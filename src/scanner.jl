@@ -463,6 +463,68 @@ function fetch_flow_mapping_start(stream::TokenStream)
 end
 
 
+function fetch_flow_collection_start(stream::TokenStream, tokentype)
+    # '[' and '{' may start a simple key.
+    save_possible_simple_key(stream)
+
+    # Increase the flow level.
+    stream.flow_level += 1
+    
+    # Simple keys are allowed after '[' and '{'.
+    stream.allow_simple_key = true
+
+
+    # Add FLOW-SEQUENCE-START or FLOW-MAPPING-START.
+    start_mark = get_mark(stream)
+    forward(stream)
+    end_mark = get_mark(stream)
+    enqueue!(stream.token_queue, tokentype(Span(start_mark, end_mark)))
+end
+
+
+function fetch_flow_sequence_end(stream::TokenStream)
+    fetch_flow_collection_end(FlowSequenceEndToken)
+end
+
+
+function fetch_flow_mapping_end(stream::TokenStream)
+    fetch_flow_sequence_end(FlowMappingEndToken)
+end
+
+
+function fetch_flow_collection_end(stream::TokenStream, tokentype)
+    # Reset possible simple key on the current level.
+    remove_possible_simple_key(stream)
+
+    # Decrease the flow level.
+    stream.flow_level -= 1
+
+    # No simple keys after ']' or '}'.
+    stream.allow_simple_key = false
+
+    # Add FLOW-SEQUENCE-END or FLOW-MAPPING-END.
+    start_mark = get_mark(stream)
+    forward(stream)
+    end_mark = get_mark(stream)
+    enqueue!(stream.token_queue, tokentype(Span(start_mark, end_mark)))
+end
+
+
+function fetch_flow_entry(stream::TokenStream)
+    # Simple keys are allowed after ','.
+    stream.allow_simple_key = true
+
+    # Reset possible simple key on the current level.
+    remove_possible_simple_key(stream)
+
+    # Add FLOW-ENTRY.
+    start_mark = get_mark(stream)
+    forward(stream)
+    end_mark = get_mark(stream)
+    enqueue!(stream.token_queue, FlowEntryToken(Span(start_mark, end_mark)))
+end
+
+
 function fetch_block_entry(stream::TokenStream)
     # Block context needs additional checks.
     if stream.flow_level == 0
@@ -497,6 +559,37 @@ function fetch_block_entry(stream::TokenStream)
     end_mark = get_mark(stream)
     enqueue!(stream.token_queue,
              BlockEntryToken(Span(start_mark, end_mark)))
+end
+
+
+function fetch_key(stream::TokenStream)
+    if stream.flow_level == 0
+        # Are we allowed to start a key (not nessesary a simple)?
+        if !stream.allow_simple_key
+            throw(ScannerError(nothing, nothing,
+                               "mapping keys are not allowed here",
+                               get_mark(stream)))
+        end
+        
+        # We may need to add BLOCK-MAPPING-START.
+        if add_indent(stream, stream.column)
+            mork = get_mark(stream)
+            enqueue!(stream.token_queue,
+                     BlockMappingStartToken(Span(mark, mark)))
+        end
+    end
+    
+    # Simple keys are allowed after '?' in the block context.
+    stream.allow_simple_key = stream.flow_level == 0
+
+    # Reset possible simple key on the current level.
+    remove_possible_simple_key(stream)
+    
+    # Add KEY.
+    start_mark = get_mark(stream)
+    forward(stream)
+    end_mark = get_mark(stream)
+    enqueue!(stream.token_queue, KeyToken(Span(start_mark, end_mark)))
 end
 
 
@@ -556,6 +649,86 @@ function fetch_value(stream::TokenStream)
     forward(stream)
     end_mark = get_mark(stream)
     enqueue!(stream.token_queue, ValueToken(Span(start_mark, end_mark)))
+end
+
+
+function fetch_alias(stream::TokenStream)
+    # ALIAS could be a simple key.
+    save_possible_simple_key(stream)
+    
+    # No simple keys after ALIAS.
+    stream.allow_simple_key = false
+
+    # Scan and add ALIAS.
+    enqueue!(stream.token_queue, scan_anchor(stream, AliasToken))
+end
+
+
+function fetch_anchor(stream::TokenStream)
+    # ANCHOR could start a simple key.
+    save_possible_simple_key(stream)
+
+    # No simple keys after ANCHOR.
+    stream.allow_simple_key = false
+
+    # Scan and add ANCHOR.
+    enqueue!(stream.token_queue, scan_anchor(stream, AnchorToken))
+end
+
+
+function fetch_tag(stream::TokenStream)
+    # TAG could start a simple key.
+    save_possible_simple_key(stream)
+
+    # No simple keys after TAG.
+    stream.allow_simple_key = false
+
+    # Scan and add TAG.
+    enqueue!(stream.token_queue, scan_tag(stream))
+end
+
+
+function fetch_literal(stream::TokenStream)
+    fetch_block_scalar(stream, '|')
+end
+
+
+function fetch_folded(stream::TokenStream)
+    fetch_block_scalar(stream, '>')
+end
+
+
+function fetch_block_scalar(stream::TokenStream, style::Char)
+    # A simple key may follow a block scalar.
+    stream.allow_simple_key = true
+
+    # Reset possible simple key on the current level.
+    remove_possible_simple_key(stream)
+
+    # Scan and add SCALAR.
+    enqueue!(stream.token_queue, scan_block_scalar(stream, style))
+end
+
+
+function fetch_single(stream::TokenStream)
+    fetch_flow_scalar(stream, '\'')
+end
+
+
+function fetch_double(stream::TokenStream)
+    fetch_flow_scalar(stream, '"')
+end
+
+
+function fetch_flow_scalar(stream::TokenStream, style::Char)
+    # A flow scalar could be a simple key.
+    save_possible_simple_key(stream)
+
+    # No simple keys after flow scalars.
+    stream.allow_simple_key = false
+
+    # Scan and add SCALAR.
+    enqueue!(stream.token_queue, scan_flow_scalar(stream, style))
 end
 
 
