@@ -8,7 +8,7 @@ abstract Token
 type DirectiveToken <: Token
     span::Span
     name::String
-    value::String
+    value::Union(String, Nothing)
 end
 
 # '---'
@@ -102,7 +102,7 @@ end
 # '!handle!suffix'
 type TagToken <: Token
     span::Span
-    value::String
+    value
 end
 
 # A scalar.
@@ -110,7 +110,7 @@ type ScalarToken <: Token
     span::Span
     value::String
     plain::Bool
-    style::Union(String, Nothing)
+    style::Union(Char, Nothing)
 end
 
 
