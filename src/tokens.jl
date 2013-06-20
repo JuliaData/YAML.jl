@@ -5,108 +5,108 @@ abstract Token
 
 
 # The '%YAML' directive.
-type DirectiveToken <: Token
+immutable DirectiveToken <: Token
     span::Span
     name::String
-    value::Union(String, Nothing)
+    value::Union(Tuple, Nothing)
 end
 
 # '---'
-type DocumentStartToken <: Token
+immutable DocumentStartToken <: Token
     span::Span
 end
 
 # '...'
-type DocumentEndToken <: Token
+immutable DocumentEndToken <: Token
     span::Span
 end
 
 # The stream start
-type StreamStartToken <: Token
+immutable StreamStartToken <: Token
     span::Span
     encoding::String
 end
 
 # The stream end
-type StreamEndToken <: Token
+immutable StreamEndToken <: Token
     span::Span
 end
 
 #
-type BlockSequenceStartToken <: Token
+immutable BlockSequenceStartToken <: Token
     span::Span
 end
 
 #
-type BlockMappingStartToken <: Token
+immutable BlockMappingStartToken <: Token
     span::Span
 end
 
 #
-type BlockEndToken <: Token
+immutable BlockEndToken <: Token
     span::Span
 end
 
 # '['
-type FlowSequenceStartToken <: Token
+immutable FlowSequenceStartToken <: Token
     span::Span
 end
 
 # '{'
-type FlowMappingStartToken <: Token
+immutable FlowMappingStartToken <: Token
     span::Span
 end
 
 # ']'
-type FlowSequenceEndToken <: Token
+immutable FlowSequenceEndToken <: Token
     span::Span
 end
 
 # '}'
-type FlowMappingEndToken <: Token
+immutable FlowMappingEndToken <: Token
     span::Span
 end
 
 # '?' or nothing (simple keys).
-type KeyToken <: Token
+immutable KeyToken <: Token
     span::Span
 end
 
 # ':'
-type ValueToken <: Token
+immutable ValueToken <: Token
     span::Span
 end
 
 # '-'
-type BlockEntryToken <: Token
+immutable BlockEntryToken <: Token
     span::Span
 end
 
 # ','
-type FlowEntryToken <: Token
+immutable FlowEntryToken <: Token
     span::Span
 end
 
 # '*anchor'
-type AliasToken <: Token
+immutable AliasToken <: Token
     span::Span
     value::String
 end
 
 # '&anchor'
-type AnchorToken <: Token
+immutable AnchorToken <: Token
     span::Span
     value::String
 end
 
 # '!handle!suffix'
-type TagToken <: Token
+immutable TagToken <: Token
     span::Span
     value
 end
 
 # A scalar.
-type ScalarToken <: Token
+immutable ScalarToken <: Token
     span::Span
     value::String
     plain::Bool

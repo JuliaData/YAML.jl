@@ -2,7 +2,7 @@
 include("queue.jl")
 
 # Position within the document being parsed
-type Mark
+immutable Mark
     index::Uint
     line::Uint
     column::Uint
@@ -10,13 +10,13 @@ end
 
 
 # Where in the stream a particular token lies.
-type Span
+immutable Span
     start_mark::Mark
     end_mark::Mark
 end
 
 
-type SimpleKey
+immutable SimpleKey
     token_number::Uint
     required::Bool
     mark::Mark
@@ -24,7 +24,7 @@ end
 
 
 # Errors thrown by the scanner.
-type ScannerError <: Exception
+immutable ScannerError <: Exception
     context::Union(String, Nothing)
     context_mark::Union(Mark, Nothing)
     problem::String
@@ -104,8 +104,10 @@ end
 function peek(stream::TokenStream, i::Integer)
     ithchar = stream.chars
     for _ in 1:i
+        if ithchar === nothing; return nothing; end
         ithchar = rest(ithchar)
     end
+    if ithchar === nothing; return nothing; end
     first(ithchar)
 end
 
@@ -117,7 +119,8 @@ function prefix(stream::TokenStream, k::Integer)
     pre = ""
     chars = stream.chars
     for _ in 1:k
-        pre *= first(chars)
+        if chars === nothing; return nothing; end
+        pre = string(pre, first(chars))
         chars = rest(chars)
     end
     pre
@@ -210,7 +213,7 @@ function fetch_more_tokens(stream::TokenStream)
     unwind_indent(stream, stream.column)
 
     c = peek(stream)
-    if c == '\0'
+    if c == '\0' || c === nothing
         fetch_stream_end(stream)
     elseif c == '%' && check_directive(stream)
         fetch_directive(stream)
@@ -308,7 +311,7 @@ end
 
 function remove_possible_simple_key(stream::TokenStream)
     # Remove the saved possible key position at the current flow level.
-    if has(stream.possible_simple_keys, stream.flow_level)
+    if haskey(stream.possible_simple_keys, stream.flow_level)
         key = stream.possible_simple_keys[stream.flow_level]
         if key.required
             throw(ScannerError("while scanning a simple key", key.mark,
@@ -483,12 +486,12 @@ end
 
 
 function fetch_flow_sequence_end(stream::TokenStream)
-    fetch_flow_collection_end(FlowSequenceEndToken)
+    fetch_flow_collection_end(stream, FlowSequenceEndToken)
 end
 
 
 function fetch_flow_mapping_end(stream::TokenStream)
-    fetch_flow_sequence_end(FlowMappingEndToken)
+    fetch_flow_sequence_end(stream, FlowMappingEndToken)
 end
 
 
@@ -595,7 +598,7 @@ end
 
 function fetch_value(stream::TokenStream)
     # Simple key
-    if has(stream.possible_simple_keys, stream.flow_level)
+    if haskey(stream.possible_simple_keys, stream.flow_level)
         # Add KEY.
         key = stream.possible_simple_keys[stream.flow_level]
         delete!(stream.possible_simple_keys, stream.flow_level)
@@ -1195,10 +1198,10 @@ function scan_flow_scalar_spaces(stream::TokenStream, double::Bool,
         elseif double && c == '\''
             forward(stream)
             c = peek(stream)
-            if has(ESCAPE_REPLACEMENTS, c)
+            if haskey(ESCAPE_REPLACEMENTS, c)
                 push!(chunks, ESCAPE_REPLACEMENTS[c])
                 forward(stream)
-            elseif has(ESCAPE_CODES, c)
+            elseif haskey(ESCAPE_CODES, c)
                 length = ESCAPE_CODES[c]
                 forward(stream)
                 for k in 0:(length-1)
@@ -1320,6 +1323,7 @@ function scan_plain(stream::TokenStream)
         end
 
         # It's not clear what we should do with ':' in the flow context.
+        c = peek(stream)
         if stream.flow_level != 0 && c == ':' &&
             !contains("\0 \t\r\n\0u0085\u2028\u2029,[]{}", peek(stream, length + 1))
             forward(stream, length)
