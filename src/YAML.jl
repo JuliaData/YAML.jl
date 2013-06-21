@@ -7,4 +7,5 @@ module YAML
 
     include("scanner.jl")
     include("parser.jl")
+    include("composer.jl")
 end
