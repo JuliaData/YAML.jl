@@ -394,9 +394,9 @@ function parse_block_mapping_key(stream::EventStream)
     end
 
     if typeof(token) != BlockEndToken
-        trow(ParserError("while parsing a block mapping", stream.marks[end],
-                         "expected <block end>, but found $(typeof(token))",
-                         token.span.start_mark))
+        throw(ParserError("while parsing a block mapping", stream.marks[end],
+                          "expected <block end>, but found $(typeof(token))",
+                          token.span.start_mark))
     end
 
     pop_token(stream)

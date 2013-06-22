@@ -87,7 +87,7 @@ type TokenStream
     possible_simple_keys::Dict
 
     function TokenStream(stream::IO)
-        tokstream = new(seq(stream), false, Queue{Token}(), 0, 0, 0, 0, 0, -1,
+        tokstream = new(seq(stream), false, Queue{Token}(), 1, 1, 1, 0, 0, -1,
                         Array(Int,0), true, Dict())
         fetch_stream_start(tokstream)
         tokstream
@@ -255,7 +255,7 @@ function fetch_more_tokens(stream::TokenStream)
         fetch_plain(stream)
     else
         # TODO: Throw a meaningful exception.
-        throw()
+        throw(c)
     end
 end
 
@@ -786,7 +786,8 @@ function scan_to_next_token(stream::TokenStream)
         end
 
         if peek(stream) == '#'
-            while contains("\0\r\n\u0085\u2028\u2029", peek(stream))
+            forward(stream)
+            while !contains("\0\r\n\u0085\u2028\u2029", peek(stream))
                 forward(stream)
             end
         end
@@ -917,6 +918,7 @@ function scan_directive_ignored_line(stream::TokenStream, start_mark::Mark)
         forward(stream)
     end
     if peek(stream) == '#'
+        forward(stream)
         while !contains("\0\r\n\u0085\u2028\u2029", peek(stream))
             forward(stream)
         end
@@ -1070,7 +1072,7 @@ function scan_block_scalar(stream::TokenStream, style::Char)
         append!(chunks, breaks)
     end
 
-    ScalarToken(Span(start_mark, end_mark), string(chunks...), style)
+    ScalarToken(Span(start_mark, end_mark), string(chunks...), false, style)
 end
 
 
@@ -1092,6 +1094,49 @@ function scan_block_scalar_ignored_line(stream::TokenStream, start_mark::Mark)
     end
     
     scan_line_break(stream)
+end
+
+
+function scan_block_scalar_indicators(stream::TokenStream, start_mark::Mark)
+    chomping = nothing
+    increment = nothing
+    c = peek(stream)
+    if c == '+' || c == '-'
+        chomping = c == '+'
+        forward(stream)
+        c = peek(stream)
+        if contains("0123456789", c)
+            increment = int(string(c))
+            if increment == 0
+                throw(ScannerError("while scanning a block scalar", start_mark,
+                    "expected indentation indicator in the range 1-9, but found 0",
+                    get_mark(stream)))
+            end
+        end
+    elseif contains("0123456789", c)
+        increment = int(string(c))
+        if increment == 0
+            throw(ScannerError("while scanning a block scalar", start_mark,
+                "expected indentation indicator in the range 1-9, but found 0",
+                get_mark(stream)))
+        end
+        forward(stream)
+
+        c = peek(stream)
+        if c == '+' || c == '-'
+            comping = c == '+'
+            forward(stream)
+        end
+    end
+
+    c = peek(stream)
+    if !contains("\0 \r\n\u0085\u2028\u2029", c)
+        throw(ScannerError("while scanning a block scalar", start_mark,
+            "expected chomping or indentation indicators, but found $(c)",
+            get_mark(stream)))
+    end
+
+    chomping, increment
 end
 
 
@@ -1141,8 +1186,8 @@ function scan_flow_scalar(stream::TokenStream, style::Char)
     q = peek(stream) # quote
     forward(stream)
     while peek(stream) != q
-        append!(chunks, scan_flow_scalar_spaces(double, start_mark))
-        append!(chunks, scan_flow_scalar_non_spaces(double, start_mark))
+        append!(chunks, scan_flow_scalar_spaces(stream, double, start_mark))
+        append!(chunks, scan_flow_scalar_non_spaces(stream, double, start_mark))
     end
     forward(stream)
     end_mark = get_mark(stream)
@@ -1175,8 +1220,9 @@ const ESCAPE_CODES = {
     'U' => 8
 }
 
-function scan_flow_scalar_spaces(stream::TokenStream, double::Bool,
-                                 start_mark::Mark)
+
+function scan_flow_scalar_non_spaces(stream::TokenStream, double::Bool,
+                                     start_mark::Mark)
     chunks = {} 
     while true
         length = 0
@@ -1240,7 +1286,7 @@ function scan_flow_scalar_spaces(stream::TokenStream, double::Bool,
     while contains(" \t", peek(stream, length))
         length += 1
     end
-    whitespaces = prefix(steram, length)
+    whitespaces = prefix(stream, length)
     forward(stream, length)
     
     c = peek(stream)
@@ -1256,7 +1302,7 @@ function scan_flow_scalar_spaces(stream::TokenStream, double::Bool,
             push!(chunks, ' ')
         end
         append!(chunks, breaks)
-    else:
+    else
         push!(chunks, whitespaces)
     end
 

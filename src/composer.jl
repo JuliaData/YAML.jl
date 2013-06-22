@@ -32,12 +32,12 @@ function pop_event(composer::Composer)
 end
 
 
-function compose(input::IO)
-    composer = Composer(parse(input), Dict{String, Node}(), Resolver())
+function compose(events)
+    composer = Composer(events, Dict{String, Node}(), Resolver())
     @assert typeof(pop_event(composer)) == StreamStartEvent
     node = compose_document(composer)
     @assert typeof(pop_event(composer)) == StreamEndEvent
-    node
+    node, composer.events
 end
 
 
@@ -51,8 +51,8 @@ end
 
 
 function compose_node(composer::Composer, parent::Union(Node, Nothing),
-                      index::Union(Int, Nothing))
-    event = first(composer.event)
+                      index::Union(Int, Node, Nothing))
+    event = first(composer.events)
     if typeof(event) == AliasEvent
         pop_event(composer)
         anchor = event.anchor
@@ -112,14 +112,14 @@ function compose_sequence_node(composer::Composer, anchor::Union(String, Nothing
                       nothing, start_event.implicit)
     end
 
-    node = SequenceNode(tag, {}, start_event.start_mork, nothing,
+    node = SequenceNode(tag, {}, start_event.start_mark, nothing,
                         start_event.flow_style)
     if !is(anchor, nothing)
         composer.anchors[anchor] = node
     end
 
     index = 1
-    while typeof(first(composer.event)) != SequenceEndEvent
+    while typeof(first(composer.events)) != SequenceEndEvent
         push!(node.value, compose_node(composer, node, index))
         index += 1
     end
@@ -139,13 +139,13 @@ function compose_mapping_node(composer::Composer, anchor::Union(String, Nothing)
                       nothing, start_event.implicit)
     end
 
-    node = MappingNode(tag, {}, start_event.start_mork, nothing,
+    node = MappingNode(tag, {}, start_event.start_mark, nothing,
                        start_event.flow_style)
     if !is(anchor, nothing)
         composer.anchors[anchor] = node
     end
 
-    while typeof(first(composer.event)) != SequenceEndEvent
+    while typeof(first(composer.events)) != MappingEndEvent
         item_key = compose_node(composer, node, nothing)
         item_value = compose_node(composer, node, item_key)
         push!(node.value, (item_key, item_value))
@@ -154,6 +154,6 @@ function compose_mapping_node(composer::Composer, anchor::Union(String, Nothing)
     end_event = pop_event(composer)
     node.end_mark = end_event.end_mark
 
-    noed
+    node
 end
 

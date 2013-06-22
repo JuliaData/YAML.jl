@@ -64,7 +64,7 @@ end
 
 
 function resolve(resolver::Resolver, ::Type{ScalarNode}, value, implicit)
-    if implicit[0]
+    if implicit[1]
         for (tag, pat) in resolver.implicit_resolvers
             if ismatch(pat, value)
                 return tag

@@ -4,8 +4,8 @@ abstract Node
 type ScalarNode <: Node
     tag::String
     value::String
-    start_mark::Mark
-    end_mark::Mark
+    start_mark::Union(Mark, Nothing)
+    end_mark::Union(Mark, Nothing)
     style::Union(Char, Nothing)
 end
 
@@ -13,8 +13,8 @@ end
 type SequenceNode <: Node
     tag::String
     value::Vector
-    start_mark::Mark
-    end_mark::Mark
+    start_mark::Union(Mark, Nothing)
+    end_mark::Union(Mark, Nothing)
     flow_style::Bool
 end
 
@@ -22,8 +22,8 @@ end
 type MappingNode <: Node
     tag::String
     value::Vector
-    start_mark::Mark
-    end_mark::Mark
+    start_mark::Union(Mark, Nothing)
+    end_mark::Union(Mark, Nothing)
     flow_style::Bool
 end
 
