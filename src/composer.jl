@@ -56,7 +56,7 @@ function compose_node(composer::Composer, parent::Union(Node, Nothing),
     if typeof(event) == AliasEvent
         pop_event(composer)
         anchor = event.anchor
-        if !haskey(composer.anchors)
+        if !haskey(composer.anchors, anchor)
             throw(ComposerError(nothing, nothing, "found undefined alias $(anchor)",
                                 event.start_mark))
         end

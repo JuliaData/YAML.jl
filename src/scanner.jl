@@ -1057,7 +1057,7 @@ function scan_block_scalar(stream::TokenStream, style::Char)
                     push!(chunks, ' ')
                 end
             else
-                push(chunks, line_break)
+                push!(chunks, line_break)
             end
         else
             break
@@ -1144,7 +1144,7 @@ function scan_block_scalar_indentation(stream::TokenStream)
     chunks = {}
     max_indent = 0
     end_mark = get_mark(stream)
-    while contains("\n\n\u0085\u2028\u2029", peek(stream))
+    while contains(" \r\n\u0085\u2028\u2029", peek(stream))
         if peek(stream) != ' '
             push!(chunks, scan_line_break(stream))
             end_mark = get_mark(stream)
@@ -1168,7 +1168,7 @@ function scan_block_scalar_breaks(stream::TokenStream, indent)
     end
 
     while contains("\r\n\u0085\u2028\u2029", peek(stream))
-        push!(chunks, scan_line_break())
+        push!(chunks, scan_line_break(stream))
         end_mark = get_mark(stream)
         while stream.column < indent && peek(stream) == ' '
             forward(stream)

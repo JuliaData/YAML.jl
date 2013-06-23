@@ -1,9 +1,11 @@
 
-require("LazySequences")
+require("Calendar")
 require("Codecs")
+require("LazySequences")
 
 module YAML
     using LazySequences
+    using Calendar
     import Codecs
     import Base.isempty, Base.length
 

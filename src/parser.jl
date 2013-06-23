@@ -214,7 +214,7 @@ function parse_node(stream::EventStream; block=false, indentless_sequence=false)
     if typeof(token) == AliasToken
         pop_token(stream)
         stream.state = pop!(stream.states)
-        AliasEvent(token.span.start_mark, token.span.end_mark, token.value)
+        return AliasEvent(token.span.start_mark, token.span.end_mark, token.value)
     end
 
     anchor = nothing

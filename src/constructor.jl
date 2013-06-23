@@ -213,9 +213,76 @@ function construct_yaml_float(constructor::Constructor, node::Node)
 end
 
 
+const timestamp_pat =
+    r"^(\d{4})-    (?# year)
+       (\d\d?)-    (?# month)
+       (\d\d?)     (?# day)
+      (?:
+        (?:[Tt]|[ \t]+)
+        (\d\d?):      (?# hour)
+        (\d\d):       (?# minute)
+        (\d\d)        (?# second)
+        (?:\.(\d*))?  (?# fraction)
+        (?:
+          [ \t]*(Z|([+\-])(\d\d?)
+            (?:
+                :(\d\d)
+            )?)
+        )?
+      )?$"x
+
+
 function construct_yaml_timestamp(constructor::Constructor, node::Node)
-    throw(ConstructorError(nothing, nothing,
-        "timestamp type not yet implemented", node.start_mark))
+    value = construct_scalar(constructor, node)
+    mat = match(timestamp_pat, value)
+    if mat === nothing
+        throw(ConstructorError(nothing, nothing,
+            "could not make sense of timestamp format", node.start_mark))
+    end
+
+    yr = parseint(mat.captures[1])
+    mn = parseint(mat.captures[2])
+    dy = parseint(mat.captures[3])
+
+    if mat.captures[4] === nothing
+        return ymd(yr, mn, dy)
+    end
+
+    h = parseint(mat.captures[4])
+    m = parseint(mat.captures[5])
+    s = parseint(mat.captures[6])
+
+    if mat.captures[7] === nothing
+        return ymd_hms(yr, mn, dy, h, m, s)
+    end
+
+    ms = 0
+    if !is(mat.captures[7], nothing)
+        ms = mat.captures[7]
+        if length(ms) > 6
+            ms = ms[1:6]
+        end
+        ms = parseint(string(ms, repeat(length(ms), "0")))
+
+        # TODO: Calendar does not currently allow for fractions of seconds, as
+        # far as I know, so the ms value is ignored.
+    end
+
+    delta_hr = 0
+    delta_mn = 0
+
+    if !is(mat.captures[9], nothing)
+        delta_hr = parseint(mat.captures[9])
+    end
+
+    if !is(mat.captures[10], nothing)
+        delta_mn = parseint(mat.captures[10])
+    end
+
+    # TODO: Also, I'm not sure if there is a way to numerically set the timezone
+    # in Calendar.
+
+    return ymd_hms(yr, mn, dy, h, m, s)
 end
 
 
