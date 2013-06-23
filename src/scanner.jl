@@ -87,7 +87,7 @@ type TokenStream
     possible_simple_keys::Dict
 
     function TokenStream(stream::IO)
-        tokstream = new(seq(stream), false, Queue{Token}(), 1, 1, 1, 0, 0, -1,
+        tokstream = new(seq(stream), false, Queue{Token}(), 1, 0, 1, 0, 0, -1,
                         Array(Int,0), true, Dict())
         fetch_stream_start(tokstream)
         tokstream
