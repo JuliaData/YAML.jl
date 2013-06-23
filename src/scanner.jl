@@ -221,6 +221,7 @@ function fetch_more_tokens(stream::TokenStream)
         fetch_document_start(stream)
     elseif c == '.' && check_document_end(stream)
         fetch_document_end(stream)
+        stream.done = true
     elseif c == '['
         fetch_flow_sequence_start(stream)
     elseif c == '{'
@@ -430,12 +431,12 @@ end
 
 
 function fetch_document_start(stream::TokenStream)
-    fetch_document_indicator(DocumentStartToken)
+    fetch_document_indicator(stream, DocumentStartToken)
 end
 
 
 function fetch_document_end(stream::TokenStream)
-    fetch_document_indicator(DocumentEndToken)
+    fetch_document_indicator(stream, DocumentEndToken)
 end
 
 

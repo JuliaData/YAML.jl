@@ -26,10 +26,11 @@ type EventStream
     marks::Vector{Mark}
     yaml_version::Union(Tuple, Nothing)
     tag_handles::Dict{String, String}
+    end_of_stream::Union(StreamEndEvent, Nothing,)
 
     function EventStream(tokens)
         new(tokens, parse_stream_start, Function[], Mark[],
-            nothing, Dict{String, String}())
+            nothing, Dict{String, String}(), nothing)
     end
 end
 
@@ -57,7 +58,14 @@ end
 
 # Return the next event in the event stream, or nothing if finished.
 function next_event(stream::EventStream)
-    stream.state === nothing ? nothing : stream.state(stream)
+    if stream.state === nothing
+        nothing
+    elseif !is(stream.end_of_stream, nothing)
+        stream.state = nothing
+        return stream.end_of_stream
+    else
+        stream.state(stream)
+    end
 end
 
 
@@ -173,8 +181,10 @@ function parse_document_end(stream::EventStream)
     explicit = false
     if typeof(token) == DocumentEndToken
         pop_token(stream)
-        end_mark = token.end_mark
+        end_mark = token.span.end_mark
         explicit = true
+        stream.end_of_stream = StreamEndEvent(token.span.start_mark,
+                                              token.span.end_mark)
     end
     event = DocumentEndEvent(start_mark, end_mark, explicit)
     stream.state = parse_document_start
