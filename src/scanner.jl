@@ -369,7 +369,7 @@ end
 function check_document_end(stream::TokenStream)
     stream.column == 0 &&
     prefix(stream, 3) == "..." &&
-    contains(whitespace, peek(stream, 3))
+    (contains(whitespace, peek(stream, 3)) || peek(stream, 3) === nothing)
 end
 
 function check_block_entry(stream::TokenStream)
