@@ -450,7 +450,7 @@ function parse_flow_sequence_entry(stream::EventStream; first_entry=false)
                 pop_token(stream)
             else
                 throw(ParserError("while parsing a flow sequence",
-                                  stream.marsk[end],
+                                  stream.mark[end],
                                   "expected ',' or ']', but got $(typeof(token))",
                                   token.span.start_mark))
             end
@@ -539,7 +539,7 @@ function parse_flow_mapping_key(stream::EventStream; first_entry=false)
             pop_token(stream)
             if !contains([ValueToken, FlowEntryToken, FlowMappingEndToken],
                          typeof(first(stream.tokens)))
-                push!(stream.states, parse-flow_mapping_value)
+                push!(stream.states, parse_flow_mapping_value)
                 return parse_flow_node(stream)
             else
                 stream.state = parse_flow_mapping_value

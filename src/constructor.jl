@@ -178,8 +178,10 @@ function construct_yaml_int(constructor::Constructor, node::Node)
 
     if contains(value, ':')
         # TODO
-        throw(ConstructorError(nothing, nothing,
-            "sexagesimal integers not yet implemented", node.start_mark))
+        #throw(ConstructorError(nothing, nothing,
+            #"sexagesimal integers not yet implemented", node.start_mark))
+        warn("sexagesimal integers not yet implemented. Returning string.")
+        return value
     end
 
     parseint(value)

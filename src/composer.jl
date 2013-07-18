@@ -36,7 +36,11 @@ function compose(events)
     composer = Composer(events, Dict{String, Node}(), Resolver())
     @assert typeof(pop_event(composer)) == StreamStartEvent
     node = compose_document(composer)
-    @assert typeof(pop_event(composer)) == StreamEndEvent
+    if typeof(first(composer.events)) == StreamEndEvent
+        pop_event(composer)
+    else
+        @assert typeof(first(composer.events)) == DocumentStartEvent
+    end
     node, composer.events
 end
 

@@ -492,7 +492,7 @@ end
 
 
 function fetch_flow_mapping_end(stream::TokenStream)
-    fetch_flow_sequence_end(stream, FlowMappingEndToken)
+    fetch_flow_collection_end(stream, FlowMappingEndToken)
 end
 
 
@@ -1361,6 +1361,7 @@ function scan_plain(stream::TokenStream)
         while true
             c = peek(stream, length)
             if contains(whitespace, c) ||
+                c === nothing ||
                 (stream.flow_level == 0 && c == ':' &&
                     contains(whitespace, peek(stream, length + 1))) ||
                 (stream.flow_level != 0 && contains(",:?[]{}", c))
