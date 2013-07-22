@@ -473,7 +473,7 @@ function fetch_flow_collection_start(stream::TokenStream, tokentype)
 
     # Increase the flow level.
     stream.flow_level += 1
-    
+
     # Simple keys are allowed after '[' and '{'.
     stream.allow_simple_key = true
 
@@ -574,21 +574,21 @@ function fetch_key(stream::TokenStream)
                                "mapping keys are not allowed here",
                                get_mark(stream)))
         end
-        
+
         # We may need to add BLOCK-MAPPING-START.
         if add_indent(stream, stream.column)
-            mork = get_mark(stream)
+            mark = get_mark(stream)
             enqueue!(stream.token_queue,
                      BlockMappingStartToken(Span(mark, mark)))
         end
     end
-    
+
     # Simple keys are allowed after '?' in the block context.
     stream.allow_simple_key = stream.flow_level == 0
 
     # Reset possible simple key on the current level.
     remove_possible_simple_key(stream)
-    
+
     # Add KEY.
     start_mark = get_mark(stream)
     forward(stream)
@@ -659,7 +659,7 @@ end
 function fetch_alias(stream::TokenStream)
     # ALIAS could be a simple key.
     save_possible_simple_key(stream)
-    
+
     # No simple keys after ALIAS.
     stream.allow_simple_key = false
 
@@ -928,7 +928,7 @@ function scan_directive_ignored_line(stream::TokenStream, start_mark::Mark)
         throw(ScannerError("while scanning a directive", start_mark,
                            "expected a comment or a line break, but found $(peek(stream))",
                            get_mark(stream)))
-     end 
+     end
      scan_line_break(stream)
 end
 
@@ -948,7 +948,7 @@ function scan_anchor(stream::TokenStream, tokentype)
         length += 1
         c = peek(stream, length)
     end
-    
+
     if length == 0
         throw(ScannerError("while scanning an $(name)", start_mark,
                            "expected an alphanumeric character, but found $(peek(stream))",
@@ -968,7 +968,7 @@ end
 
 function scan_tag(stream::TokenStream)
     start_mark = get_mark(stream)
-    c = peek(stream)
+    c = peek(stream, 1)
     if c == '<'
         handle = nothing
         forward(stream, 2)
@@ -979,7 +979,7 @@ function scan_tag(stream::TokenStream)
                                get_mark(stream)))
         end
         forward(stream)
-    elseif contains("\0 \t\r\n\u0085\u2028\u2029", c) 
+    elseif contains("\0 \t\r\n\u0085\u2028\u2029", c)
         handle = nothing
         suffix = '!'
         forward(stream)
@@ -1003,14 +1003,14 @@ function scan_tag(stream::TokenStream)
         end
         suffix = scan_tag_uri(stream, "tag", start_mark)
     end
-    
+
     c = peek(stream)
     if !contains("\0 \r\n\u0085\u2028\u2029", c)
         throw(ScannerError("while scanning a tag", start_mark,
                            "expected ' ', but found $(c)",
                            get_mark(stream)))
     end
-    
+
     value = (handle, suffix)
     end_mark = get_mark(stream)
     TagToken(Span(start_mark, end_mark), value)
@@ -1019,7 +1019,7 @@ end
 
 function scan_block_scalar(stream::TokenStream, style::Char)
     folded = style == '>'
-    
+
     chunks = {}
     start_mark = get_mark(stream)
 
@@ -1027,7 +1027,7 @@ function scan_block_scalar(stream::TokenStream, style::Char)
     forward(stream)
     chomping, increment = scan_block_scalar_indicators(stream, start_mark)
     scan_block_scalar_ignored_line(stream, start_mark)
-    
+
     # Determine the indentation level and go to the first non-empty line.
     min_indent = max(1, stream.indent + 1)
     if increment === nothing
@@ -1038,7 +1038,7 @@ function scan_block_scalar(stream::TokenStream, style::Char)
         breaks, end_mark = scan_block_scalar_breaks(stream, indent)
     end
     line_break = ""
-    
+
     # Scan the inner part of the block scalar.
     while stream.column == indent && peek(stream) != '\0'
         append!(chunks, breaks)
@@ -1052,8 +1052,8 @@ function scan_block_scalar(stream::TokenStream, style::Char)
         line_break = scan_line_break(stream)
         breaks, end_mark = scan_block_scalar_breaks(stream, indent)
         if stream.column == indent && peek(stream) != '\0'
-            if folded && line_break == '\n' &&
-               leading_non_space && contains(" \t", peek(stream))
+            if folded && line_break == "\n" &&
+               leading_non_space && !contains(" \t", peek(stream))
                 if isempty(breaks)
                     push!(chunks, ' ')
                 end
@@ -1064,7 +1064,7 @@ function scan_block_scalar(stream::TokenStream, style::Char)
             break
         end
     end
-    
+
     # Chomp the tail.
     if chomping != false
         push!(chunks, line_break)
@@ -1087,13 +1087,13 @@ function scan_block_scalar_ignored_line(stream::TokenStream, start_mark::Mark)
             forward(stream)
         end
     end
-    
+
     if !contains("\0\r\n\u0085\u2028\u2029", peek(stream))
         throw(ScannerError("while scanning a block scalal", start_mark,
                            "expected a commend or a line break, but found $(peek(stream))",
                            get_mark(stream)))
     end
-    
+
     scan_line_break(stream)
 end
 
@@ -1205,6 +1205,7 @@ const ESCAPE_REPLACEMENTS = {
     'n'  => '\u000a',
     'v'  => '\u000b',
     'f'  => '\u000c',
+    'r'  => '\u000d',
     'e'  => '\u001b',
     ' '  => '\u0020',
     '"'  => '"',
@@ -1224,7 +1225,7 @@ const ESCAPE_CODES = {
 
 function scan_flow_scalar_non_spaces(stream::TokenStream, double::Bool,
                                      start_mark::Mark)
-    chunks = {} 
+    chunks = {}
     while true
         length = 0
         while !contains("\'\"\\\0 \t\r\n\u0085\u2028\u2029", peek(stream, length))
@@ -1234,15 +1235,15 @@ function scan_flow_scalar_non_spaces(stream::TokenStream, double::Bool,
             push!(chunks, prefix(stream, length))
             forward(stream, length)
         end
-        
+
         c = peek(stream)
         if !double && c == '\'' && peek(stream, 1) == '\''
             push!(chunks, '\'')
             forward(stream, 2)
         elseif (double && c == '\'') || (!double && contains("\"\\", c))
-            push(chunks, c)
+            push!(chunks, c)
             forward(stream)
-        elseif double && c == '\''
+        elseif double && c == '\\'
             forward(stream)
             c = peek(stream)
             if haskey(ESCAPE_REPLACEMENTS, c)
@@ -1262,12 +1263,12 @@ function scan_flow_scalar_non_spaces(stream::TokenStream, double::Bool,
                                            get_mark(stream)))
                     end
                 end
-                push!(chunks, char(parse_hex(prefix(stream, length))))
+                push!(chunks, char(parseint(prefix(stream, length), 16)))
                 forward(stream, length)
             elseif contains("\r\n\u0085\u2028\u2029", c)
                 scan_line_break(stream)
                 append!(chunks, scan_flow_scalar_breaks(double, start_mark))
-            else:
+            else
                 throw(ScannerError("while scanning a double-quoted scalar",
                                    start_mark,
                                    "found unknown escape character $(c)",
@@ -1281,22 +1282,22 @@ end
 
 
 function scan_flow_scalar_spaces(stream::TokenStream, double::Bool,
-                                 steart_mark::Mark)
-    chunks = {} 
+                                 start_mark::Mark)
+    chunks = {}
     length = 0
     while contains(" \t", peek(stream, length))
         length += 1
     end
     whitespaces = prefix(stream, length)
     forward(stream, length)
-    
+
     c = peek(stream)
     if c == '\0'
         throw(ScannerError("while scanning a quoted scalar", start_mark,
                            "found unexpected end of stream", get_mark(stream)))
     elseif contains("\r\n\u0085\u2028\u2029", c)
         line_break = scan_line_break(stream)
-        breaks = scan_flow_scalar_breaks(double, start_mark)
+        breaks = scan_flow_scalar_breaks(stream, double, start_mark)
         if line_break != '\n'
             push!(chunks, line_break)
         else isempty(breaks)
@@ -1313,7 +1314,7 @@ end
 
 function scan_flow_scalar_breaks(stream::TokenStream, double::Bool,
                                  start_mark::Mark)
-    chunks = {}                                 
+    chunks = {}
     while true
         pref = prefix(stream, 3)
         if pref == "---" || pref == "..." &&
@@ -1322,11 +1323,11 @@ function scan_flow_scalar_breaks(stream::TokenStream, double::Bool,
                                "found unexpected document seperator",
                                get_mark(stream)))
         end
-        
+
         while contains(" \t", peek(stream))
             forward(stream)
         end
-        
+
         if contains("\r\n\u0085\u2028\u2029", peek(stream))
             push(chunks, scan_line_break(stream))
         else
@@ -1459,23 +1460,23 @@ function scan_tag_handle(stream::TokenStream, name::String, start_mark::Mark)
             length += 1
             c = peek(stream, length)
         end
-        
+
         if c != '!'
-            forward(length)
+            forward(stream, length)
             throw(ScannerError("while scanning a $(name)", start_mark,
                                "expected '!', but found $(c)",
-                               get_mark(stream)()))
+                               get_mark(stream)))
         end
         length += 1
     end
-    
+
     value = prefix(stream, length)
     forward(stream, length)
     value
 end
 
 
-function scan_tag_uri(stream::TokenStream, start_mark::Mark)
+function scan_tag_uri(stream::TokenStream, name::String, start_mark::Mark)
     chunks = {}
     length = 0
     c = peek(stream, length)
@@ -1490,7 +1491,7 @@ function scan_tag_uri(stream::TokenStream, start_mark::Mark)
         end
         c = peek(stream, length)
     end
-        
+
     if length > 0
         push!(chunks, prefix(stream, length))
         forward(stream, length)
@@ -1502,7 +1503,7 @@ function scan_tag_uri(stream::TokenStream, start_mark::Mark)
                            "expected URI, but found $(c)",
                            get_mark(stream)))
     end
-    
+
     string(chunks...)
 end
 
@@ -1524,7 +1525,7 @@ function scan_uri_escapes(stream::TokenStream, name::String, start_mark::Mark)
         push!(bytes, char(parse_hex(prefix(stream, 2))))
         forward(stream, 2)
     end
-    
+
     string(bytes...)
 end
 

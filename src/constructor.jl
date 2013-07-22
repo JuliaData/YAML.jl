@@ -152,7 +152,7 @@ end
 
 
 function construct_yaml_null(constructor::Constructor, node::Node)
-    construct_scalar(node)
+    construct_scalar(constructor, node)
     nothing
 end
 
@@ -184,7 +184,13 @@ function construct_yaml_int(constructor::Constructor, node::Node)
         return value
     end
 
-    parseint(value)
+    if length(value) > 2 && value[1] == '0' && (value[2] == 'x' || value[2] == 'X')
+        parseint(value[3:], 16)
+    elseif length(value) > 1 && value[1] == '0'
+        parseint(value, 8)
+    else
+        parseint(value, 10)
+    end
 end
 
 
@@ -194,20 +200,22 @@ function construct_yaml_float(constructor::Constructor, node::Node)
 
     if contains(value, ':')
         # TODO
-        throw(ConstructorError(nothing, nothing,
-            "sexagesimal floats not yet implemented", node.start_mark))
+        # throw(ConstructorError(nothing, nothing,
+        #     "sexagesimal floats not yet implemented", node.start_mark))
+        warn("sexagesimal floats not yet implemented. Returning string.")
+        return value
     end
 
     if value == ".nan"
-        return nan
+        return NaN
     end
 
     m = match(r"^([+\-]?)\.inf$", value)
     if !is(m, nothing)
         if m.captures[1] == "-"
-            return -inf
+            return -Inf
         else
-            return inf
+            return Inf
         end
     end
 
@@ -226,7 +234,7 @@ const timestamp_pat =
         (\d\d)        (?# second)
         (?:\.(\d*))?  (?# fraction)
         (?:
-          [ \t]*(Z|([+\-])(\d\d?)
+          [ \t]*(Z|(?:[+\-])(\d\d?)
             (?:
                 :(\d\d)
             )?)
@@ -264,7 +272,7 @@ function construct_yaml_timestamp(constructor::Constructor, node::Node)
         if length(ms) > 6
             ms = ms[1:6]
         end
-        ms = parseint(string(ms, repeat(length(ms), "0")))
+        ms = parseint(string(ms, repeat("0", length(ms))))
 
         # TODO: Calendar does not currently allow for fractions of seconds, as
         # far as I know, so the ms value is ignored.
@@ -334,8 +342,8 @@ function construct_undefined(constructor::Constructor, node::Node)
 end
 
 
-function construct_yaml_binary(construct::Constructor, node::Node)
-    value = string(construct_scalar(constructor, node))
+function construct_yaml_binary(constructor::Constructor, node::Node)
+    value = replace(string(construct_scalar(constructor, node)), "\n", "")
     Codecs.decode(Codecs.Base64, value)
 end
 

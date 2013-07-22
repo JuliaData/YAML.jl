@@ -1,13 +1,17 @@
 
 [YAML](http://yaml.org/) is a flexible data serialization format that is
-designed to be easily read and written by humans beings.
+designed to be easily read and written by human beings.
 
 This library parses YAML documents into native Julia types. (Dumping Julia
 objects to YAML has not yet been implemented.)
 
 ## Synopsis
 
-For most purposes there is one important function: `YAML.load`.
+For most purposes there is one important function: `YAML.load`, which takes a
+string and parses it the first YAML document it finds.
+
+To parse a file use `YAML.load_file`, and to parse every document in a file
+use `YAML.load_all` or `YAML.load_all_file`.
 
 Given a YAML document like the following
 
@@ -66,4 +70,11 @@ Note that ints and floats are recognized, as well as timestamps which are parsed
 into CalendarTime objects. Also, anchors and references work as expected,
 without making a copy.
 
+## Not yet implemented
+
+  * Emitting julia objects to YAML.
+  * Parsing sexigesimal numbers.
+  * Fractions of seconds in timestamps.
+  * Specific time-zone offsets in timestamps.
+  * Application specific tags.
 

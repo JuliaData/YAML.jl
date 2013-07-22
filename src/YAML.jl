@@ -39,5 +39,21 @@ module YAML
 
     load(input::String) = load(IOBuffer(input))
     load_all(input::String) = load_all(IOBuffer(input))
+
+
+    function load_file(filename::String)
+        input = open(filename)
+        data = load(input)
+        close(input)
+        data
+    end
+
+
+    function load_all_file(filename::String)
+        input = open(filename)
+        data = load_all(input)
+        close(input)
+        data
+    end
 end
 

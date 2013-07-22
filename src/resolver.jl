@@ -8,7 +8,7 @@
 const DEFAULT_SCALAR_TAG = "tag:yaml.org,2002:str"
 const DEFAULT_SEQUENCE_TAG = "tag:yaml.org,2002:seq"
 const DEFAULT_MAPPING_TAG = "tag:yaml.org,2002:map"
- 
+
 
 const default_implicit_resolvers =
     [
