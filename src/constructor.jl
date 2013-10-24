@@ -48,7 +48,7 @@ function construct_object(constructor::Constructor, node::Node; deep=false)
         constructor.deep_construct = true
     end
 
-    if contains(constructor.recursive_objects, node)
+    if in(node, constructor.recursive_objects)
         throw(ConstructorError(nothing, nothing,
                                "found unconstructable recursive node",
                                node.start_mark))
@@ -176,7 +176,7 @@ function construct_yaml_int(constructor::Constructor, node::Node)
     value = string(construct_scalar(constructor, node))
     value = lowercase(replace(value, "_", ""))
 
-    if contains(value, ':')
+    if in(':', value)
         # TODO
         #throw(ConstructorError(nothing, nothing,
             #"sexagesimal integers not yet implemented", node.start_mark))
@@ -198,7 +198,7 @@ function construct_yaml_float(constructor::Constructor, node::Node)
     value = string(construct_scalar(constructor, node))
     value = lowercase(replace(value, "_", ""))
 
-    if contains(value, ':')
+    if in(':', value)
         # TODO
         # throw(ConstructorError(nothing, nothing,
         #     "sexagesimal floats not yet implemented", node.start_mark))
