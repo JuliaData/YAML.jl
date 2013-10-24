@@ -126,8 +126,7 @@ end
 
 function parse_implicit_document_start(stream::EventStream)
     token = first(stream.tokens)
-    if !contains([DirectiveToken, DocumentStartToken, StreamEndToken],
-                typeof(token))
+    if !in(typeof(token), [DirectiveToken, DocumentStartToken, StreamEndToken])
         stream.tag_handles = DEFAULT_TAGS
         event = DocumentStartEvent(token.span.start_mark, token.span.start_mark,
                                    false)
@@ -193,8 +192,7 @@ end
 
 
 function parse_document_content(stream::EventStream)
-    if contains([DirectiveToken, DocumentStartToken, DocumentEndToken,
-                 StreamEndToken], first(stream.tokens))
+    if in(first(stream.tokens), [DirectiveToken, DocumentStartToken, DocumentEndToken,StreamEndToken])
         event = process_empty_scalar(stream, first(stream.tokens).span.start_mark)
         stream.state = pop!(stream.states)
         event
@@ -341,7 +339,7 @@ function parse_block_sequence_entry(stream::EventStream)
     token = first(stream.tokens)
     if typeof(token) == BlockEntryToken
         pop_token(stream)
-        if !contains([BlockEntryToken, BlockEndToken], typeof(first(stream.tokens)))
+        if !in(typeof(first(stream.tokens)), [BlockEntryToken, BlockEndToken])
             push!(stream.states, parse_block_sequence_entry)
             return parse_block_node(stream)
         else
@@ -367,8 +365,7 @@ function parse_indentless_sequence_entry(stream::EventStream)
     token = first(stream.tokens)
     if typeof(token) == BlockEntryToken
         pop_token(stream)
-        if !contains([BlockEntryToken, KeyToken, ValueToken, BlockEndToken],
-                     typeof(first(stream.tokens)))
+        if !in(typeof(first(stream.tokens)), [BlockEntryToken, KeyToken, ValueToken, BlockEndToken])
             push!(stream.states, parse_indentless_sequence_entry)
             return parse_block_node(stream)
         else
@@ -393,8 +390,7 @@ function parse_block_mapping_key(stream::EventStream)
     token = first(stream.tokens)
     if typeof(token) == KeyToken
         pop_token(stream)
-        if !contains([KeyToken, ValueToken, BlockEndToken],
-                     typeof(first(stream.tokens)))
+        if !in(typeof(first(stream.tokens)), [KeyToken, ValueToken, BlockEndToken])
             push!(stream.states, parse_block_mapping_value)
             return parse_block_node_or_indentless_sequence(stream)
         else
@@ -420,8 +416,7 @@ function parse_block_mapping_value(stream::EventStream)
     token = first(stream.tokens)
     if typeof(token) == ValueToken
         pop_token(stream)
-        if !contains([KeyToken, ValueToken, BlockEndToken],
-                     typeof(first(stream.tokens)))
+        if !in(typeof(first(stream.tokens)), [KeyToken, ValueToken, BlockEndToken])
             push!(stream.states, parse_block_mapping_key)
             parse_block_node_or_indentless_sequence(stream)
         else
@@ -476,8 +471,7 @@ end
 
 function parse_flow_sequence_entry_mapping_key(stream::EventStream)
     token = pop_token(stream)
-    if !contains([ValueToken, FlowEntryToken, FlowSequenceEndToken],
-                 typeof(token))
+    if !in(typeof(token), [ValueToken, FlowEntryToken, FlowSequenceEndToken])
         push!(stream.states, parse_flow_sequence_entry_mapping_value)
         parse_flow_node(stream)
     else
@@ -491,8 +485,7 @@ function parse_flow_sequence_entry_mapping_value(stream::EventStream)
     token = first(stream.tokens)
     if typeof(token) == ValueToken
         pop_token(stream)
-        if !contains([FlowEntryToken, FlowSequenceEndToken],
-                     typeof(first(stream.tokens)))
+        if !in(typeof(first(stream.tokens)), [FlowEntryToken, FlowSequenceEndToken])
             push!(stream.states, parse_flow_sequence_entry_mapping_end)
             parse_flow_node(stream)
         else
@@ -537,8 +530,7 @@ function parse_flow_mapping_key(stream::EventStream; first_entry=false)
         token = first(stream.tokens)
         if typeof(token) == KeyToken
             pop_token(stream)
-            if !contains([ValueToken, FlowEntryToken, FlowMappingEndToken],
-                         typeof(first(stream.tokens)))
+            if !in(typeof(first(stream.tokens)), [ValueToken, FlowEntryToken, FlowMappingEndToken])
                 push!(stream.states, parse_flow_mapping_value)
                 return parse_flow_node(stream)
             else
@@ -562,8 +554,7 @@ function parse_flow_mapping_value(stream::EventStream)
     token = first(stream.tokens)
     if typeof(token) == ValueToken
         pop_token(stream)
-        if !contains([FlowEntryToken, FlowMappingEndToken],
-                     typeof(first(stream.tokens)))
+        if !in(typeof(first(stream.tokens)), [FlowEntryToken, FlowMappingEndToken])
             push!(stream.states, parse_flow_mapping_key)
             parse_flow_node(stream)
         else
