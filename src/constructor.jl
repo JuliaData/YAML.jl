@@ -54,7 +54,7 @@ function construct_object(constructor::Constructor, node::Node; deep=false)
                                node.start_mark))
     end
 
-    add!(constructor.recursive_objects, node)
+    push!(constructor.recursive_objects, node)
     node_constructor = nothing
     tag_suffix = nothing
     if haskey(constructor.yaml_constructors, node.tag)
