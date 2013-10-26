@@ -320,7 +320,7 @@ function parse_node(stream::EventStream; block=false, indentless_sequence=false)
             node = block ? "block" : "flow"
             throw(ParserError("while parsing a $(node) node", start_mark,
                     "expected the node content, but found $(typeof(token))",
-                    token.start_mark))
+                    token.span.start_mark))
         end
     end
 
