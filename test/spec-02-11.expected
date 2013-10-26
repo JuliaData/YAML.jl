@@ -1,10 +1,10 @@
 
-using Calendar
+using Datetime
 
 {{"Detroit Tigers", "Chicago cubs"} =>
-    {Calendar.ymd(2001, 7, 23)},
+    {date(2001, 7, 23)},
  {"New York Yankees", "Atlanta Braves"} => {
-        Calendar.ymd(2001, 7, 2),
-        Calendar.ymd(2001, 8, 12),
-        Calendar.ymd(2001, 8, 14)}}
+        date(2001, 7, 2),
+        date(2001, 8, 12),
+        date(2001, 8, 14)}}
 

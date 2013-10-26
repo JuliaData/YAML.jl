@@ -255,7 +255,7 @@ function construct_yaml_timestamp(constructor::Constructor, node::Node)
     dy = parseint(mat.captures[3])
 
     if mat.captures[4] === nothing
-        return ymd(yr, mn, dy)
+        return date(yr, mn, dy)
     end
 
     h = parseint(mat.captures[4])
@@ -263,19 +263,16 @@ function construct_yaml_timestamp(constructor::Constructor, node::Node)
     s = parseint(mat.captures[6])
 
     if mat.captures[7] === nothing
-        return ymd_hms(yr, mn, dy, h, m, s)
+        return datetime(yr, mn, dy, h, m, s)
     end
 
     ms = 0
     if !is(mat.captures[7], nothing)
         ms = mat.captures[7]
-        if length(ms) > 6
-            ms = ms[1:6]
+        if length(ms) > 3
+            ms = ms[1:3]
         end
-        ms = parseint(string(ms, repeat("0", length(ms))))
-
-        # TODO: Calendar does not currently allow for fractions of seconds, as
-        # far as I know, so the ms value is ignored.
+        ms = parseint(string(ms, repeat("0", 3 - length(ms))))
     end
 
     delta_hr = 0
@@ -292,7 +289,7 @@ function construct_yaml_timestamp(constructor::Constructor, node::Node)
     # TODO: Also, I'm not sure if there is a way to numerically set the timezone
     # in Calendar.
 
-    return ymd_hms(yr, mn, dy, h, m, s)
+    return datetime(yr, mn, dy, h, m, s, ms)
 end
 
 

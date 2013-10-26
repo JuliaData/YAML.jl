@@ -1,8 +1,8 @@
-using Calendar
+using Datetime
 
 {
-    "canonical" => ymd_hms(2001, 12, 15, 2,  59, 43),
-    "iso8601"   => ymd_hms(2001, 12, 14, 21, 59, 43),
-    "spaced"    => ymd_hms(2001, 12, 14, 21, 59, 43),
-    "date"      => ymd(2002, 12, 14)
+    "canonical" => datetime(2001, 12, 15, 2,  59, 43, 100),
+    "iso8601"   => datetime(2001, 12, 14, 21, 59, 43, 100),
+    "spaced"    => datetime(2001, 12, 14, 21, 59, 43, 100),
+    "date"      => date(2002, 12, 14)
 }

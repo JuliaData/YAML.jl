@@ -76,9 +76,6 @@ for test in tests
     expected = evalfile(string(test, ".expected"))
     if !equivalent(data, expected)
         @printf("%s: FAILED\n", test)
-
-        println(STDERR, "part: ", data["not a number"] == expected["not a number"])
-
         @printf("Expected:\n%s\nParsed:\n%s\n",
                 expected, data)
     else
