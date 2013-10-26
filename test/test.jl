@@ -30,11 +30,55 @@ tests = [
     "spec-02-23"
 ]
 
+
+function equivalent(xs::Dict, ys::Dict)
+    if Set(keys(xs)...) != Set(keys(ys)...)
+        return false
+    end
+
+    for k in keys(xs)
+        if !equivalent(xs[k], ys[k])
+            return false
+        end
+    end
+
+    true
+end
+
+
+function equivalent(xs::AbstractArray, ys::AbstractArray)
+    if length(xs) != length(ys)
+        return false
+    end
+
+    for (x, y) in zip(xs, ys)
+        if !equivalent(x, y)
+            return false
+        end
+    end
+
+    true
+end
+
+
+function equivalent(x::Float64, y::Float64)
+    isnan(x) && isnan(y) ? true : x == y
+end
+
+
+function equivalent(x, y)
+    x == y
+end
+
+
 for test in tests
     data = YAML.load_file(string(test, ".data"))
     expected = evalfile(string(test, ".expected"))
-    if data != expected
+    if !equivalent(data, expected)
         @printf("%s: FAILED\n", test)
+
+        println(STDERR, "part: ", data["not a number"] == expected["not a number"])
+
         @printf("Expected:\n%s\nParsed:\n%s\n",
                 expected, data)
     else
