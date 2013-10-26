@@ -1,7 +1,5 @@
 #!/usr/bin/env julia
 
-push!(LOAD_PATH, joinpath(pwd(), "..", "src"))
-
 import YAML
 
 tests = [
@@ -71,9 +69,11 @@ function equivalent(x, y)
 end
 
 
+testdir = joinpath(Pkg.dir("YAML"), "test")
+
 for test in tests
-    data = YAML.load_file(string(test, ".data"))
-    expected = evalfile(string(test, ".expected"))
+    data = YAML.load_file(joinpath(testdir, string(test, ".data")))
+    expected = evalfile(joinpath(testdir, string(test, ".expected")))
     if !equivalent(data, expected)
         @printf("%s: FAILED\n", test)
         @printf("Expected:\n%s\nParsed:\n%s\n",
