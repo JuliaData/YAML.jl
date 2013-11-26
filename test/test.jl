@@ -25,7 +25,8 @@ tests = [
     "spec-02-20",
     "spec-02-21",
     "spec-02-22",
-    "spec-02-23"
+    "spec-02-23",
+    "empty_scalar"
 ]
 
 

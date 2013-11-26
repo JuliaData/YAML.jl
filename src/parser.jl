@@ -575,7 +575,7 @@ end
 
 
 function process_empty_scalar(stream::EventStream, mark::Mark)
-    ScalarEvent(mork, mark, nothing, nothing, (true, false), "")
+    ScalarEvent(mark, mark, nothing, nothing, (true, false), "", nothing)
 end
 
 
