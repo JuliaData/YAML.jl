@@ -7,7 +7,7 @@ module YAML
     using LazySequences
     using Datetime
     import Codecs
-    import Base.isempty, Base.length
+    import Base: isempty, length, show
 
 
     include("scanner.jl")

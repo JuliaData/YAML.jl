@@ -26,7 +26,8 @@ tests = [
     "spec-02-21",
     "spec-02-22",
     "spec-02-23",
-    "empty_scalar"
+    "empty_scalar",
+    "no_trailing_newline"
 ]
 
 

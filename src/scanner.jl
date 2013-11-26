@@ -9,6 +9,11 @@ immutable Mark
 end
 
 
+function show(io::IO, mark::Mark)
+    @printf(io, "line %d, column %d", mark.line, mark.column)
+end
+
+
 # Where in the stream a particular token lies.
 immutable Span
     start_mark::Mark
@@ -381,7 +386,8 @@ function check_key(stream::TokenStream)
 end
 
 function check_value(stream::TokenStream)
-    stream.flow_level > 0 || in(peek(stream, 1), whitespace)
+    cnext = peek(stream, 1)
+    stream.flow_level > 0 || in(cnext, whitespace) || cnext === nothing
 end
 
 function check_plain(stream::TokenStream)
@@ -1361,10 +1367,11 @@ function scan_plain(stream::TokenStream)
 
         while true
             c = peek(stream, length)
+            cnext = peek(stream, length + 1)
             if in(c, whitespace) ||
                 c === nothing ||
                 (stream.flow_level == 0 && c == ':' &&
-                    in(peek(stream, length + 1), whitespace)) ||
+                    (cnext === nothing || in(cnext, whitespace))) ||
                 (stream.flow_level != 0 && in(c, ",:?[]{}"))
                 break
             end
