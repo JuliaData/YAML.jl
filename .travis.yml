@@ -10,4 +10,4 @@ before_install:
     - sudo apt-get install libpcre3-dev julia -y
 script:
     - julia -e 'Pkg.init(); run(`ln -s $(pwd()) $(Pkg.dir("YAML"))`); Pkg.pin("YAML"); Pkg.resolve()'
-    - julia ~/.julia/YAML/test/test.jl
+    - julia test/test.jl
