@@ -185,7 +185,7 @@ function construct_yaml_int(constructor::Constructor, node::Node)
     end
 
     if length(value) > 2 && value[1] == '0' && (value[2] == 'x' || value[2] == 'X')
-        parseint(value[3:], 16)
+        parseint(value[3:end], 16)
     elseif length(value) > 1 && value[1] == '0'
         parseint(value, 8)
     else
