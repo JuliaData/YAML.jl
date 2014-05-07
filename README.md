@@ -1,6 +1,6 @@
 
 # YAML
-[![Build Status](https://api.travis-ci.org/dcjones/YAML.jl.png)](https://travis-ci.org/dcjones/YAML.jl)
+[![Build Status](https://api.travis-ci.org/dcjones/YAML.jl.png)](https://travis-ci.org/dcjones/YAML.jl) [![Coverage Status](https://coveralls.io/repos/dcjones/YAML.jl/badge.png)](https://coveralls.io/r/dcjones/YAML.jl)
 
 [YAML](http://yaml.org/) is a flexible data serialization format that is
 designed to be easily read and written by human beings.
