@@ -1,8 +1,8 @@
-using Datetime
+using Dates
 
 {
-    "canonical" => datetime(2001, 12, 15, 2,  59, 43, 100),
-    "iso8601"   => datetime(2001, 12, 14, 21, 59, 43, 100),
-    "spaced"    => datetime(2001, 12, 14, 21, 59, 43, 100),
-    "date"      => date(2002, 12, 14)
+    "canonical" => DateTime(2001, 12, 15, 2,  59, 43, 100),
+    "iso8601"   => DateTime(2001, 12, 14, 21, 59, 43, 100),
+    "spaced"    => DateTime(2001, 12, 14, 21, 59, 43, 100),
+    "date"      => Date(2002, 12, 14)
 }

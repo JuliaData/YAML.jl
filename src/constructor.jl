@@ -255,7 +255,7 @@ function construct_yaml_timestamp(constructor::Constructor, node::Node)
     dy = parseint(mat.captures[3])
 
     if mat.captures[4] === nothing
-        return date(yr, mn, dy)
+        return Date(yr, mn, dy)
     end
 
     h = parseint(mat.captures[4])
@@ -263,7 +263,7 @@ function construct_yaml_timestamp(constructor::Constructor, node::Node)
     s = parseint(mat.captures[6])
 
     if mat.captures[7] === nothing
-        return datetime(yr, mn, dy, h, m, s)
+        return DateTime(yr, mn, dy, h, m, s)
     end
 
     ms = 0
@@ -289,7 +289,7 @@ function construct_yaml_timestamp(constructor::Constructor, node::Node)
     # TODO: Also, I'm not sure if there is a way to numerically set the timezone
     # in Calendar.
 
-    return datetime(yr, mn, dy, h, m, s, ms)
+    return DateTime(yr, mn, dy, h, m, s, ms)
 end
 
 

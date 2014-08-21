@@ -1,10 +1,10 @@
 
-using Datetime
+using Dates
 
 {{"Detroit Tigers", "Chicago cubs"} =>
-    {date(2001, 7, 23)},
+    {Date(2001, 7, 23)},
  {"New York Yankees", "Atlanta Braves"} => {
-        date(2001, 7, 2),
-        date(2001, 8, 12),
-        date(2001, 8, 14)}}
+        Date(2001, 7, 2),
+        Date(2001, 8, 12),
+        Date(2001, 8, 14)}}
 
