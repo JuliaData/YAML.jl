@@ -1,11 +1,11 @@
 
-require("Datetime")
+require("Dates")
 require("Codecs")
 require("LazySequences")
 
 module YAML
     using LazySequences
-    using Datetime
+    using Dates
     import Codecs
     import Base: isempty, length, show
 
