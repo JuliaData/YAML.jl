@@ -116,7 +116,7 @@ function compose_sequence_node(composer::Composer, anchor::Union(String, Nothing
                       nothing, start_event.implicit)
     end
 
-    node = SequenceNode(tag, {}, start_event.start_mark, nothing,
+    node = SequenceNode(tag, [], start_event.start_mark, nothing,
                         start_event.flow_style)
     if !is(anchor, nothing)
         composer.anchors[anchor] = node
@@ -143,7 +143,7 @@ function compose_mapping_node(composer::Composer, anchor::Union(String, Nothing)
                       nothing, start_event.implicit)
     end
 
-    node = MappingNode(tag, {}, start_event.start_mark, nothing,
+    node = MappingNode(tag, [], start_event.start_mark, nothing,
                        start_event.flow_style)
     if !is(anchor, nothing)
         composer.anchors[anchor] = node

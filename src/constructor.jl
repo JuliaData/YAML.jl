@@ -113,7 +113,7 @@ end
 
 
 function flatten_mapping(node::MappingNode)
-    merge = {}
+    merge = []
     index = 1
     while index <= length(node.value)
         key_node, value_node = node.value[index]
@@ -255,7 +255,7 @@ function construct_yaml_timestamp(constructor::Constructor, node::Node)
     dy = parseint(mat.captures[3])
 
     if mat.captures[4] === nothing
-        return Date(yr, mn, dy)
+        return date(yr, mn, dy)
     end
 
     h = parseint(mat.captures[4])
@@ -263,7 +263,7 @@ function construct_yaml_timestamp(constructor::Constructor, node::Node)
     s = parseint(mat.captures[6])
 
     if mat.captures[7] === nothing
-        return DateTime(yr, mn, dy, h, m, s)
+        return datetime(yr, mn, dy, h, m, s)
     end
 
     ms = 0
@@ -289,7 +289,7 @@ function construct_yaml_timestamp(constructor::Constructor, node::Node)
     # TODO: Also, I'm not sure if there is a way to numerically set the timezone
     # in Calendar.
 
-    return DateTime(yr, mn, dy, h, m, s, ms)
+    return datetime(yr, mn, dy, h, m, s, ms)
 end
 
 
@@ -346,7 +346,7 @@ end
 
 
 const default_yaml_constructors =
-    (Union(String, Nothing) => Function) [
+    Dict{Union(String, Nothing), Function} (
         "tag:yaml.org,2002:null"      => construct_yaml_null,
         "tag:yaml.org,2002:bool"      => construct_yaml_bool,
         "tag:yaml.org,2002:int"       => construct_yaml_int,
@@ -360,6 +360,6 @@ const default_yaml_constructors =
         "tag:yaml.org,2002:seq"       => construct_yaml_seq,
         "tag:yaml.org,2002:map"       => construct_yaml_map,
         nothing                       => construct_undefined
-    ]
+    )
 
 
