@@ -157,13 +157,13 @@ function construct_yaml_null(constructor::Constructor, node::Node)
 end
 
 
-const bool_values = [
+const bool_values = Dict(
     "yes"   => true,
     "no"    => false,
     "true"  => true,
     "false" => false,
     "on"    => true,
-    "off"   => false ]
+    "off"   => false )
 
 
 function construct_yaml_bool(constructor::Constructor, node::Node)
