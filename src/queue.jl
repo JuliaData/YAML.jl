@@ -80,3 +80,12 @@ function dequeue!(q::Queue)
 end
 
 
+function peek(q::Queue)
+    if q.front === nothing
+        throw(EmptyQueue())
+    else
+        return q.front.value
+    end
+end
+
+

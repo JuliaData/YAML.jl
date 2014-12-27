@@ -1,10 +1,8 @@
 
-require("Dates")
-require("Codecs")
-require("LazySequences")
 
 module YAML
-    using LazySequences
+    import Base: start, next, done
+
     using Dates
     import Codecs
     import Base: isempty, length, show
@@ -16,26 +14,49 @@ module YAML
     include("constructor.jl")
 
 
+    function load(ts::TokenStream)
+        events = EventStream(ts)
+        node = compose(events)
+        return construct_document(Constructor(), node)
+    end
+
+
     function load(input::IO)
-        events = parse(input)
-        node = compose(events)[1]
-        construct_document(Constructor(), node)
+        return load(TokenStream(input))
+    end
+
+
+    type YAMLDocIterator
+        ts::TokenStream
+        next_doc
+
+        function YAMLDocIterator(input::IO)
+            it = YAMLDocIterator(TokenStream(input), nothing)
+            it.next_doc = load(it.ts)
+        end
+    end
+
+
+    function start(it::YAMLDocIterator)
+        nothing
+    end
+
+
+    function next(it::YAMLDocIterator, state)
+        doc = it.next_doc
+        it.next_doc = load(it.ts)
+        return doc, nothing
+    end
+
+    function done(it::YAMLDocIterator, state)
+        return it.next_doc === nothing
     end
 
 
     function load_all(input::IO)
-        events = parse(input)
-        constructor = YAML.Constructor()
-        function next_document(events)
-            if events === nothing
-                return nothing
-            end
-            node, events = compose(events)
-            cons(construct_document(constructor, node),
-                 @lazyseq next_document(events))
-        end
-        next_document(events)
+        YAMLDocIterator(input)
     end
+
 
     load(input::String) = load(IOBuffer(input))
     load_all(input::String) = load_all(IOBuffer(input))

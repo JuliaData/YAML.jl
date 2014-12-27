@@ -70,7 +70,7 @@ immutable SequenceEndEvent <: Event
 end
 
 
-immutable MappingStartEvent
+immutable MappingStartEvent <: Event
     start_mark::Mark
     end_mark::Mark
     anchor::Union(String, Nothing)
@@ -80,7 +80,7 @@ immutable MappingStartEvent
 end
 
 
-immutable MappingEndEvent
+immutable MappingEndEvent <: Event
     start_mark::Mark
     end_mark::Mark
 end
