@@ -1,10 +1,11 @@
-{
+using Compat
+@compat Dict{Any,Any}(
     "name" => "Mark McGwire",
-    "accomplishment" => 
+    "accomplishment" =>
         "Mark set a major league home run record in 1998.\n",
     "stats" =>
         """
         65 Home Runs
         0.278 Batting Average
         """
-}
+)

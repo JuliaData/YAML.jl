@@ -1,10 +1,15 @@
 
-{
-  {"item"     => "Super Hoop",
-   "quantity" => 1},
-  {"item"     => "Basketball",
-   "quantity" => 4},
-  {"item"     => "Big Shoes",
-   "quantity" => 1}
-}
+using Compat
+
+@compat Any[
+  Dict{Any,Any}(
+  "item"     => "Super Hoop",
+  "quantity" => 1),
+  Dict{Any,Any}(
+   "item"     => "Basketball",
+   "quantity" => 4),
+  Dict{Any,Any}(
+   "item"     => "Big Shoes",
+   "quantity" => 1)
+]
 

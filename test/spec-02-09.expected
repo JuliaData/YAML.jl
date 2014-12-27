@@ -1,4 +1,5 @@
-{
-    "hr" => {"Mark McGwire", "Sammy Sosa"},
-    "rbi" => {"Sammy Sosa", "Ken Griffey"}
-}
+using Compat
+@compat Dict{Any,Any}(
+    "hr" => Any["Mark McGwire", "Sammy Sosa"],
+    "rbi" => Any["Sammy Sosa", "Ken Griffey"]
+)

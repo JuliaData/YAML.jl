@@ -986,7 +986,7 @@ end
 function scan_block_scalar(stream::TokenStream, style::Char)
     folded = style == '>'
 
-    chunks = {}
+    chunks = Any[]
     start_mark = get_mark(stream)
 
     # Scan the header.
@@ -1108,7 +1108,7 @@ end
 
 
 function scan_block_scalar_indentation(stream::TokenStream)
-    chunks = {}
+    chunks = Any[]
     max_indent = 0
     end_mark = get_mark(stream)
     while in(peek(stream.input), " \r\n\u0085\u2028\u2029")
@@ -1128,7 +1128,7 @@ end
 
 
 function scan_block_scalar_breaks(stream::TokenStream, indent)
-    chunks = {}
+    chunks = Any[]
     end_mark = get_mark(stream)
     while stream.column < indent && peek(stream.input) == ' '
         forwardchars!(stream)
@@ -1148,7 +1148,7 @@ end
 
 function scan_flow_scalar(stream::TokenStream, style::Char)
     double = style == '"'
-    chunks = {}
+    chunks = Any[]
     start_mark = get_mark(stream)
     q = peek(stream.input) # quote
     forwardchars!(stream)
@@ -1162,7 +1162,7 @@ function scan_flow_scalar(stream::TokenStream, style::Char)
 end
 
 
-const ESCAPE_REPLACEMENTS = {
+const ESCAPE_REPLACEMENTS = @compat Dict{Char,Char}(
     '0'  => '\0',
     'a'  => '\u0007',
     'b'  => '\u0008',
@@ -1179,19 +1179,19 @@ const ESCAPE_REPLACEMENTS = {
     'N'  => '\u0085',
     'L'  => '\u2028',
     'P'  => '\u2029'
-}
+)
 
 
-const ESCAPE_CODES = {
+const ESCAPE_CODES = @compat Dict{Char, Int}(
     'x' => 2,
     'u' => 4,
     'U' => 8
-}
+)
 
 
 function scan_flow_scalar_non_spaces(stream::TokenStream, double::Bool,
                                      start_mark::Mark)
-    chunks = {}
+    chunks = Any[]
     while true
         length = 0
         while !in(peek(stream.input, length), "\'\"\\\0 \t\r\n\u0085\u2028\u2029")
@@ -1249,7 +1249,7 @@ end
 
 function scan_flow_scalar_spaces(stream::TokenStream, double::Bool,
                                  start_mark::Mark)
-    chunks = {}
+    chunks = Any[]
     length = 0
     while in(peek(stream.input, length), " \t")
         length += 1
@@ -1280,7 +1280,7 @@ end
 
 function scan_flow_scalar_breaks(stream::TokenStream, double::Bool,
                                  start_mark::Mark)
-    chunks = {}
+    chunks = Any[]
     while true
         pref = prefix(stream.input, 3)
         if pref == "---" || pref == "..." &&
@@ -1309,7 +1309,7 @@ function scan_plain(stream::TokenStream)
     #   plain scalars in the flow context cannot contain ',', ':' and '?'.
     # We also keep track of the `allow_simple_key` flag here.
     # Indentation rules are loosed for the flow context.
-    chunks = {}
+    chunks = Any[]
     start_mark = get_mark(stream)
     end_mark = start_mark
     indent = stream.indent + 1
@@ -1318,7 +1318,7 @@ function scan_plain(stream::TokenStream)
     # document separators at the beginning of the line.
     #if indent == 0:
     #    indent = 1
-    spaces = {}
+    spaces = Any[]
     while true
         length = 0
         if peek(stream.input) == '#'
@@ -1369,7 +1369,7 @@ end
 
 function scan_plain_spaces(stream::TokenStream, indent::Integer,
                            start_mark::Mark)
-    chunks = {}
+    chunks = Any[]
     length = 0
     while peek(stream.input, length) == ' '
         length += 1
@@ -1384,10 +1384,10 @@ function scan_plain_spaces(stream::TokenStream, indent::Integer,
         pref = prefix(stream.input, 3)
         if pref == "---" || pref == "..." &&
             in(peek(stream.input, 3), "\0 \t\r\n\u0085\u2028\u2029")
-            return {}
+            return Any[]
         end
 
-        breaks = {}
+        breaks = Any[]
         while in(peek(stream.input), " \r\n\u0085\u2028\u2029")
             if peek(stream.input) == ' '
                 forwardchars!(stream)
@@ -1396,7 +1396,7 @@ function scan_plain_spaces(stream::TokenStream, indent::Integer,
                 pref = prefix(stream.input, 3)
                 if pref == "---" || pref == "..." &&
                     in(peek(stream.input, 3), "\0 \t\r\n\u0085\u2028\u2029")
-                    return {}
+                    return Any[]
                 end
             end
         end
@@ -1444,7 +1444,7 @@ end
 
 
 function scan_tag_uri(stream::TokenStream, name::String, start_mark::Mark)
-    chunks = {}
+    chunks = Any[]
     length = 0
     c = peek(stream.input, length)
     while isalnum(c) || in(c, "-;/?:@&=+\$,_.!~*\'()[]%")
@@ -1476,7 +1476,7 @@ end
 
 
 function scan_uri_escapes(stream::TokenStream, name::String, start_mark::Mark)
-    bytes = {}
+    bytes = Any[]
     mark = get_mark(stream)
     while peek(stream.input) == '%'
         forward!(stream.input)

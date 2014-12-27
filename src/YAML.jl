@@ -1,12 +1,13 @@
 
 
 module YAML
-    import Base: start, next, done
-
-    using Dates
+    import Base: start, next, done, isempty, length, show
     import Codecs
-    import Base: isempty, length, show
+    using Compat
 
+    if VERSION < v"0.4-dev"
+        using Dates
+    end
 
     include("scanner.jl")
     include("parser.jl")

@@ -1,7 +1,7 @@
 
 include("events.jl")
 
-const DEFAULT_TAGS = (String=>String)["!" => "!", "!!" => "tag:yaml.org,2002:"]
+const DEFAULT_TAGS = @compat Dict{String,String}("!" => "!", "!!" => "tag:yaml.org,2002:")
 
 
 immutable ParserError

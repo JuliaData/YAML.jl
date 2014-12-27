@@ -1,5 +1,6 @@
-{"american" =>
-    {"Boston Red Sox", "Detroit Tigers", "New York Yankees"},
+using Compat
+@compat Dict{Any,Any}("american" =>
+    Any["Boston Red Sox", "Detroit Tigers", "New York Yankees"],
  "national" =>
-    {"New York Mets", "Chicago Cubs", "Atlanta Braves"}
-}
+    Any["New York Mets", "Chicago Cubs", "Atlanta Braves"]
+)

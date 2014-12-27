@@ -1,6 +1,6 @@
-{
-    {"name", "hr", "avg"},
-    {"Mark McGwire", 65, 0.278},
-    {"Sammy Sosa", 63, 0.288}
-}
+Any[
+    Any["name", "hr", "avg"],
+    Any["Mark McGwire", 65, 0.278],
+    Any["Sammy Sosa", 63, 0.288]
+]
 

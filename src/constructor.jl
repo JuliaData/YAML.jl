@@ -113,7 +113,7 @@ end
 
 
 function flatten_mapping(node::MappingNode)
-    merge = {}
+    merge = []
     index = 1
     while index <= length(node.value)
         key_node, value_node = node.value[index]
@@ -157,13 +157,13 @@ function construct_yaml_null(constructor::Constructor, node::Node)
 end
 
 
-const bool_values = [
+const bool_values = @compat Dict(
     "yes"   => true,
     "no"    => false,
     "true"  => true,
     "false" => false,
     "on"    => true,
-    "off"   => false ]
+    "off"   => false )
 
 
 function construct_yaml_bool(constructor::Constructor, node::Node)
@@ -345,8 +345,7 @@ function construct_yaml_binary(constructor::Constructor, node::Node)
 end
 
 
-const default_yaml_constructors =
-    (Union(String, Nothing) => Function) [
+const default_yaml_constructors = @compat Dict{Union(String, Nothing), Function}(
         "tag:yaml.org,2002:null"      => construct_yaml_null,
         "tag:yaml.org,2002:bool"      => construct_yaml_bool,
         "tag:yaml.org,2002:int"       => construct_yaml_int,
@@ -360,6 +359,6 @@ const default_yaml_constructors =
         "tag:yaml.org,2002:seq"       => construct_yaml_seq,
         "tag:yaml.org,2002:map"       => construct_yaml_map,
         nothing                       => construct_undefined
-    ]
+    )
 
 
