@@ -101,6 +101,12 @@ type TokenStream
 end
 
 
+function reset!(stream::TokenStream)
+    stream.done = false
+    fetch_stream_start(stream)
+end
+
+
 function get_mark(stream::TokenStream)
     Mark(stream.index, stream.line, stream.column)
 end

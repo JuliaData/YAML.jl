@@ -28,12 +28,14 @@ module YAML
 
 
     type YAMLDocIterator
+        input::IO
         ts::TokenStream
         next_doc
 
         function YAMLDocIterator(input::IO)
-            it = YAMLDocIterator(TokenStream(input), nothing)
-            it.next_doc = load(it.ts)
+            it = new(input, TokenStream(input), nothing)
+            it.next_doc = eof(it.input) ? nothing : load(it.ts)
+            return it
         end
     end
 
@@ -45,7 +47,12 @@ module YAML
 
     function next(it::YAMLDocIterator, state)
         doc = it.next_doc
-        it.next_doc = load(it.ts)
+        if eof(it.input)
+            it.next_doc = nothing
+        else
+            reset!(it.ts)
+            it.next_doc = load(it.ts)
+        end
         return doc, nothing
     end
 
@@ -57,6 +64,7 @@ module YAML
     function load_all(input::IO)
         YAMLDocIterator(input)
     end
+
 
 
     load(input::String) = load(IOBuffer(input))
