@@ -1,7 +1,9 @@
 
-using Dates
-
+if VERSION < v"0.4-dev"
+    using Dates
+end
 using Compat
+
 @compat Dict{Any,Any}(
  Any["Detroit Tigers", "Chicago cubs"] =>
     Any[Date(2001, 7, 23)],
