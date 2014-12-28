@@ -1,6 +1,12 @@
 
 # YAML
-[![Build Status](https://api.travis-ci.org/dcjones/YAML.jl.png)](https://travis-ci.org/dcjones/YAML.jl) [![Coverage Status](https://coveralls.io/repos/dcjones/YAML.jl/badge.png)](https://coveralls.io/r/dcjones/YAML.jl)
+
+Julia 0.3 [![YAML](http://pkg.julialang.org/badges/YAML_release.svg)](http://pkg.julialang.org/?pkg=YAML&ver=release)
+
+Julia 0.4 [![YAML](http://pkg.julialang.org/badges/YAML_nightly.svg)](http://pkg.julialang.org/?pkg=YAML&ver=nightly)
+
+[![Build Status](http://img.shields.io/travis/dcjones/YAML.jl.svg)](https://travis-ci.org/dcjones/YAML.jl) [![Coverage Status](http://img.shields.io/coveralls/dcjones/YAML.jl.svg)](https://coveralls.io/r/dcjones/YAML.jl)
+
 
 [YAML](http://yaml.org/) is a flexible data serialization format that is
 designed to be easily read and written by human beings.
