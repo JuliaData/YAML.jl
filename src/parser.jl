@@ -279,8 +279,9 @@ function parse_node(stream::EventStream; block=false, indentless_sequence=false)
     event = nothing
     implicit = tag === nothing || tag == "!"
     if indentless_sequence && typeof(token) == BlockEntryToken
-        end_mark = stream.span.end_mark
-        event = SequenceStartEvent(start_mark, end_mark, anchor, tag, implicit)
+        end_mark = token.span.end_mark
+        event = SequenceStartEvent(start_mark, end_mark, anchor, tag, implicit,
+                                   false)
         stream.state = parse_indentless_sequence_entry
     else
         if typeof(token) == ScalarToken
