@@ -28,6 +28,7 @@ tests = [
     "spec-02-23",
     "empty_scalar",
     "no_trailing_newline",
+    "windows_newlines",
     "issue15"
 ]
 

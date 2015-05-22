@@ -119,7 +119,7 @@ function forwardchars!(stream::TokenStream, k::Integer)
         forward!(stream.input)
         stream.index += 1
         if in(c, "\n\u0085\u2028\u2029") ||
-            (c == '\r' && first(stream.chars) == '\n')
+            (c == '\r' && peek(stream.input) == '\n')
             stream.column = 0
             stream.line += 1
         else
