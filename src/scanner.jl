@@ -1235,7 +1235,7 @@ function scan_flow_scalar_non_spaces(stream::TokenStream, double::Bool,
                                            get_mark(stream)))
                     end
                 end
-                push!(chunks, char(parseint(prefix(stream.input, length), 16)))
+                push!(chunks, @compat Char(parse(Int, prefix(stream.input, length), 16)))
                 forwardchars!(stream, length)
             elseif in(c, "\r\n\u0085\u2028\u2029")
                 scan_line_break(stream)

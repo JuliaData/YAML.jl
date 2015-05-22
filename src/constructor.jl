@@ -185,11 +185,11 @@ function construct_yaml_int(constructor::Constructor, node::Node)
     end
 
     if length(value) > 2 && value[1] == '0' && (value[2] == 'x' || value[2] == 'X')
-        parseint(value[3:end], 16)
+        return parse(Int, value[3:end], 16)
     elseif length(value) > 1 && value[1] == '0'
-        parseint(value, 8)
+        return parse(Int, value, 8)
     else
-        parseint(value, 10)
+        return parse(Int, value, 10)
     end
 end
 
@@ -219,7 +219,7 @@ function construct_yaml_float(constructor::Constructor, node::Node)
         end
     end
 
-    parsefloat(value)
+    return parse(Float64, value)
 end
 
 
@@ -250,17 +250,17 @@ function construct_yaml_timestamp(constructor::Constructor, node::Node)
             "could not make sense of timestamp format", node.start_mark))
     end
 
-    yr = parseint(mat.captures[1])
-    mn = parseint(mat.captures[2])
-    dy = parseint(mat.captures[3])
+    yr = parse(Int, mat.captures[1])
+    mn = parse(Int, mat.captures[2])
+    dy = parse(Int, mat.captures[3])
 
     if mat.captures[4] === nothing
         return Date(yr, mn, dy)
     end
 
-    h = parseint(mat.captures[4])
-    m = parseint(mat.captures[5])
-    s = parseint(mat.captures[6])
+    h = parse(Int, mat.captures[4])
+    m = parse(Int, mat.captures[5])
+    s = parse(Int, mat.captures[6])
 
     if mat.captures[7] === nothing
         return DateTime(yr, mn, dy, h, m, s)
@@ -272,18 +272,18 @@ function construct_yaml_timestamp(constructor::Constructor, node::Node)
         if length(ms) > 3
             ms = ms[1:3]
         end
-        ms = parseint(string(ms, repeat("0", 3 - length(ms))))
+        ms = parse(Int, string(ms, repeat("0", 3 - length(ms))))
     end
 
     delta_hr = 0
     delta_mn = 0
 
     if !is(mat.captures[9], nothing)
-        delta_hr = parseint(mat.captures[9])
+        delta_hr = parse(Int, mat.captures[9])
     end
 
     if !is(mat.captures[10], nothing)
-        delta_mn = parseint(mat.captures[10])
+        delta_mn = parse(Int, mat.captures[10])
     end
 
     # TODO: Also, I'm not sure if there is a way to numerically set the timezone

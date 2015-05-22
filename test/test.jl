@@ -33,7 +33,7 @@ tests = [
 
 
 function equivalent(xs::Dict, ys::Dict)
-    if Set([keys(xs)...]) != Set([keys(ys)...])
+    if Set(collect(keys(xs))) != Set(collect(keys(ys)))
         return false
     end
 
