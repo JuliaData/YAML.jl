@@ -46,7 +46,7 @@ function prefix(bi::BufferedInput, n::Integer=1)
     if bi.avail < n + 1
         _fill(bi, n + 1 - bi.avail)
     end
-    return string(bi.buffer[(bi.offset + 1):(bi.offset + n)]...)
+    return string(bi.buffer[(@compat Int(bi.offset + 1)):(@compat Int(bi.offset + n))]...)
 end
 
 
