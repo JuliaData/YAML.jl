@@ -754,7 +754,7 @@ function scan_to_next_token(stream::TokenStream)
 
     found = false
     while !found
-        while peek(stream.input) == ' '
+        while peek(stream.input) == ' ' || peek(stream.input) == '\t'
             forwardchars!(stream)
         end
 

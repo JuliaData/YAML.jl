@@ -1,0 +1,2 @@
+using Compat
+@compat Dict{Any,Any}("foo" => Any["bar"])

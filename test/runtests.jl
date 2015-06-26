@@ -26,6 +26,7 @@ tests = [
     "spec-02-21",
     "spec-02-22",
     "spec-02-23",
+    "tabs",
     "empty_scalar",
     "no_trailing_newline",
     "windows_newlines",
