@@ -4,11 +4,11 @@ include("resolver.jl")
 
 
 immutable ComposerError
-    context::Union(String, Nothing)
-    context_mark::Union(Mark, Nothing)
-    problem::Union(String, Nothing)
-    problem_mark::Union(Mark, Nothing)
-    note::Union(String, Nothing)
+    context::Union{AbstractString, Void}
+    context_mark::Union{Mark, Void}
+    problem::Union{AbstractString, Void}
+    problem_mark::Union{Mark, Void}
+    note::Union{AbstractString, Void}
 
     function ComposerError(context=nothing, context_mark=nothing,
                            problem=nothing, problem_mark=nothing,
@@ -20,13 +20,13 @@ end
 
 type Composer
     input::EventStream
-    anchors::Dict{String, Node}
+    anchors::Dict{AbstractString, Node}
     resolver::Resolver
 end
 
 
 function compose(events)
-    composer = Composer(events, Dict{String, Node}(), Resolver())
+    composer = Composer(events, Dict{AbstractString, Node}(), Resolver())
     @assert typeof(forward!(composer.input)) == StreamStartEvent
     node = compose_document(composer)
     if typeof(peek(composer.input)) == StreamEndEvent
@@ -47,8 +47,8 @@ function compose_document(composer::Composer)
 end
 
 
-function compose_node(composer::Composer, parent::Union(Node, Nothing),
-                      index::Union(Int, Node, Nothing))
+function compose_node(composer::Composer, parent::Union{Node, Void},
+                      index::Union{Int, Node, Void})
     event = peek(composer.input)
     if typeof(event) == AliasEvent
         forward!(composer.input)
@@ -83,7 +83,7 @@ function compose_node(composer::Composer, parent::Union(Node, Nothing),
 end
 
 
-function compose_scalar_node(composer::Composer, anchor::Union(String, Nothing))
+function compose_scalar_node(composer::Composer, anchor::Union{AbstractString, Void})
     event = forward!(composer.input)
     tag = event.tag
     if tag === nothing || tag == "!"
@@ -101,7 +101,7 @@ function compose_scalar_node(composer::Composer, anchor::Union(String, Nothing))
 end
 
 
-function compose_sequence_node(composer::Composer, anchor::Union(String, Nothing))
+function compose_sequence_node(composer::Composer, anchor::Union{AbstractString, Void})
     start_event = forward!(composer.input)
     tag = start_event.tag
     if tag === nothing || tag == "!"
@@ -128,7 +128,7 @@ function compose_sequence_node(composer::Composer, anchor::Union(String, Nothing
 end
 
 
-function compose_mapping_node(composer::Composer, anchor::Union(String, Nothing))
+function compose_mapping_node(composer::Composer, anchor::Union{AbstractString, Void})
     start_event = forward!(composer.input)
     tag = start_event.tag
     if tag === nothing || tag == "!"

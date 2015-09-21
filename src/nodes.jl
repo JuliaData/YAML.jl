@@ -2,28 +2,28 @@
 abstract Node
 
 type ScalarNode <: Node
-    tag::String
-    value::String
-    start_mark::Union(Mark, Nothing)
-    end_mark::Union(Mark, Nothing)
-    style::Union(Char, Nothing)
+    tag::AbstractString
+    value::AbstractString
+    start_mark::Union{Mark, Void}
+    end_mark::Union{Mark, Void}
+    style::Union{Char, Void}
 end
 
 
 type SequenceNode <: Node
-    tag::String
+    tag::AbstractString
     value::Vector
-    start_mark::Union(Mark, Nothing)
-    end_mark::Union(Mark, Nothing)
+    start_mark::Union{Mark, Void}
+    end_mark::Union{Mark, Void}
     flow_style::Bool
 end
 
 
 type MappingNode <: Node
-    tag::String
+    tag::AbstractString
     value::Vector
-    start_mark::Union(Mark, Nothing)
-    end_mark::Union(Mark, Nothing)
+    start_mark::Union{Mark, Void}
+    end_mark::Union{Mark, Void}
     flow_style::Bool
 end
 

@@ -9,14 +9,14 @@ end
 
 type QueueNode{T}
     value::T
-    next::Union(QueueNode, Nothing)
+    next::Union{QueueNode, Void}
 end
 
 
 type Queue{T}
-    front::Union(QueueNode{T}, Nothing)
-    back::Union(QueueNode{T}, Nothing)
-    length::Uint
+    front::Union{QueueNode{T}, Void}
+    back::Union{QueueNode{T}, Void}
+    length::UInt64
 
     function Queue()
         new(nothing, nothing, 0)

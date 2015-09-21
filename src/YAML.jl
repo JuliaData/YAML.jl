@@ -1,4 +1,4 @@
-
+VERSION >= v"0.4-" && __precompile__()
 
 module YAML
     import Base: start, next, done, isempty, length, show
@@ -67,11 +67,11 @@ module YAML
 
 
 
-    load(input::String) = load(IOBuffer(input))
-    load_all(input::String) = load_all(IOBuffer(input))
+    load(input::AbstractString) = load(IOBuffer(input))
+    load_all(input::AbstractString) = load_all(IOBuffer(input))
 
 
-    function load_file(filename::String)
+    function load_file(filename::AbstractString)
         input = open(filename)
         data = load(input)
         close(input)
@@ -79,7 +79,7 @@ module YAML
     end
 
 
-    function load_all_file(filename::String)
+    function load_all_file(filename::AbstractString)
         input = open(filename)
         data = load_all(input)
         close(input)

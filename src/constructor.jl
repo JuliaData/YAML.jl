@@ -1,11 +1,11 @@
 
 
 immutable ConstructorError
-    context::Union(String, Nothing)
-    context_mark::Union(Mark, Nothing)
-    problem::Union(String, Nothing)
-    problem_mark::Union(Mark, Nothing)
-    note::Union(String, Nothing)
+    context::Union{AbstractString, Void}
+    context_mark::Union{Mark, Void}
+    problem::Union{AbstractString, Void}
+    problem_mark::Union{Mark, Void}
+    note::Union{AbstractString, Void}
 
     function ConstructorError(context=nothing, context_mark=nothing,
                               problem=nothing, problem_mark=nothing,
@@ -20,7 +20,7 @@ type Constructor
     constructed_objects::Dict{Node, Any}
     recursive_objects::Set{Node}
     deep_construct::Bool
-    yaml_constructors::Dict{Union(String, Nothing), Function}
+    yaml_constructors::Dict{Union{AbstractString, Void}, Function}
 
     function Constructor()
         new(Dict{Node, Any}(), Set{Node}(), false,
@@ -173,14 +173,14 @@ end
 
 
 function construct_yaml_int(constructor::Constructor, node::Node)
-    value = string(construct_scalar(constructor, node))
+    value = AbstractString(construct_scalar(constructor, node))
     value = lowercase(replace(value, "_", ""))
 
     if in(':', value)
         # TODO
         #throw(ConstructorError(nothing, nothing,
             #"sexagesimal integers not yet implemented", node.start_mark))
-        warn("sexagesimal integers not yet implemented. Returning string.")
+        warn("sexagesimal integers not yet implemented. Returning AbstractString.")
         return value
     end
 
@@ -195,14 +195,14 @@ end
 
 
 function construct_yaml_float(constructor::Constructor, node::Node)
-    value = string(construct_scalar(constructor, node))
+    value = AbstractString(construct_scalar(constructor, node))
     value = lowercase(replace(value, "_", ""))
 
     if in(':', value)
         # TODO
         # throw(ConstructorError(nothing, nothing,
         #     "sexagesimal floats not yet implemented", node.start_mark))
-        warn("sexagesimal floats not yet implemented. Returning string.")
+        warn("sexagesimal floats not yet implemented. Returning AbstractString.")
         return value
     end
 
@@ -272,7 +272,7 @@ function construct_yaml_timestamp(constructor::Constructor, node::Node)
         if length(ms) > 3
             ms = ms[1:3]
         end
-        ms = parse(Int, string(ms, repeat("0", 3 - length(ms))))
+        ms = parse(Int, AbstractString(ms, repeat("0", 3 - length(ms))))
     end
 
     delta_hr = 0
@@ -312,7 +312,7 @@ end
 
 
 function construct_yaml_str(constructor::Constructor, node::Node)
-    string(construct_scalar(constructor, node))
+    AbstractString(construct_scalar(constructor, node))
 end
 
 
@@ -340,12 +340,12 @@ end
 
 
 function construct_yaml_binary(constructor::Constructor, node::Node)
-    value = replace(string(construct_scalar(constructor, node)), "\n", "")
+    value = replace(AbstractString(construct_scalar(constructor, node)), "\n", "")
     Codecs.decode(Codecs.Base64, value)
 end
 
 
-const default_yaml_constructors = @compat Dict{Union(String, Nothing), Function}(
+const default_yaml_constructors = @compat Dict{Union{AbstractString, Void}, Function}(
         "tag:yaml.org,2002:null"      => construct_yaml_null,
         "tag:yaml.org,2002:bool"      => construct_yaml_bool,
         "tag:yaml.org,2002:int"       => construct_yaml_int,

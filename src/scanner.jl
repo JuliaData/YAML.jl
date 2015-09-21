@@ -4,9 +4,9 @@ include("buffered_input.jl")
 
 # Position within the document being parsed
 immutable Mark
-    index::Uint
-    line::Uint
-    column::Uint
+    index::UInt64
+    line::UInt64
+    column::UInt64
 end
 
 
@@ -23,7 +23,7 @@ end
 
 
 immutable SimpleKey
-    token_number::Uint
+    token_number::UInt64
     required::Bool
     mark::Mark
 end
@@ -31,9 +31,9 @@ end
 
 # Errors thrown by the scanner.
 immutable ScannerError <: Exception
-    context::Union(String, Nothing)
-    context_mark::Union(Mark, Nothing)
-    problem::String
+    context::Union{AbstractString, Void}
+    context_mark::Union{Mark, Void}
+    problem::AbstractString
     problem_mark::Mark
 end
 
@@ -52,20 +52,20 @@ type TokenStream
     token_queue::Queue{Token}
 
     # Index of the start of the head of the stream. (0-based)
-    index::Uint
+    index::UInt64
 
     # Index of the current column. (0-based)
-    column::Uint
+    column::UInt64
 
     # Current line numebr. (0-based)
-    line::Uint
+    line::UInt64
 
     # Number of tokens read, not including those still in token_queue.
-    tokens_taken::Uint
+    tokens_taken::UInt64
 
     # The number of unclosed '{' and '['. `flow_level == 0` means block
     # context.
-    flow_level::Uint
+    flow_level::UInt64
 
     # Current indentation level.
     indent::Int
@@ -1420,7 +1420,7 @@ function scan_plain_spaces(stream::TokenStream, indent::Integer,
 end
 
 
-function scan_tag_handle(stream::TokenStream, name::String, start_mark::Mark)
+function scan_tag_handle(stream::TokenStream, name::AbstractString, start_mark::Mark)
     c = peek(stream.input)
     if c != '!'
         throw(ScannerError("while scanning a $(name)", start_mark,
@@ -1449,7 +1449,7 @@ function scan_tag_handle(stream::TokenStream, name::String, start_mark::Mark)
 end
 
 
-function scan_tag_uri(stream::TokenStream, name::String, start_mark::Mark)
+function scan_tag_uri(stream::TokenStream, name::AbstractString, start_mark::Mark)
     chunks = Any[]
     length = 0
     c = peek(stream.input, length)
@@ -1481,7 +1481,7 @@ function scan_tag_uri(stream::TokenStream, name::String, start_mark::Mark)
 end
 
 
-function scan_uri_escapes(stream::TokenStream, name::String, start_mark::Mark)
+function scan_uri_escapes(stream::TokenStream, name::AbstractString, start_mark::Mark)
     bytes = Any[]
     mark = get_mark(stream)
     while peek(stream.input) == '%'
