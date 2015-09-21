@@ -173,7 +173,7 @@ end
 
 
 function construct_yaml_int(constructor::Constructor, node::Node)
-    value = AbstractString(construct_scalar(constructor, node))
+    value = string(construct_scalar(constructor, node))
     value = lowercase(replace(value, "_", ""))
 
     if in(':', value)
@@ -195,7 +195,7 @@ end
 
 
 function construct_yaml_float(constructor::Constructor, node::Node)
-    value = AbstractString(construct_scalar(constructor, node))
+    value = string(construct_scalar(constructor, node))
     value = lowercase(replace(value, "_", ""))
 
     if in(':', value)
@@ -272,7 +272,7 @@ function construct_yaml_timestamp(constructor::Constructor, node::Node)
         if length(ms) > 3
             ms = ms[1:3]
         end
-        ms = parse(Int, AbstractString(ms, repeat("0", 3 - length(ms))))
+        ms = parse(Int, string(ms, repeat("0", 3 - length(ms))))
     end
 
     delta_hr = 0
@@ -312,7 +312,7 @@ end
 
 
 function construct_yaml_str(constructor::Constructor, node::Node)
-    AbstractString(construct_scalar(constructor, node))
+    string(construct_scalar(constructor, node))
 end
 
 
@@ -340,7 +340,7 @@ end
 
 
 function construct_yaml_binary(constructor::Constructor, node::Node)
-    value = replace(AbstractString(construct_scalar(constructor, node)), "\n", "")
+    value = replace(string(construct_scalar(constructor, node)), "\n", "")
     Codecs.decode(Codecs.Base64, value)
 end
 

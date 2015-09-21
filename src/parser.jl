@@ -265,7 +265,7 @@ function parse_node(stream::EventStream; block=false, indentless_sequence=false)
                                   "found undefined tag handle $(handle)",
                                   tag_mark))
             end
-            tag = AbstractString(stream.tag_handles[handle], suffix)
+            tag = string(stream.tag_handles[handle], suffix)
         else
             tag = suffix
         end
