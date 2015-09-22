@@ -4,11 +4,11 @@ include("resolver.jl")
 
 
 immutable ComposerError
-    context::Union{AbstractString, Void}
-    context_mark::Union{Mark, Void}
-    problem::Union{AbstractString, Void}
-    problem_mark::Union{Mark, Void}
-    note::Union{AbstractString, Void}
+    context::(@compat Union{AbstractString, Void})
+    context_mark::(@compat Union{Mark, Void})
+    problem::(@compat Union{AbstractString, Void})
+    problem_mark::(@compat Union{Mark, Void})
+    note::(@compat Union{AbstractString, Void})
 
     function ComposerError(context=nothing, context_mark=nothing,
                            problem=nothing, problem_mark=nothing,
@@ -47,8 +47,8 @@ function compose_document(composer::Composer)
 end
 
 
-function compose_node(composer::Composer, parent::Union{Node, Void},
-                      index::Union{Int, Node, Void})
+function compose_node(composer::Composer, parent::(@compat Union{Node, Void}),
+                      index::(@compat Union{Int, Node, Void}))
     event = peek(composer.input)
     if typeof(event) == AliasEvent
         forward!(composer.input)
@@ -83,7 +83,7 @@ function compose_node(composer::Composer, parent::Union{Node, Void},
 end
 
 
-function compose_scalar_node(composer::Composer, anchor::Union{AbstractString, Void})
+function compose_scalar_node(composer::Composer, anchor::(@compat Union{AbstractString, Void}))
     event = forward!(composer.input)
     tag = event.tag
     if tag === nothing || tag == "!"
@@ -101,7 +101,7 @@ function compose_scalar_node(composer::Composer, anchor::Union{AbstractString, V
 end
 
 
-function compose_sequence_node(composer::Composer, anchor::Union{AbstractString, Void})
+function compose_sequence_node(composer::Composer, anchor::(@compat Union{AbstractString, Void}))
     start_event = forward!(composer.input)
     tag = start_event.tag
     if tag === nothing || tag == "!"
@@ -128,7 +128,7 @@ function compose_sequence_node(composer::Composer, anchor::Union{AbstractString,
 end
 
 
-function compose_mapping_node(composer::Composer, anchor::Union{AbstractString, Void})
+function compose_mapping_node(composer::Composer, anchor::(@compat Union{AbstractString, Void}))
     start_event = forward!(composer.input)
     tag = start_event.tag
     if tag === nothing || tag == "!"

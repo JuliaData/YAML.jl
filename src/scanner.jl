@@ -31,8 +31,8 @@ end
 
 # Errors thrown by the scanner.
 immutable ScannerError <: Exception
-    context::Union{AbstractString, Void}
-    context_mark::Union{Mark, Void}
+    context::(@compat Union{AbstractString, Void})
+    context_mark::(@compat Union{Mark, Void})
     problem::AbstractString
     problem_mark::Mark
 end

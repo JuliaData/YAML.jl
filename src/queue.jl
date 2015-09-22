@@ -9,13 +9,13 @@ end
 
 type QueueNode{T}
     value::T
-    next::Union{QueueNode, Void}
+    next::(@compat Union{QueueNode, Void})
 end
 
 
 type Queue{T}
-    front::Union{QueueNode{T}, Void}
-    back::Union{QueueNode{T}, Void}
+    front::(@compat Union{QueueNode{T}, Void})
+    back::(@compat Union{QueueNode{T}, Void})
     length::UInt64
 
     function Queue()

@@ -5,11 +5,11 @@ const DEFAULT_TAGS = @compat Dict{AbstractString,AbstractString}("!" => "!", "!!
 
 
 immutable ParserError
-    context::Union{AbstractString, Void}
-    context_mark::Union{Mark, Void}
-    problem::Union{AbstractString, Void}
-    problem_mark::Union{Mark, Void}
-    note::Union{AbstractString, Void}
+    context::(@compat Union{AbstractString, Void})
+    context_mark::(@compat Union{Mark, Void})
+    problem::(@compat Union{AbstractString, Void})
+    problem_mark::(@compat Union{Mark, Void})
+    note::(@compat Union{AbstractString, Void})
 
     function ParserError(context=nothing, context_mark=nothing,
                          problem=nothing, problem_mark=nothing,
@@ -21,13 +21,13 @@ end
 
 type EventStream
     input::TokenStream
-    next_event::Union{Event, Void}
-    state::Union{Function, Void}
+    next_event::(@compat Union{Event, Void})
+    state::(@compat Union{Function, Void})
     states::Vector{Function}
     marks::Vector{Mark}
-    yaml_version::Union{Tuple, Void}
+    yaml_version::(@compat Union{Tuple, Void})
     tag_handles::Dict{AbstractString, AbstractString}
-    end_of_stream::Union{StreamEndEvent, Void,}
+    end_of_stream::(@compat Union{StreamEndEvent, Void})
 
     function EventStream(input::TokenStream)
         new(input, nothing, parse_stream_start, Function[], Mark[],

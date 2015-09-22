@@ -1,11 +1,11 @@
 
 
 immutable ConstructorError
-    context::Union{AbstractString, Void}
-    context_mark::Union{Mark, Void}
-    problem::Union{AbstractString, Void}
-    problem_mark::Union{Mark, Void}
-    note::Union{AbstractString, Void}
+    context::(@compat Union{AbstractString, Void})
+    context_mark::(@compat Union{Mark, Void})
+    problem::(@compat Union{AbstractString, Void})
+    problem_mark::(@compat Union{Mark, Void})
+    note::(@compat Union{AbstractString, Void})
 
     function ConstructorError(context=nothing, context_mark=nothing,
                               problem=nothing, problem_mark=nothing,
@@ -20,7 +20,7 @@ type Constructor
     constructed_objects::Dict{Node, Any}
     recursive_objects::Set{Node}
     deep_construct::Bool
-    yaml_constructors::Dict{Union{AbstractString, Void}, Function}
+    yaml_constructors::Dict{(@compat Union{AbstractString, Void}), Function}
 
     function Constructor()
         new(Dict{Node, Any}(), Set{Node}(), false,
@@ -345,7 +345,7 @@ function construct_yaml_binary(constructor::Constructor, node::Node)
 end
 
 
-const default_yaml_constructors = @compat Dict{Union{AbstractString, Void}, Function}(
+const default_yaml_constructors = @compat Dict{(@compat Union{AbstractString, Void}), Function}(
         "tag:yaml.org,2002:null"      => construct_yaml_null,
         "tag:yaml.org,2002:bool"      => construct_yaml_bool,
         "tag:yaml.org,2002:int"       => construct_yaml_int,

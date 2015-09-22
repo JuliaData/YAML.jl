@@ -8,7 +8,7 @@ abstract Token
 immutable DirectiveToken <: Token
     span::Span
     name::AbstractString
-    value::Union{Tuple, Void}
+    value::(@compat Union{Tuple, Void})
 end
 
 # '---'
@@ -110,7 +110,7 @@ immutable ScalarToken <: Token
     span::Span
     value::AbstractString
     plain::Bool
-    style::Union{Char, Void}
+    style::(@compat Union{Char, Void})
 end
 
 
