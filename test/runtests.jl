@@ -73,7 +73,7 @@ function equivalent(x, y)
 end
 
 
-testdir = joinpath(Pkg.dir("YAML"), "test")
+testdir = dirname(@__FILE__)
 
 for test in tests
     data = YAML.load_file(joinpath(testdir, string(test, ".data")))
@@ -86,5 +86,3 @@ for test in tests
         @printf("%s: PASSED\n", test)
     end
 end
-
-
