@@ -4,6 +4,8 @@ module YAML
     import Base: start, next, done, isempty, length, show
     import Codecs
     using Compat
+    
+    export @yaml_str, @yaml_mstr
 
     if VERSION < v"0.4-dev"
         using Dates
@@ -85,5 +87,12 @@ module YAML
         close(input)
         data
     end
-end
 
+    macro yaml_str(ex)
+        load(ex)
+    end
+    macro yaml_mstr(ex)
+        load(ex)
+    end
+
+end
