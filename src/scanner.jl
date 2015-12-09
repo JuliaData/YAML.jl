@@ -786,7 +786,9 @@ function scan_directive(stream::TokenStream)
         value = scan_yaml_directive_value(stream, start_mark)
         end_mark = get_mark(stream)
     elseif name == "TAG"
-        value = scan_tag_directive_value(stream, start_mark)
+        tag_handle = scan_tag_directive_handle(stream, start_mark)
+        tag_prefix = scan_tag_directive_prefix(stream, start_mark)
+        value = (tag_handle, tag_prefix)
         end_mark = get_mark(stream)
     else
         end_mark = get_mark(stream)
@@ -820,7 +822,7 @@ function scan_directive_name(stream::TokenStream, start_mark::Mark)
     c = peek(stream.input)
     if !in(c, "\0 \r\n\u0085\u2028\u2029")
         throw(ScannerError("while scanning a directive", start_mark,
-                           "expected alphanumeric character, but bound $(c)",
+                           "expected alphanumeric character, but found $(c)",
                            get_mark(stream)))
     end
 
@@ -833,17 +835,18 @@ function scan_yaml_directive_value(stream::TokenStream, start_mark::Mark)
         forwardchars!(stream)
     end
 
-    major = scan_yaml_directive_number(start_mark)
+    major = scan_yaml_directive_number(stream, start_mark)
     if peek(stream.input) != '.'
         throw(ScannerError("while scanning a directive", start_mark,
                            "expected a digit or '.' but found $(peek(stream.input))",
                            get_mark(stream)))
     end
     forwardchars!(stream)
-    minor = scan_yaml_directive_number(start_mark)
+    minor = scan_yaml_directive_number(stream, start_mark)
     if !in(peek(stream.input), "\0 \r\n\u0085\u2028\u2029")
         throw(ScannerError("while scanning a directive", start_mark,
-                           "expected a digit or ' ', but found $(peek(stream.input))"))
+                           "expected a digit or ' ', but found $(peek(stream.input))",
+                           get_mark(stream)))
     end
     return (major, minor)
 end
@@ -852,19 +855,24 @@ end
 function scan_yaml_directive_number(stream::TokenStream, start_mark::Mark)
     if !isdigit(peek(stream.input))
         throw(ScannerError("while scanning a directive", start_mark,
-                           "expected a digit, but found $(peek(stream.input))"))
+                           "expected a digit, but found $(peek(stream.input))",
+                           get_mark(stream)))
     end
     length = 0
-    while isdigit(peek(length))
+    while isdigit(peek(stream.input, length))
         length += 1
     end
-    value = int(prefix(stream.input, length))
-    forwardchars!(length)
+    value = parse(Int, prefix(stream.input, length))
+    forwardchars!(stream, length)
     value
 end
 
 
 function scan_tag_directive_handle(stream::TokenStream, start_mark::Mark)
+    while peek(stream.input) == ' '
+        forwardchars!(stream)
+    end
+
     value = scan_tag_handle(stream, "directive", start_mark)
     if peek(stream.input) != ' '
         throw(ScannerError("while scanning a directive", start_mark,
@@ -876,6 +884,10 @@ end
 
 
 function scan_tag_directive_prefix(stream::TokenStream, start_mark::Mark)
+    while peek(stream.input) == ' '
+        forwardchars!(stream)
+    end
+
     value = scan_tag_uri(stream, "directive", start_mark)
     if !in(peek(stream.input), "\0 \r\n\u0085\u2028\u2029")
         throw(ScannerError("while scanning a directive", start_mark,
@@ -966,11 +978,10 @@ function scan_tag(stream::TokenStream)
             length += 1
             c = peek(stream.input, length)
         end
-        handle = '!'
         if use_handle
             handle = scan_tag_handle(stream, "tag", start_mark)
         else
-            handle = '!'
+            handle = "!"
             forwardchars!(stream)
         end
         suffix = scan_tag_uri(stream, "tag", start_mark)

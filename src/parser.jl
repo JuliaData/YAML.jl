@@ -91,7 +91,7 @@ function process_directives(stream::EventStream)
                     token.start_mark))
             end
             stream.yaml_version = token.value
-        elseif taken.name == "TAG"
+        elseif token.name == "TAG"
             handle, prefix = token.value
             if haskey(stream.tag_handles, handle)
                 throw(ParserError(nothing, nothing,

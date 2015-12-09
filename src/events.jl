@@ -18,7 +18,7 @@ immutable DocumentStartEvent <: Event
     start_mark::Mark
     end_mark::Mark
     explicit::Bool
-    version::(@compat Union{AbstractString, Void})
+    version::(@compat Union{Tuple, Void})
     tags::(@compat Union{Dict{AbstractString, AbstractString}, Void})
 
     function DocumentStartEvent(start_mark::Mark,end_mark::Mark,
