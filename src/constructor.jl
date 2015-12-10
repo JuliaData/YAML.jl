@@ -15,6 +15,13 @@ immutable ConstructorError
 
 end
 
+function show(io::IO, error::ConstructorError)
+    if error.context != nothing
+        print(io, error.context, " at ", error.context_mark, ": ")
+    end
+    print(io, error.problem, " at ", error.problem_mark)
+end
+
 
 type Constructor
     constructed_objects::Dict{Node, Any}
@@ -334,7 +341,7 @@ end
 
 function construct_undefined(constructor::Constructor, node::Node)
     throw(ConstructorError(nothing, nothing,
-        "could not determine a constructor for the tag $(node.tag)",
+        "could not determine a constructor for the tag '$(node.tag)'",
         node.start_mark))
 end
 

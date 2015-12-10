@@ -18,6 +18,13 @@ immutable ParserError
     end
 end
 
+function show(io::IO, error::ParserError)
+    if error.context != nothing
+        print(io, error.context, " at ", error.context_mark, ": ")
+    end
+    print(io, error.problem, " at ", error.problem_mark)
+end
+
 
 type EventStream
     input::TokenStream

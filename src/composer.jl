@@ -17,6 +17,13 @@ immutable ComposerError
     end
 end
 
+function show(io::IO, error::ComposerError)
+    if error.context != nothing
+        print(io, error.context, " at ", error.context_mark, ": ")
+    end
+    print(io, error.problem, " at ", error.problem_mark)
+end
+
 
 type Composer
     input::EventStream
@@ -54,7 +61,7 @@ function compose_node(composer::Composer, parent::(@compat Union{Node, Void}),
         forward!(composer.input)
         anchor = event.anchor
         if !haskey(composer.anchors, anchor)
-            throw(ComposerError(nothing, nothing, "found undefined alias $(anchor)",
+            throw(ComposerError(nothing, nothing, "found undefined alias '$(anchor)'",
                                 event.start_mark))
         end
         return composer.anchors[anchor]
@@ -64,7 +71,7 @@ function compose_node(composer::Composer, parent::(@compat Union{Node, Void}),
     if !is(anchor, nothing)
         if haskey(composer.anchors, anchor)
             throw(ComposerError(
-                "found duplicate anchor $(anchor); first occurance",
+                "found duplicate anchor '$(anchor)'; first occurance",
                 composer.anchors[anchor].start_mark, "second occurence",
                 event.start_mark))
         end
