@@ -13,7 +13,7 @@ module YAML
     include("parser.jl")
     include("composer.jl")
     include("constructor.jl")
-
+    include("deserialization.jl")
 
     function load(ts::TokenStream)
         events = EventStream(ts)

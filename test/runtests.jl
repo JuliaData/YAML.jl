@@ -86,3 +86,5 @@ for test in tests
         @printf("%s: PASSED\n", test)
     end
 end
+
+include("deserialization_test.jl")
