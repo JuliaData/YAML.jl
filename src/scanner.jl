@@ -296,7 +296,7 @@ end
 
 function unwind_indent(stream::TokenStream, column)
     # In the flow context, indentation is ignored. We make the scanner less
-    # restrictive then specification requires.
+    # restrictive than specification requires.
     if stream.flow_level != 0
         return
     end
