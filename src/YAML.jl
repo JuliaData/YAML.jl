@@ -5,6 +5,7 @@ module YAML
 import Base: start, next, done, isempty, length, show
 import Codecs
 using Compat
+using Compat: String
 
 if VERSION < v"0.4-dev"
     using Dates
@@ -15,18 +16,17 @@ include("parser.jl")
 include("composer.jl")
 include("constructor.jl")
 
+typealias _constructor @compat Union{Void,Dict{ASCIIString,Function}}
 
-function load(ts::TokenStream)
+function load(ts::TokenStream, more_constructors::_constructor=nothing)
     events = EventStream(ts)
     node = compose(events)
-    return construct_document(Constructor(), node)
+    return construct_document(Constructor(more_constructors), node)
 end
 
-
-function load(input::IO)
-    return load(TokenStream(input))
+function load(input::IO, more_constructors::_constructor=nothing)
+    load(TokenStream(input), more_constructors)
 end
-
 
 type YAMLDocIterator
     input::IO
@@ -41,10 +41,7 @@ type YAMLDocIterator
 end
 
 
-function start(it::YAMLDocIterator)
-    nothing
-end
-
+start(it::YAMLDocIterator) = nothing
 
 function next(it::YAMLDocIterator, state)
     doc = it.next_doc
@@ -57,24 +54,19 @@ function next(it::YAMLDocIterator, state)
     return doc, nothing
 end
 
-function done(it::YAMLDocIterator, state)
-    return it.next_doc === nothing
+done(it::YAMLDocIterator, state) = it.next_doc === nothing
+
+load_all(input::IO) = YAMLDocIterator(input)
+
+function load(input::AbstractString, more_constructors::_constructor=nothing)
+    load(IOBuffer(input), more_constructors)
 end
 
-
-function load_all(input::IO)
-    YAMLDocIterator(input)
-end
-
-
-
-load(input::AbstractString) = load(IOBuffer(input))
 load_all(input::AbstractString) = load_all(IOBuffer(input))
 
-
-function load_file(filename::AbstractString)
+function load_file(filename::AbstractString, more_constructors::_constructor=nothing)
     input = open(filename)
-    data = load(input)
+    data = load(input, more_constructors)
     close(input)
     data
 end
@@ -88,4 +80,3 @@ function load_all_file(filename::AbstractString)
 end
 
 end  # module
-

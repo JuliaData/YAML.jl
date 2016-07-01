@@ -29,12 +29,14 @@ type Constructor
     deep_construct::Bool
     yaml_constructors::Dict{(@compat Union{AbstractString, Void}), Function}
 
-    function Constructor()
+    function Constructor(more_constructors::Dict{ASCIIString,Function})
         new(Dict{Node, Any}(), Set{Node}(), false,
-            copy(default_yaml_constructors))
+            merge(copy(default_yaml_constructors), more_constructors))
     end
 end
 
+Constructor() = Constructor(Dict{ASCIIString,Function}())
+Constructor(::Void) = Constructor(Dict{ASCIIString,Function}())
 
 function construct_document(constructor::Constructor, node::Node)
     data = construct_object(constructor, node)
@@ -351,7 +353,6 @@ function construct_yaml_binary(constructor::Constructor, node::Node)
     Codecs.decode(Codecs.Base64, value)
 end
 
-
 const default_yaml_constructors = @compat Dict{(@compat Union{AbstractString, Void}), Function}(
         "tag:yaml.org,2002:null"      => construct_yaml_null,
         "tag:yaml.org,2002:bool"      => construct_yaml_bool,
@@ -365,7 +366,5 @@ const default_yaml_constructors = @compat Dict{(@compat Union{AbstractString, Vo
         "tag:yaml.org,2002:str"       => construct_yaml_str,
         "tag:yaml.org,2002:seq"       => construct_yaml_seq,
         "tag:yaml.org,2002:map"       => construct_yaml_map,
-        nothing                       => construct_undefined
+        nothing                       => construct_undefined,
     )
-
-
