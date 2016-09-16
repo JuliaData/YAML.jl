@@ -31,9 +31,9 @@ end
 
 # Errors thrown by the scanner.
 immutable ScannerError <: Exception
-    context::(@compat Union{AbstractString, Void})
+    context::(@compat Union{String, Void})
     context_mark::(@compat Union{Mark, Void})
-    problem::AbstractString
+    problem::String
     problem_mark::Mark
 end
 
@@ -1438,7 +1438,7 @@ function scan_plain_spaces(stream::TokenStream, indent::Integer,
 end
 
 
-function scan_tag_handle(stream::TokenStream, name::AbstractString, start_mark::Mark)
+function scan_tag_handle(stream::TokenStream, name::String, start_mark::Mark)
     c = peek(stream.input)
     if c != '!'
         throw(ScannerError("while scanning a $(name)", start_mark,
@@ -1467,7 +1467,7 @@ function scan_tag_handle(stream::TokenStream, name::AbstractString, start_mark::
 end
 
 
-function scan_tag_uri(stream::TokenStream, name::AbstractString, start_mark::Mark)
+function scan_tag_uri(stream::TokenStream, name::String, start_mark::Mark)
     chunks = Any[]
     length = 0
     c = peek(stream.input, length)
@@ -1499,7 +1499,7 @@ function scan_tag_uri(stream::TokenStream, name::AbstractString, start_mark::Mar
 end
 
 
-function scan_uri_escapes(stream::TokenStream, name::AbstractString, start_mark::Mark)
+function scan_uri_escapes(stream::TokenStream, name::String, start_mark::Mark)
     bytes = Any[]
     mark = get_mark(stream)
     while peek(stream.input) == '%'

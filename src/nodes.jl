@@ -2,8 +2,8 @@
 abstract Node
 
 type ScalarNode <: Node
-    tag::AbstractString
-    value::AbstractString
+    tag::String
+    value::String
     start_mark::(@compat Union{Mark, Void})
     end_mark::(@compat Union{Mark, Void})
     style::(@compat Union{Char, Void})
@@ -11,7 +11,7 @@ end
 
 
 type SequenceNode <: Node
-    tag::AbstractString
+    tag::String
     value::Vector
     start_mark::(@compat Union{Mark, Void})
     end_mark::(@compat Union{Mark, Void})
@@ -20,7 +20,7 @@ end
 
 
 type MappingNode <: Node
-    tag::AbstractString
+    tag::String
     value::Vector
     start_mark::(@compat Union{Mark, Void})
     end_mark::(@compat Union{Mark, Void})

@@ -7,7 +7,7 @@ abstract Token
 # The '%YAML' directive.
 immutable DirectiveToken <: Token
     span::Span
-    name::AbstractString
+    name::String
     value::(@compat Union{Tuple, Void})
 end
 
@@ -24,7 +24,7 @@ end
 # The stream start
 immutable StreamStartToken <: Token
     span::Span
-    encoding::AbstractString
+    encoding::String
 end
 
 # The stream end
@@ -90,13 +90,13 @@ end
 # '*anchor'
 immutable AliasToken <: Token
     span::Span
-    value::AbstractString
+    value::String
 end
 
 # '&anchor'
 immutable AnchorToken <: Token
     span::Span
-    value::AbstractString
+    value::String
 end
 
 # '!handle!suffix'
@@ -108,7 +108,7 @@ end
 # A scalar.
 immutable ScalarToken <: Token
     span::Span
-    value::AbstractString
+    value::String
     plain::Bool
     style::(@compat Union{Char, Void})
 end

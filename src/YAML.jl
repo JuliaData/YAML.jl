@@ -58,13 +58,13 @@ done(it::YAMLDocIterator, state) = it.next_doc === nothing
 
 load_all(input::IO) = YAMLDocIterator(input)
 
-function load(input::AbstractString, more_constructors::_constructor=nothing)
+function load(input::String, more_constructors::_constructor=nothing)
     load(IOBuffer(input), more_constructors)
 end
 
-load_all(input::AbstractString) = load_all(IOBuffer(input))
+load_all(input::String) = load_all(IOBuffer(input))
 
-function load_file(filename::AbstractString, more_constructors::_constructor=nothing)
+function load_file(filename::String, more_constructors::_constructor=nothing)
     input = open(filename)
     data = load(input, more_constructors)
     close(input)
@@ -72,7 +72,7 @@ function load_file(filename::AbstractString, more_constructors::_constructor=not
 end
 
 
-function load_all_file(filename::AbstractString)
+function load_all_file(filename::String)
     input = open(filename)
     data = load_all(input)
     close(input)
