@@ -16,7 +16,7 @@ include("parser.jl")
 include("composer.jl")
 include("constructor.jl")
 
-typealias _constructor @compat Union{Void,Dict{String,Function}}
+typealias _constructor @compat Union{Void,Dict}
 
 function load(ts::TokenStream, more_constructors::_constructor=nothing)
     events = EventStream(ts)
