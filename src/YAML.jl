@@ -5,7 +5,7 @@ module YAML
 import Base: start, next, done, isempty, length, show
 import Codecs
 using Compat
-using Compat: String
+import Compat: String
 
 if VERSION < v"0.4-dev"
     using Dates
@@ -16,7 +16,7 @@ include("parser.jl")
 include("composer.jl")
 include("constructor.jl")
 
-typealias _constructor @compat Union{Void,Dict{ASCIIString,Function}}
+typealias _constructor @compat Union{Void,Dict{String,Function}}
 
 function load(ts::TokenStream, more_constructors::_constructor=nothing)
     events = EventStream(ts)
