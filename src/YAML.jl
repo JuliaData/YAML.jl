@@ -31,11 +31,12 @@ end
 type YAMLDocIterator
     input::IO
     ts::TokenStream
+    more_constructors::_constructor
     next_doc
 
-    function YAMLDocIterator(input::IO)
-        it = new(input, TokenStream(input), nothing)
-        it.next_doc = eof(it.input) ? nothing : load(it.ts)
+    function YAMLDocIterator(input::IO, more_constructors::_constructor=nothing)
+        it = new(input, TokenStream(input), more_constructors, nothing)
+        it.next_doc = eof(it.input) ? nothing : load(it.ts, it.more_constructors)
         return it
     end
 end
@@ -49,34 +50,36 @@ function next(it::YAMLDocIterator, state)
         it.next_doc = nothing
     else
         reset!(it.ts)
-        it.next_doc = load(it.ts)
+        it.next_doc = load(it.ts, it.more_constructors)
     end
     return doc, nothing
 end
 
 done(it::YAMLDocIterator, state) = it.next_doc === nothing
 
-load_all(input::IO) = YAMLDocIterator(input)
+function load_all(input::IO, more_constructors::_constructor=nothing)
+    YAMLDocIterator(input, more_constructors)
+end
 
 function load(input::String, more_constructors::_constructor=nothing)
     load(IOBuffer(input), more_constructors)
 end
 
-load_all(input::String) = load_all(IOBuffer(input))
+function load_all(input::String, more_constructors::_constructor=nothing)
+    load_all(IOBuffer(input), more_constructors)
+end
 
 function load_file(filename::String, more_constructors::_constructor=nothing)
-    input = open(filename)
-    data = load(input, more_constructors)
-    close(input)
-    data
+    open(filename, "r") do input
+        load(input, more_constructors)
+    end
 end
 
 
-function load_all_file(filename::String)
-    input = open(filename)
-    data = load_all(input)
-    close(input)
-    data
+function load_all_file(filename::String, more_constructors::_constructor=nothing)
+    open(filename, "r") do input
+        load_all(input, more_constructors)
+    end
 end
 
 end  # module
