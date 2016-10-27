@@ -107,4 +107,5 @@ more_constructors = let
                            for (t, s) in pairs])
 end
 
+runtests(tests)
 runtests(["cartesian", "ar1", "ar1_cartesian"], more_constructors)
