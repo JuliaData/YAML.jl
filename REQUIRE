@@ -1,4 +1,4 @@
-julia 0.3
+julia 0.4
 Codecs
-Compat
+Compat 0.12
 Dates
