@@ -31,10 +31,17 @@ end
 
 # Errors thrown by the scanner.
 immutable ScannerError <: Exception
-    context::(@compat Union{AbstractString, Void})
+    context::(@compat Union{String, Void})
     context_mark::(@compat Union{Mark, Void})
-    problem::AbstractString
+    problem::String
     problem_mark::Mark
+end
+
+function show(io::IO, error::ScannerError)
+    if error.context != nothing
+        print(io, error.context, " at ", error.context_mark, ": ")
+    end
+    print(io, error.problem, " at ", error.problem_mark)
 end
 
 
@@ -786,7 +793,9 @@ function scan_directive(stream::TokenStream)
         value = scan_yaml_directive_value(stream, start_mark)
         end_mark = get_mark(stream)
     elseif name == "TAG"
-        value = scan_tag_directive_value(stream, start_mark)
+        tag_handle = scan_tag_directive_handle(stream, start_mark)
+        tag_prefix = scan_tag_directive_prefix(stream, start_mark)
+        value = (tag_handle, tag_prefix)
         end_mark = get_mark(stream)
     else
         end_mark = get_mark(stream)
@@ -810,7 +819,7 @@ function scan_directive_name(stream::TokenStream, start_mark::Mark)
 
     if length == 0
         throw(ScannerError("while scanning a directive", start_mark,
-                           "expected alphanumeric character, but found $(c)",
+                           "expected alphanumeric character, but found '$(c)'",
                            get_mark(stream)))
     end
 
@@ -820,7 +829,7 @@ function scan_directive_name(stream::TokenStream, start_mark::Mark)
     c = peek(stream.input)
     if !in(c, "\0 \r\n\u0085\u2028\u2029")
         throw(ScannerError("while scanning a directive", start_mark,
-                           "expected alphanumeric character, but bound $(c)",
+                           "expected alphanumeric character, but found '$(c)'",
                            get_mark(stream)))
     end
 
@@ -833,17 +842,18 @@ function scan_yaml_directive_value(stream::TokenStream, start_mark::Mark)
         forwardchars!(stream)
     end
 
-    major = scan_yaml_directive_number(start_mark)
+    major = scan_yaml_directive_number(stream, start_mark)
     if peek(stream.input) != '.'
         throw(ScannerError("while scanning a directive", start_mark,
-                           "expected a digit or '.' but found $(peek(stream.input))",
+                           "expected '.' but found '$(peek(stream.input))'",
                            get_mark(stream)))
     end
     forwardchars!(stream)
-    minor = scan_yaml_directive_number(start_mark)
+    minor = scan_yaml_directive_number(stream, start_mark)
     if !in(peek(stream.input), "\0 \r\n\u0085\u2028\u2029")
         throw(ScannerError("while scanning a directive", start_mark,
-                           "expected a digit or ' ', but found $(peek(stream.input))"))
+                           "expected ' ' or a line break, but found '$(peek(stream.input))'",
+                           get_mark(stream)))
     end
     return (major, minor)
 end
@@ -852,23 +862,28 @@ end
 function scan_yaml_directive_number(stream::TokenStream, start_mark::Mark)
     if !isdigit(peek(stream.input))
         throw(ScannerError("while scanning a directive", start_mark,
-                           "expected a digit, but found $(peek(stream.input))"))
+                           "expected a digit, but found '$(peek(stream.input))'",
+                           get_mark(stream)))
     end
     length = 0
-    while isdigit(peek(length))
+    while isdigit(peek(stream.input, length))
         length += 1
     end
-    value = int(prefix(stream.input, length))
-    forwardchars!(length)
+    value = parse(Int, prefix(stream.input, length))
+    forwardchars!(stream, length)
     value
 end
 
 
 function scan_tag_directive_handle(stream::TokenStream, start_mark::Mark)
+    while peek(stream.input) == ' '
+        forwardchars!(stream)
+    end
+
     value = scan_tag_handle(stream, "directive", start_mark)
     if peek(stream.input) != ' '
         throw(ScannerError("while scanning a directive", start_mark,
-                           "expected ' ', but found $(peek(stream.input))",
+                           "expected ' ', but found '$(peek(stream.input))'",
                            get_mark(stream)))
     end
     value
@@ -876,6 +891,10 @@ end
 
 
 function scan_tag_directive_prefix(stream::TokenStream, start_mark::Mark)
+    while peek(stream.input) == ' '
+        forwardchars!(stream)
+    end
+
     value = scan_tag_uri(stream, "directive", start_mark)
     if !in(peek(stream.input), "\0 \r\n\u0085\u2028\u2029")
         throw(ScannerError("while scanning a directive", start_mark,
@@ -898,10 +917,10 @@ function scan_directive_ignored_line(stream::TokenStream, start_mark::Mark)
     end
     if !in(peek(stream.input), "\0\r\n\u0085\u2028\u2029")
         throw(ScannerError("while scanning a directive", start_mark,
-                           "expected a comment or a line break, but found $(peek(stream.input))",
+                           "expected a comment or a line break, but found '$(peek(stream.input))'",
                            get_mark(stream)))
-     end
-     scan_line_break(stream)
+    end
+    scan_line_break(stream)
 end
 
 
@@ -923,14 +942,14 @@ function scan_anchor(stream::TokenStream, tokentype)
 
     if length == 0
         throw(ScannerError("while scanning an $(name)", start_mark,
-                           "expected an alphanumeric character, but found $(peek(stream.input))",
+                           "expected an alphanumeric character, but found '$(peek(stream.input))'",
                            get_mark(stream)))
     end
     value = prefix(stream.input, length)
     forwardchars!(stream, length)
     if !in(peek(stream.input), "\0 \t\r\n\u0085\u2028\u2029?:,]}%@`")
         throw(ScannerError("while scanning an $(name)", start_mark,
-                           "expected an alphanumeric character, but found $(peek(stream.input))",
+                           "expected an alphanumeric character, but found '$(peek(stream.input))'",
                            get_mark(stream)))
     end
     end_mark = get_mark(stream)
@@ -947,7 +966,7 @@ function scan_tag(stream::TokenStream)
         suffix = scan_tag_uri(stream, "tag", start_mark)
         if peek(stream.input) != '>'
             throw(ScannerError("while parsing a tag", start_mark,
-                               "expected '>', but found $(peek(stream.input))",
+                               "expected '>', but found '$(peek(stream.input))'",
                                get_mark(stream)))
         end
         forwardchars!(stream)
@@ -966,11 +985,10 @@ function scan_tag(stream::TokenStream)
             length += 1
             c = peek(stream.input, length)
         end
-        handle = '!'
         if use_handle
             handle = scan_tag_handle(stream, "tag", start_mark)
         else
-            handle = '!'
+            handle = "!"
             forwardchars!(stream)
         end
         suffix = scan_tag_uri(stream, "tag", start_mark)
@@ -979,7 +997,7 @@ function scan_tag(stream::TokenStream)
     c = peek(stream.input)
     if !in(c, "\0 \r\n\u0085\u2028\u2029")
         throw(ScannerError("while scanning a tag", start_mark,
-                           "expected ' ', but found $(c)",
+                           "expected ' ' or a line break, but found '$(c)'",
                            get_mark(stream)))
     end
 
@@ -1062,7 +1080,7 @@ function scan_block_scalar_ignored_line(stream::TokenStream, start_mark::Mark)
 
     if !in(peek(stream.input), "\0\r\n\u0085\u2028\u2029")
         throw(ScannerError("while scanning a block scalal", start_mark,
-                           "expected a commend or a line break, but found $(peek(stream.input))",
+                           "expected a comment or a line break, but found '$(peek(stream.input))'",
                            get_mark(stream)))
     end
 
@@ -1105,7 +1123,7 @@ function scan_block_scalar_indicators(stream::TokenStream, start_mark::Mark)
     c = peek(stream.input)
     if !in(c, "\0 \r\n\u0085\u2028\u2029")
         throw(ScannerError("while scanning a block scalar", start_mark,
-            "expected chomping or indentation indicators, but found $(c)",
+            "expected chomping or indentation indicators, but found '$(c)'",
             get_mark(stream)))
     end
 
@@ -1231,7 +1249,7 @@ function scan_flow_scalar_non_spaces(stream::TokenStream, double::Bool,
                                            start_mark,
                                            string("expected escape sequence of",
                                                   " $(length) hexadecimal",
-                                                  "digits, but found $(c)"),
+                                                  "digits, but found '$(c)'"),
                                            get_mark(stream)))
                     end
                 end
@@ -1243,7 +1261,7 @@ function scan_flow_scalar_non_spaces(stream::TokenStream, double::Bool,
             else
                 throw(ScannerError("while scanning a double-quoted scalar",
                                    start_mark,
-                                   "found unknown escape character $(c)",
+                                   "found unknown escape character '$(c)'",
                                    get_mark(stream)))
             end
         else
@@ -1420,11 +1438,11 @@ function scan_plain_spaces(stream::TokenStream, indent::Integer,
 end
 
 
-function scan_tag_handle(stream::TokenStream, name::AbstractString, start_mark::Mark)
+function scan_tag_handle(stream::TokenStream, name::String, start_mark::Mark)
     c = peek(stream.input)
     if c != '!'
         throw(ScannerError("while scanning a $(name)", start_mark,
-                           "expected '!', but found $(c)", get_mark(stream)))
+                           "expected '!', but found '$(c)'", get_mark(stream)))
     end
     length = 1
     c = peek(stream.input, length)
@@ -1437,7 +1455,7 @@ function scan_tag_handle(stream::TokenStream, name::AbstractString, start_mark::
         if c != '!'
             forwardchars!(stream, length)
             throw(ScannerError("while scanning a $(name)", start_mark,
-                               "expected '!', but found $(c)",
+                               "expected '!', but found '$(c)'",
                                get_mark(stream)))
         end
         length += 1
@@ -1449,7 +1467,7 @@ function scan_tag_handle(stream::TokenStream, name::AbstractString, start_mark::
 end
 
 
-function scan_tag_uri(stream::TokenStream, name::AbstractString, start_mark::Mark)
+function scan_tag_uri(stream::TokenStream, name::String, start_mark::Mark)
     chunks = Any[]
     length = 0
     c = peek(stream.input, length)
@@ -1473,7 +1491,7 @@ function scan_tag_uri(stream::TokenStream, name::AbstractString, start_mark::Mar
 
     if isempty(chunks)
         throw(ScannerError("while parsing a $(name)", start_mark,
-                           "expected URI, but found $(c)",
+                           "expected URI, but found '$(c)'",
                            get_mark(stream)))
     end
 
@@ -1481,7 +1499,7 @@ function scan_tag_uri(stream::TokenStream, name::AbstractString, start_mark::Mar
 end
 
 
-function scan_uri_escapes(stream::TokenStream, name::AbstractString, start_mark::Mark)
+function scan_uri_escapes(stream::TokenStream, name::String, start_mark::Mark)
     bytes = Any[]
     mark = get_mark(stream)
     while peek(stream.input) == '%'
@@ -1491,7 +1509,7 @@ function scan_uri_escapes(stream::TokenStream, name::AbstractString, start_mark:
                 throw(ScannerError("while scanning a $(name)", start_mark,
                                    string("expected URI escape sequence of",
                                           " 2 hexadecimal digits, but found",
-                                          " $(peek(stream.input, k))"),
+                                          " '$(peek(stream.input, k))'"),
                                    get_mark(stream)))
             end
         end

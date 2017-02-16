@@ -72,17 +72,40 @@ function equivalent(x, y)
     x == y
 end
 
-
 testdir = dirname(@__FILE__)
 
-for test in tests
-    data = YAML.load_file(joinpath(testdir, string(test, ".data")))
-    expected = evalfile(joinpath(testdir, string(test, ".expected")))
-    if !equivalent(data, expected)
-        @printf("%s: FAILED\n", test)
-        @printf("Expected:\n%s\nParsed:\n%s\n",
-                expected, data)
-    else
-        @printf("%s: PASSED\n", test)
+function runtests(tests, more_constructors=nothing)
+
+    for test in tests
+        data = YAML.load_file(
+            joinpath(testdir, string(test, ".data")),
+            more_constructors
+        )
+        expected = evalfile(joinpath(testdir, string(test, ".expected")))
+        if !equivalent(data, expected)
+            @printf("%s: FAILED\n", test)
+            @printf("Expected:\n%s\nParsed:\n%s\n",
+                    expected, data)
+        else
+            @printf("%s: PASSED\n", test)
+        end
     end
 end
+
+# test custom tags
+function construct_type_map(t::Symbol, constructor::YAML.Constructor,
+                            node::YAML.Node)
+    mapping = YAML.construct_mapping(constructor, node)
+    mapping[:tag] = t
+    mapping
+end
+
+more_constructors = let
+    pairs = [("!Cartesian", :Cartesian),
+             ("!AR1", :AR1)]
+    Dict{String,Function}([(t, (c, n) -> construct_type_map(s, c, n))
+                           for (t, s) in pairs])
+end
+
+runtests(tests)
+runtests(["cartesian", "ar1", "ar1_cartesian"], more_constructors)

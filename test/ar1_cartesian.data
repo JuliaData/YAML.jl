@@ -1,0 +1,9 @@
+grid: !Cartesian
+    a: [ 1-2*sig_z, k*0.9 ]
+    b: [ 1+2*sig_z, k*1.1 ]
+    orders: [10, 50]
+    mu: 3
+
+process: !AR1
+    rho: 0.95
+    sigma: 0.1

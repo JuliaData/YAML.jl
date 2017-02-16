@@ -4,11 +4,11 @@ include("resolver.jl")
 
 
 immutable ComposerError
-    context::(@compat Union{AbstractString, Void})
+    context::(@compat Union{String, Void})
     context_mark::(@compat Union{Mark, Void})
-    problem::(@compat Union{AbstractString, Void})
+    problem::(@compat Union{String, Void})
     problem_mark::(@compat Union{Mark, Void})
-    note::(@compat Union{AbstractString, Void})
+    note::(@compat Union{String, Void})
 
     function ComposerError(context=nothing, context_mark=nothing,
                            problem=nothing, problem_mark=nothing,
@@ -17,16 +17,23 @@ immutable ComposerError
     end
 end
 
+function show(io::IO, error::ComposerError)
+    if error.context != nothing
+        print(io, error.context, " at ", error.context_mark, ": ")
+    end
+    print(io, error.problem, " at ", error.problem_mark)
+end
+
 
 type Composer
     input::EventStream
-    anchors::Dict{AbstractString, Node}
+    anchors::Dict{String, Node}
     resolver::Resolver
 end
 
 
 function compose(events)
-    composer = Composer(events, Dict{AbstractString, Node}(), Resolver())
+    composer = Composer(events, Dict{String, Node}(), Resolver())
     @assert typeof(forward!(composer.input)) == StreamStartEvent
     node = compose_document(composer)
     if typeof(peek(composer.input)) == StreamEndEvent
@@ -54,7 +61,7 @@ function compose_node(composer::Composer, parent::(@compat Union{Node, Void}),
         forward!(composer.input)
         anchor = event.anchor
         if !haskey(composer.anchors, anchor)
-            throw(ComposerError(nothing, nothing, "found undefined alias $(anchor)",
+            throw(ComposerError(nothing, nothing, "found undefined alias '$(anchor)'",
                                 event.start_mark))
         end
         return composer.anchors[anchor]
@@ -64,7 +71,7 @@ function compose_node(composer::Composer, parent::(@compat Union{Node, Void}),
     if !is(anchor, nothing)
         if haskey(composer.anchors, anchor)
             throw(ComposerError(
-                "found duplicate anchor $(anchor); first occurance",
+                "found duplicate anchor '$(anchor)'; first occurance",
                 composer.anchors[anchor].start_mark, "second occurence",
                 event.start_mark))
         end
@@ -83,7 +90,7 @@ function compose_node(composer::Composer, parent::(@compat Union{Node, Void}),
 end
 
 
-function compose_scalar_node(composer::Composer, anchor::(@compat Union{AbstractString, Void}))
+function compose_scalar_node(composer::Composer, anchor::(@compat Union{String, Void}))
     event = forward!(composer.input)
     tag = event.tag
     if tag === nothing || tag == "!"
@@ -101,7 +108,7 @@ function compose_scalar_node(composer::Composer, anchor::(@compat Union{Abstract
 end
 
 
-function compose_sequence_node(composer::Composer, anchor::(@compat Union{AbstractString, Void}))
+function compose_sequence_node(composer::Composer, anchor::(@compat Union{String, Void}))
     start_event = forward!(composer.input)
     tag = start_event.tag
     if tag === nothing || tag == "!"
@@ -128,7 +135,7 @@ function compose_sequence_node(composer::Composer, anchor::(@compat Union{Abstra
 end
 
 
-function compose_mapping_node(composer::Composer, anchor::(@compat Union{AbstractString, Void}))
+function compose_mapping_node(composer::Composer, anchor::(@compat Union{String, Void}))
     start_event = forward!(composer.input)
     tag = start_event.tag
     if tag === nothing || tag == "!"

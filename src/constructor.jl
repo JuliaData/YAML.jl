@@ -1,11 +1,11 @@
 
 
 immutable ConstructorError
-    context::(@compat Union{AbstractString, Void})
+    context::(@compat Union{String, Void})
     context_mark::(@compat Union{Mark, Void})
-    problem::(@compat Union{AbstractString, Void})
+    problem::(@compat Union{String, Void})
     problem_mark::(@compat Union{Mark, Void})
-    note::(@compat Union{AbstractString, Void})
+    note::(@compat Union{String, Void})
 
     function ConstructorError(context=nothing, context_mark=nothing,
                               problem=nothing, problem_mark=nothing,
@@ -15,19 +15,28 @@ immutable ConstructorError
 
 end
 
+function show(io::IO, error::ConstructorError)
+    if error.context != nothing
+        print(io, error.context, " at ", error.context_mark, ": ")
+    end
+    print(io, error.problem, " at ", error.problem_mark)
+end
+
 
 type Constructor
     constructed_objects::Dict{Node, Any}
     recursive_objects::Set{Node}
     deep_construct::Bool
-    yaml_constructors::Dict{(@compat Union{AbstractString, Void}), Function}
+    yaml_constructors::Dict{(@compat Union{String, Void}), Function}
 
-    function Constructor()
+    function Constructor(more_constructors::Dict{String,Function})
         new(Dict{Node, Any}(), Set{Node}(), false,
-            copy(default_yaml_constructors))
+            merge(copy(default_yaml_constructors), more_constructors))
     end
 end
 
+Constructor() = Constructor(Dict{String,Function}())
+Constructor(::Void) = Constructor(Dict{String,Function}())
 
 function construct_document(constructor::Constructor, node::Node)
     data = construct_object(constructor, node)
@@ -180,7 +189,7 @@ function construct_yaml_int(constructor::Constructor, node::Node)
         # TODO
         #throw(ConstructorError(nothing, nothing,
             #"sexagesimal integers not yet implemented", node.start_mark))
-        warn("sexagesimal integers not yet implemented. Returning AbstractString.")
+        warn("sexagesimal integers not yet implemented. Returning String.")
         return value
     end
 
@@ -202,7 +211,7 @@ function construct_yaml_float(constructor::Constructor, node::Node)
         # TODO
         # throw(ConstructorError(nothing, nothing,
         #     "sexagesimal floats not yet implemented", node.start_mark))
-        warn("sexagesimal floats not yet implemented. Returning AbstractString.")
+        warn("sexagesimal floats not yet implemented. Returning String.")
         return value
     end
 
@@ -334,7 +343,7 @@ end
 
 function construct_undefined(constructor::Constructor, node::Node)
     throw(ConstructorError(nothing, nothing,
-        "could not determine a constructor for the tag $(node.tag)",
+        "could not determine a constructor for the tag '$(node.tag)'",
         node.start_mark))
 end
 
@@ -344,8 +353,7 @@ function construct_yaml_binary(constructor::Constructor, node::Node)
     Codecs.decode(Codecs.Base64, value)
 end
 
-
-const default_yaml_constructors = @compat Dict{(@compat Union{AbstractString, Void}), Function}(
+const default_yaml_constructors = @compat Dict{(@compat Union{String, Void}), Function}(
         "tag:yaml.org,2002:null"      => construct_yaml_null,
         "tag:yaml.org,2002:bool"      => construct_yaml_bool,
         "tag:yaml.org,2002:int"       => construct_yaml_int,
@@ -358,7 +366,5 @@ const default_yaml_constructors = @compat Dict{(@compat Union{AbstractString, Vo
         "tag:yaml.org,2002:str"       => construct_yaml_str,
         "tag:yaml.org,2002:seq"       => construct_yaml_seq,
         "tag:yaml.org,2002:map"       => construct_yaml_map,
-        nothing                       => construct_undefined
+        nothing                       => construct_undefined,
     )
-
-
