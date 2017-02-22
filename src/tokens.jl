@@ -1,14 +1,14 @@
 
 # YAML Tokens.
 # Each token must include at minimum member "span::Span".
-abstract Token
+@compat abstract type Token end
 
 
 # The '%YAML' directive.
 immutable DirectiveToken <: Token
     span::Span
     name::String
-    value::(@compat Union{Tuple, Void})
+    value::Union{Tuple, Void}
 end
 
 # '---'
@@ -110,7 +110,5 @@ immutable ScalarToken <: Token
     span::Span
     value::String
     plain::Bool
-    style::(@compat Union{Char, Void})
+    style::Union{Char, Void}
 end
-
-

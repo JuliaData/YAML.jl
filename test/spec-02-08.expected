@@ -1,6 +1,5 @@
 # TODO: implement sexagesimal numbers and figure out what this should be.
-using Compat
-@compat Dict{Any,Any}(
+Dict{Any,Any}(
  "time" => "20:03:20",
  "player" => "Sammy Sosa",
  "action" => "strike (miss)")

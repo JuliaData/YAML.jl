@@ -1,5 +1,4 @@
-using Compat
-@compat Dict{Any,Any}(
+Dict{Any,Any}(
     "canonical"         => 1.23015e3,
     "exponential"       => 12.3015e2,
     # TODO: replace when sexagesimal is implemented

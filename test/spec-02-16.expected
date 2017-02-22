@@ -1,5 +1,4 @@
-using Compat
-@compat Dict{Any,Any}(
+Dict{Any,Any}(
     "name" => "Mark McGwire",
     "accomplishment" =>
         "Mark set a major league home run record in 1998.\n",

@@ -11,7 +11,7 @@ type BufferedInput
     avail::UInt64
 
     function BufferedInput(input::IO)
-        return new(input, Array(Char, 0), 0, 0)
+        return new(input, Vector{Char}(0), 0, 0)
     end
 end
 
@@ -46,7 +46,7 @@ function prefix(bi::BufferedInput, n::Integer=1)
     if bi.avail < n + 1
         _fill(bi, n + 1 - bi.avail)
     end
-    return string(bi.buffer[(@compat Int(bi.offset + 1)):(@compat Int(bi.offset + n))]...)
+    return string(bi.buffer[Int(bi.offset + 1):Int(bi.offset + n)]...)
 end
 
 
@@ -67,5 +67,3 @@ function forward!(bi::BufferedInput, n::Integer=1)
         end
     end
 end
-
-

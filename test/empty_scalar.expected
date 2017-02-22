@@ -1,2 +1,1 @@
-using Compat
-@compat Dict{Any,Any}("hello"=>nothing)
+Dict{Any,Any}("hello"=>nothing)

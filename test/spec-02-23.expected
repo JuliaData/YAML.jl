@@ -1,7 +1,5 @@
 using Codecs
-using Compat
-
-@compat Dict{Any,Any}(
+Dict{Any,Any}(
     "not-date" => "2002-04-28",
     "picture" =>
         decode(Base64,
@@ -15,4 +13,3 @@ using Compat
         #different documents.
         #"""
 )
-

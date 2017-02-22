@@ -1,8 +1,6 @@
-using Compat
-@compat Dict{Any,Any}(
+Dict{Any,Any}(
     nothing  => nothing,
     true     => "y",
     false    => "n",
     "string" => "12345"
 )
-

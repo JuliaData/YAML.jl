@@ -1,5 +1,4 @@
-using Compat
-@compat Any[
+Any[
     Dict{Any,Any}(
      "name" => "Mark McGwire",
      "hr" => 65,
