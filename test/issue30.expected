@@ -1,0 +1,5 @@
+using Compat
+@compat Dict{Any,Any}(
+  "x" => 1,
+  "y" => 2,
+)
