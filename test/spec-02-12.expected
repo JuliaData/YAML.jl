@@ -1,7 +1,4 @@
-
-using Compat
-
-@compat Any[
+Any[
   Dict{Any,Any}(
   "item"     => "Super Hoop",
   "quantity" => 1),
@@ -12,4 +9,3 @@ using Compat
    "item"     => "Big Shoes",
    "quantity" => 1)
 ]
-

@@ -1,5 +1,5 @@
 
-abstract Event
+@compat abstract type Event end
 
 immutable StreamStartEvent <: Event
     start_mark::Mark
@@ -18,8 +18,8 @@ immutable DocumentStartEvent <: Event
     start_mark::Mark
     end_mark::Mark
     explicit::Bool
-    version::(@compat Union{Tuple, Void})
-    tags::(@compat Union{Dict{String, String}, Void})
+    version::Union{Tuple, Void}
+    tags::Union{Dict{String, String}, Void}
 
     function DocumentStartEvent(start_mark::Mark,end_mark::Mark,
                                 explicit::Bool, version=nothing,
@@ -39,26 +39,26 @@ end
 immutable AliasEvent <: Event
     start_mark::Mark
     end_mark::Mark
-    anchor::(@compat Union{String, Void})
+    anchor::Union{String, Void}
 end
 
 
 immutable ScalarEvent <: Event
     start_mark::Mark
     end_mark::Mark
-    anchor::(@compat Union{String, Void})
-    tag::(@compat Union{String, Void})
+    anchor::Union{String, Void}
+    tag::Union{String, Void}
     implicit::Tuple
     value::String
-    style::(@compat Union{Char, Void})
+    style::Union{Char, Void}
 end
 
 
 immutable SequenceStartEvent <: Event
     start_mark::Mark
     end_mark::Mark
-    anchor::(@compat Union{String, Void})
-    tag::(@compat Union{String, Void})
+    anchor::Union{String, Void}
+    tag::Union{String, Void}
     implicit::Bool
     flow_style::Bool
 end
@@ -73,8 +73,8 @@ end
 immutable MappingStartEvent <: Event
     start_mark::Mark
     end_mark::Mark
-    anchor::(@compat Union{String, Void})
-    tag::(@compat Union{String, Void})
+    anchor::Union{String, Void}
+    tag::Union{String, Void}
     implicit::Bool
     flow_style::Bool
 end

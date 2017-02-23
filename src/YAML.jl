@@ -6,6 +6,7 @@ import Base: start, next, done, isempty, length, show
 import Codecs
 using Compat
 import Compat: String
+import Compat: Iterators
 
 if VERSION < v"0.4-dev"
     using Dates
@@ -16,7 +17,7 @@ include("parser.jl")
 include("composer.jl")
 include("constructor.jl")
 
-typealias _constructor @compat Union{Void,Dict}
+const _constructor = Union{Void,Dict}
 
 function load(ts::TokenStream, more_constructors::_constructor=nothing)
     events = EventStream(ts)

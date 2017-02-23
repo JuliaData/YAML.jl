@@ -1,5 +1,4 @@
-using Compat
-@compat Dict{Any,Any}(
+Dict{Any,Any}(
     "canonical" => 12345,
     "decimal"   => 12345,
     # TODO: change this when sexagesimal is implemented

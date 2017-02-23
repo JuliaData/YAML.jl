@@ -31,14 +31,14 @@ end
 
 # Errors thrown by the scanner.
 immutable ScannerError <: Exception
-    context::(@compat Union{String, Void})
-    context_mark::(@compat Union{Mark, Void})
+    context::Union{String, Void}
+    context_mark::Union{Mark, Void}
     problem::String
     problem_mark::Mark
 end
 
 function show(io::IO, error::ScannerError)
-    if error.context != nothing
+    if error.context !== nothing
         print(io, error.context, " at ", error.context_mark, ": ")
     end
     print(io, error.problem, " at ", error.problem_mark)
@@ -101,7 +101,7 @@ type TokenStream
     function TokenStream(stream::IO)
         tokstream = new(BufferedInput(stream), false, Queue{Token}(),
                         1, 0, 1, 0, 0, -1,
-                        Array(Int,0), true, Dict())
+                        Vector{Int}(0), true, Dict())
         fetch_stream_start(tokstream)
         tokstream
     end
@@ -1186,7 +1186,7 @@ function scan_flow_scalar(stream::TokenStream, style::Char)
 end
 
 
-const ESCAPE_REPLACEMENTS = @compat Dict{Char,Char}(
+const ESCAPE_REPLACEMENTS = Dict{Char,Char}(
     '0'  => '\0',
     'a'  => '\u0007',
     'b'  => '\u0008',
@@ -1206,7 +1206,7 @@ const ESCAPE_REPLACEMENTS = @compat Dict{Char,Char}(
 )
 
 
-const ESCAPE_CODES = @compat Dict{Char, Int}(
+const ESCAPE_CODES = Dict{Char, Int}(
     'x' => 2,
     'u' => 4,
     'U' => 8
@@ -1253,7 +1253,7 @@ function scan_flow_scalar_non_spaces(stream::TokenStream, double::Bool,
                                            get_mark(stream)))
                     end
                 end
-                push!(chunks, @compat Char(parse(Int, prefix(stream.input, length), 16)))
+                push!(chunks, Char(parse(Int, prefix(stream.input, length), 16)))
                 forwardchars!(stream, length)
             elseif in(c, "\r\n\u0085\u2028\u2029")
                 scan_line_break(stream)

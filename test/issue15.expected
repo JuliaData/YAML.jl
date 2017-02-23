@@ -1,5 +1,4 @@
-using Compat
-@compat Dict{Any,Any}(
+Dict{Any,Any}(
     "path" => "/foo",
     "tiles" =>
         Any[Dict{Any,Any}(

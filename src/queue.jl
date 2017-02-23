@@ -1,7 +1,24 @@
+# Simple general-purpose queue.
+
+type EmptyQueue <: Exception
+end
+
+type UnderfullQueue <: Exception
+end
+
+type QueueNode{T}
+    value::T
+    next::Union{QueueNode, Void}
+end
+
+
 type Queue{T}
-    data::Vector{T}
-    function Queue()
-        new(Vector{T}())
+    front::Union{QueueNode{T}, Void}
+    back::Union{QueueNode{T}, Void}
+    length::UInt64
+
+    function (::Type{Queue{T}}){T}()
+        new{T}(nothing, nothing, 0)
     end
 end
 

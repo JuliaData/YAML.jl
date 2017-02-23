@@ -4,11 +4,11 @@ include("resolver.jl")
 
 
 immutable ComposerError
-    context::(@compat Union{String, Void})
-    context_mark::(@compat Union{Mark, Void})
-    problem::(@compat Union{String, Void})
-    problem_mark::(@compat Union{Mark, Void})
-    note::(@compat Union{String, Void})
+    context::Union{String, Void}
+    context_mark::Union{Mark, Void}
+    problem::Union{String, Void}
+    problem_mark::Union{Mark, Void}
+    note::Union{String, Void}
 
     function ComposerError(context=nothing, context_mark=nothing,
                            problem=nothing, problem_mark=nothing,
@@ -54,8 +54,8 @@ function compose_document(composer::Composer)
 end
 
 
-function compose_node(composer::Composer, parent::(@compat Union{Node, Void}),
-                      index::(@compat Union{Int, Node, Void}))
+function compose_node(composer::Composer, parent::Union{Node, Void},
+                      index::Union{Int, Node, Void})
     event = peek(composer.input)
     if typeof(event) == AliasEvent
         forward!(composer.input)
@@ -68,7 +68,7 @@ function compose_node(composer::Composer, parent::(@compat Union{Node, Void}),
     end
 
     anchor = event.anchor
-    if !is(anchor, nothing)
+    if anchor !== nothing
         if haskey(composer.anchors, anchor)
             throw(ComposerError(
                 "found duplicate anchor '$(anchor)'; first occurance",
@@ -90,7 +90,7 @@ function compose_node(composer::Composer, parent::(@compat Union{Node, Void}),
 end
 
 
-function compose_scalar_node(composer::Composer, anchor::(@compat Union{String, Void}))
+function compose_scalar_node(composer::Composer, anchor::Union{String, Void})
     event = forward!(composer.input)
     tag = event.tag
     if tag === nothing || tag == "!"
@@ -100,7 +100,7 @@ function compose_scalar_node(composer::Composer, anchor::(@compat Union{String, 
 
     node = ScalarNode(tag, event.value, event.start_mark, event.end_mark,
                       event.style)
-    if !is(anchor, nothing)
+    if anchor !== nothing
         composer.anchors[anchor] = node
     end
 
@@ -108,7 +108,7 @@ function compose_scalar_node(composer::Composer, anchor::(@compat Union{String, 
 end
 
 
-function compose_sequence_node(composer::Composer, anchor::(@compat Union{String, Void}))
+function compose_sequence_node(composer::Composer, anchor::Union{String, Void})
     start_event = forward!(composer.input)
     tag = start_event.tag
     if tag === nothing || tag == "!"
@@ -118,7 +118,7 @@ function compose_sequence_node(composer::Composer, anchor::(@compat Union{String
 
     node = SequenceNode(tag, Any[], start_event.start_mark, nothing,
                         start_event.flow_style)
-    if !is(anchor, nothing)
+    if anchor !== nothing
         composer.anchors[anchor] = node
     end
 
@@ -135,7 +135,7 @@ function compose_sequence_node(composer::Composer, anchor::(@compat Union{String
 end
 
 
-function compose_mapping_node(composer::Composer, anchor::(@compat Union{String, Void}))
+function compose_mapping_node(composer::Composer, anchor::Union{String, Void})
     start_event = forward!(composer.input)
     tag = start_event.tag
     if tag === nothing || tag == "!"
@@ -145,7 +145,7 @@ function compose_mapping_node(composer::Composer, anchor::(@compat Union{String,
 
     node = MappingNode(tag, Any[], start_event.start_mark, nothing,
                        start_event.flow_style)
-    if !is(anchor, nothing)
+    if anchor !== nothing
         composer.anchors[anchor] = node
     end
 
@@ -160,4 +160,3 @@ function compose_mapping_node(composer::Composer, anchor::(@compat Union{String,
 
     node
 end
-

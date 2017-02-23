@@ -1,11 +1,11 @@
 
 
 immutable ConstructorError
-    context::(@compat Union{String, Void})
-    context_mark::(@compat Union{Mark, Void})
-    problem::(@compat Union{String, Void})
-    problem_mark::(@compat Union{Mark, Void})
-    note::(@compat Union{String, Void})
+    context::Union{String, Void}
+    context_mark::Union{Mark, Void}
+    problem::Union{String, Void}
+    problem_mark::Union{Mark, Void}
+    note::Union{String, Void}
 
     function ConstructorError(context=nothing, context_mark=nothing,
                               problem=nothing, problem_mark=nothing,
@@ -27,7 +27,7 @@ type Constructor
     constructed_objects::Dict{Node, Any}
     recursive_objects::Set{Node}
     deep_construct::Bool
-    yaml_constructors::Dict{(@compat Union{String, Void}), Function}
+    yaml_constructors::Dict{Union{String, Void}, Function}
 
     function Constructor(more_constructors::Dict{String,Function})
         new(Dict{Node, Any}(), Set{Node}(), false,
@@ -166,7 +166,7 @@ function construct_yaml_null(constructor::Constructor, node::Node)
 end
 
 
-const bool_values = @compat Dict(
+const bool_values = Dict(
     "yes"   => true,
     "no"    => false,
     "true"  => true,
@@ -220,7 +220,7 @@ function construct_yaml_float(constructor::Constructor, node::Node)
     end
 
     m = match(r"^([+\-]?)\.inf$", value)
-    if !is(m, nothing)
+    if m !== nothing
         if m.captures[1] == "-"
             return -Inf
         else
@@ -276,7 +276,7 @@ function construct_yaml_timestamp(constructor::Constructor, node::Node)
     end
 
     ms = 0
-    if !is(mat.captures[7], nothing)
+    if mat.captures[7] !== nothing
         ms = mat.captures[7]
         if length(ms) > 3
             ms = ms[1:3]
@@ -287,11 +287,11 @@ function construct_yaml_timestamp(constructor::Constructor, node::Node)
     delta_hr = 0
     delta_mn = 0
 
-    if !is(mat.captures[9], nothing)
+    if mat.captures[9] !== nothing
         delta_hr = parse(Int, mat.captures[9])
     end
 
-    if !is(mat.captures[10], nothing)
+    if mat.captures[10] !== nothing
         delta_mn = parse(Int, mat.captures[10])
     end
 
@@ -353,7 +353,7 @@ function construct_yaml_binary(constructor::Constructor, node::Node)
     Codecs.decode(Codecs.Base64, value)
 end
 
-const default_yaml_constructors = @compat Dict{(@compat Union{String, Void}), Function}(
+const default_yaml_constructors = Dict{Union{String, Void}, Function}(
         "tag:yaml.org,2002:null"      => construct_yaml_null,
         "tag:yaml.org,2002:bool"      => construct_yaml_bool,
         "tag:yaml.org,2002:int"       => construct_yaml_int,
