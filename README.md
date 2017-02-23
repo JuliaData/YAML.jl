@@ -1,8 +1,10 @@
 
 # YAML
 
-[![YAML](http://pkg.julialang.org/badges/YAML_0.3.svg)](http://pkg.julialang.org/?pkg=YAML&ver=0.3)
-[![YAML](http://pkg.julialang.org/badges/YAML_0.4.svg)](http://pkg.julialang.org/?pkg=YAML&ver=0.4)
+[![YAML](http://pkg.julialang.org/badges/YAML_0.4.svg)](http://pkg.julialang.org/?pkg=YAML)
+[![YAML](http://pkg.julialang.org/badges/YAML_0.5.svg)](http://pkg.julialang.org/?pkg=YAML)
+[![YAML](http://pkg.julialang.org/badges/YAML_0.6.svg)](http://pkg.julialang.org/?pkg=YAML)
+
 
 [![Build Status](http://img.shields.io/travis/dcjones/YAML.jl.svg?branch=master)](https://travis-ci.org/dcjones/YAML.jl)
 [![Coverage Status](https://coveralls.io/repos/dcjones/YAML.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/dcjones/YAML.jl?branch=master)
