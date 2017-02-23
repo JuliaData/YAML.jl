@@ -8,10 +8,6 @@ using Compat
 import Compat: String
 import Compat: Iterators
 
-if VERSION < v"0.4-dev"
-    using Dates
-end
-
 include("scanner.jl")
 include("parser.jl")
 include("composer.jl")
