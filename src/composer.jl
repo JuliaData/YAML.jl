@@ -4,11 +4,11 @@ include("resolver.jl")
 
 
 immutable ComposerError
-    context::Union{String, Void}
+    context::Union{AbstractString, Void}
     context_mark::Union{Mark, Void}
-    problem::Union{String, Void}
+    problem::Union{AbstractString, Void}
     problem_mark::Union{Mark, Void}
-    note::Union{String, Void}
+    note::Union{AbstractString, Void}
 
     function ComposerError(context=nothing, context_mark=nothing,
                            problem=nothing, problem_mark=nothing,
@@ -27,13 +27,13 @@ end
 
 type Composer
     input::EventStream
-    anchors::Dict{String, Node}
+    anchors::Dict{AbstractString, Node}
     resolver::Resolver
 end
 
 
 function compose(events)
-    composer = Composer(events, Dict{String, Node}(), Resolver())
+    composer = Composer(events, Dict{AbstractString, Node}(), Resolver())
     @assert typeof(forward!(composer.input)) == StreamStartEvent
     node = compose_document(composer)
     if typeof(peek(composer.input)) == StreamEndEvent
@@ -90,7 +90,7 @@ function compose_node(composer::Composer, parent::Union{Node, Void},
 end
 
 
-function compose_scalar_node(composer::Composer, anchor::Union{String, Void})
+function compose_scalar_node(composer::Composer, anchor::Union{AbstractString, Void})
     event = forward!(composer.input)
     tag = event.tag
     if tag === nothing || tag == "!"
@@ -108,7 +108,7 @@ function compose_scalar_node(composer::Composer, anchor::Union{String, Void})
 end
 
 
-function compose_sequence_node(composer::Composer, anchor::Union{String, Void})
+function compose_sequence_node(composer::Composer, anchor::Union{AbstractString, Void})
     start_event = forward!(composer.input)
     tag = start_event.tag
     if tag === nothing || tag == "!"
@@ -135,7 +135,7 @@ function compose_sequence_node(composer::Composer, anchor::Union{String, Void})
 end
 
 
-function compose_mapping_node(composer::Composer, anchor::Union{String, Void})
+function compose_mapping_node(composer::Composer, anchor::Union{AbstractString, Void})
     start_event = forward!(composer.input)
     tag = start_event.tag
     if tag === nothing || tag == "!"

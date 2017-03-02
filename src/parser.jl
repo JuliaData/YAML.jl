@@ -1,15 +1,15 @@
 
 include("events.jl")
 
-const DEFAULT_TAGS = Dict{String,String}("!" => "!", "!!" => "tag:yaml.org,2002:")
+const DEFAULT_TAGS = Dict{AbstractString,AbstractString}("!" => "!", "!!" => "tag:yaml.org,2002:")
 
 
 immutable ParserError
-    context::Union{String, Void}
+    context::Union{AbstractString, Void}
     context_mark::Union{Mark, Void}
-    problem::Union{String, Void}
+    problem::Union{AbstractString, Void}
     problem_mark::Union{Mark, Void}
-    note::Union{String, Void}
+    note::Union{AbstractString, Void}
 
     function ParserError(context=nothing, context_mark=nothing,
                          problem=nothing, problem_mark=nothing,
@@ -33,12 +33,12 @@ type EventStream
     states::Vector{Function}
     marks::Vector{Mark}
     yaml_version::Union{Tuple, Void}
-    tag_handles::Dict{String, String}
+    tag_handles::Dict{AbstractString, AbstractString}
     end_of_stream::Union{StreamEndEvent, Void}
 
     function EventStream(input::TokenStream)
         new(input, nothing, parse_stream_start, Function[], Mark[],
-            nothing, Dict{String, String}(), nothing)
+            nothing, Dict{AbstractString, AbstractString}(), nothing)
     end
 end
 
@@ -82,7 +82,7 @@ end
 
 function process_directives(stream::EventStream)
     stream.yaml_version = nothing
-    stream.tag_handles = Dict{String, String}()
+    stream.tag_handles = Dict{AbstractString, AbstractString}()
     while typeof(peek(stream.input)) == DirectiveToken
         token = forward!(stream.input)
         if token.name == "YAML"
