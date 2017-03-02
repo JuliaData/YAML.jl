@@ -105,7 +105,7 @@ end
 more_constructors = let
     pairs = [("!Cartesian", :Cartesian),
              ("!AR1", :AR1)]
-    Dict{String,Function}([(t, (c, n) -> construct_type_map(s, c, n))
+    Dict{AbstractString,Function}([(t, (c, n) -> construct_type_map(s, c, n))
                            for (t, s) in pairs])
 end
 
