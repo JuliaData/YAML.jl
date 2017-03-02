@@ -5,7 +5,7 @@ module YAML
 import Base: start, next, done, isempty, length, show
 import Codecs
 using Compat
-import Compat: String
+import Compat: AbstractString
 import Compat: Iterators
 
 include("scanner.jl")
@@ -58,22 +58,22 @@ function load_all(input::IO, more_constructors::_constructor=nothing)
     YAMLDocIterator(input, more_constructors)
 end
 
-function load(input::String, more_constructors::_constructor=nothing)
+function load(input::AbstractString, more_constructors::_constructor=nothing)
     load(IOBuffer(input), more_constructors)
 end
 
-function load_all(input::String, more_constructors::_constructor=nothing)
+function load_all(input::AbstractString, more_constructors::_constructor=nothing)
     load_all(IOBuffer(input), more_constructors)
 end
 
-function load_file(filename::String, more_constructors::_constructor=nothing)
+function load_file(filename::AbstractString, more_constructors::_constructor=nothing)
     open(filename, "r") do input
         load(input, more_constructors)
     end
 end
 
 
-function load_all_file(filename::String, more_constructors::_constructor=nothing)
+function load_all_file(filename::AbstractString, more_constructors::_constructor=nothing)
     open(filename, "r") do input
         load_all(input, more_constructors)
     end
