@@ -31,7 +31,7 @@ tests = [
     "windows_newlines",
     "issue15",
     "issue30",
-
+    "issue36"
 ]
 
 
