@@ -1319,7 +1319,7 @@ function scan_flow_scalar_breaks(stream::TokenStream, double::Bool,
         end
 
         if in(peek(stream.input), "\r\n\u0085\u2028\u2029")
-            push(chunks, scan_line_break(stream))
+            push!(chunks, scan_line_break(stream))
         else
             return chunks
         end
@@ -1519,5 +1519,3 @@ function scan_uri_escapes(stream::TokenStream, name::AbstractString, start_mark:
 
     string(bytes...)
 end
-
-
