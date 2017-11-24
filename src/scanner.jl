@@ -1257,7 +1257,7 @@ function scan_flow_scalar_non_spaces(stream::TokenStream, double::Bool,
                 forwardchars!(stream, length)
             elseif in(c, "\r\n\u0085\u2028\u2029")
                 scan_line_break(stream)
-                append!(chunks, scan_flow_scalar_breaks(double, start_mark))
+                append!(chunks, scan_flow_scalar_breaks(stream, double, start_mark))
             else
                 throw(ScannerError("while scanning a double-quoted scalar",
                                    start_mark,
