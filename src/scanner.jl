@@ -1201,6 +1201,7 @@ const ESCAPE_REPLACEMENTS = Dict{Char,Char}(
     '"'  => '"',
     '\\' => '\\',
     'N'  => '\u0085',
+    '_' => '\u00A0',
     'L'  => '\u2028',
     'P'  => '\u2029'
 )

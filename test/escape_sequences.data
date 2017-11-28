@@ -1,0 +1,4 @@
+string:
+- '\0\a\b\t\n\v\f\r\e\ \"\\\N\_\L\P'
+escape sequences:
+- "\0\a\b\t\n\v\f\r\e\ \"\\\N\_\L\P"

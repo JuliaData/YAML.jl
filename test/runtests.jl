@@ -32,6 +32,7 @@ const tests = [
     "empty_scalar",
     "no_trailing_newline",
     "windows_newlines",
+    "escape_sequences",
     "issue15",
     "issue30",
     "cartesian",
