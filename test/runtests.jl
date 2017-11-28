@@ -35,6 +35,8 @@ const tests = [
     "escape_sequences",
     "issue15",
     "issue30",
+    "issue36",
+    "issue39",
     "cartesian",
     "ar1",
     "ar1_cartesian"
