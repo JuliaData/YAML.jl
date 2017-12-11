@@ -1097,7 +1097,7 @@ function scan_block_scalar_indicators(stream::TokenStream, start_mark::Mark)
         forwardchars!(stream)
         c = peek(stream.input)
         if in(c, "0123456789")
-            increment = int(string(c))
+            increment = parse(Int, string(c))
             if increment == 0
                 throw(ScannerError("while scanning a block scalar", start_mark,
                     "expected indentation indicator in the range 1-9, but found 0",
@@ -1105,7 +1105,7 @@ function scan_block_scalar_indicators(stream::TokenStream, start_mark::Mark)
             end
         end
     elseif in(c, "0123456789")
-        increment = int(string(c))
+        increment = parse(Int, string(c))
         if increment == 0
             throw(ScannerError("while scanning a block scalar", start_mark,
                 "expected indentation indicator in the range 1-9, but found 0",
