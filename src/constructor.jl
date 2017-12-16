@@ -193,12 +193,20 @@ function construct_yaml_int(constructor::Constructor, node::Node)
         return value
     end
 
-    if length(value) > 2 && value[1] == '0' && (value[2] == 'x' || value[2] == 'X')
-        return parse(Int, value[3:end], 16)
-    elseif length(value) > 1 && value[1] == '0'
-        return parse(Int, value, 8)
-    else
-        return parse(Int, value, 10)
+    try
+        if length(value) > 2 && value[1] == '0' && (value[2] == 'x' || value[2] == 'X')
+            return parse(Int, value[3:end], 16)
+        elseif length(value) > 1 && value[1] == '0'
+            return parse(Int, value, 8)
+        else
+            return parse(Int, value, 10)
+        end
+    catch y
+        if isa(y, ArgumentError)
+            return value
+        else
+            error("Could not decode int, failed with error $(y)")
+        end
     end
 end
 
