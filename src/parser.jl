@@ -426,13 +426,19 @@ function parse_block_mapping_key(stream::EventStream)
     token = peek(stream.input)
     if typeof(token) == KeyToken
         forward!(stream.input)
-        if !in(typeof(peek(stream.input)), [KeyToken, ValueToken, BlockEndToken])
-            push!(stream.states, parse_block_mapping_value)
-            return parse_block_node_or_indentless_sequence(stream)
-        else
+        peeked_value = peek(stream.input)
+
+        function parse!(token::Union{KeyToken, ValueToken, BlockEndToken})
             stream.state = parse_block_mapping_value
             return process_empty_scalar(stream, token.span.end_mark)
         end
+
+        function parse!(token::Any)
+            push!(stream.states, parse_block_mapping_value)
+            return parse_block_node_or_indentless_sequence(stream)
+        end
+
+        return parse!(peeked_value)
     end
 
     if typeof(token) != BlockEndToken
