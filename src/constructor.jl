@@ -101,23 +101,21 @@ end
 
 
 function construct_scalar(constructor::Constructor, node::Node)
-    if typeof(node) != ScalarNode
-        throw(ConstructorError(nothing, nothing,
+    construct!(node::ScalarNode) = node.value
+    construct!(node::Any) = throw(ConstructorError(nothing, nothing,
                                "expected a scalar node, but found $(typeof(node))",
                                node.start_mark))
-    end
-    node.value
+    return construct!(node)
 end
 
 
 function construct_sequence(constructor::Constructor, node::Node; deep=false)
-    if typeof(node) != SequenceNode
+    construct!(node::SequenceNode) = [construct_object(constructor, child, deep=deep) for child in node.value]
+    construct!(node::Any) = 
         throw(ConstructorError(nothing, nothing,
                                "expected a sequence node, but found $(typeof(node))",
                                node.start_mark))
-    end
-
-    [construct_object(constructor, child, deep=deep) for child in node.value]
+    construct!(node)
 end
 
 
