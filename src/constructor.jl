@@ -73,12 +73,12 @@ function construct_object(constructor::Constructor, node::Node; deep=false)
 
         if haskey(constructor.yaml_constructors, nothing)
             node_constructor = constructor.yaml_constructors[nothing]
-        elseif typeof(node) == ScalarNode
-            node_constructor = construct_scalar
-        elseif typeof(node) == SequenceNode
-            node_constructor = construct_sequence
-        elseif typeof(node) == MappingNode
-            node_constructor = construct_mapping
+        else
+            construct!(node::ScalarNode) = construct_scalar
+            construct!(node::SequenceNode) = construct_sequence
+            construct!(node::MappingNode) = construct_mapping
+            construct!(node::Any) = nothing
+            node_constructor = construct!(node)
         end
     end
 
