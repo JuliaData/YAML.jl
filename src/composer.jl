@@ -80,16 +80,11 @@ function compose_node(composer::Composer, parent::Union{Node, Void},
         end
     end
 
-    node = nothing
-    if typeof(event) == ScalarEvent
-        node = compose_scalar_node(composer, anchor)
-    elseif typeof(event) == SequenceStartEvent
-        node = compose_sequence_node(composer, anchor)
-    elseif typeof(event) == MappingStartEvent
-        node = compose_mapping_node(composer, anchor)
-    end
-
-    node
+    compose_event!(event::ScalarEvent) = compose_scalar_node(composer, anchor)
+    compose_event!(event::SequenceStartEvent) = compose_sequence_node(composer, anchor)
+    compose_event!(event::MappingStartEvent) = compose_mapping_node(composer, anchor)
+    compose_event!(event::Any) = nothing
+    compose_event!(event)
 end
 
 
