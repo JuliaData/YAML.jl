@@ -296,7 +296,7 @@ function parse_node(stream::EventStream; block=false, indentless_sequence=false)
                                    false)
         stream.state = parse_indentless_sequence_entry
     else
-        if typeof(token) == ScalarToken
+        function parse!(token::ScalarToken)
             forward!(stream.input)
             end_mark = token.span.end_mark
             if (token.plain && tag == nothing) || tag == "!"
@@ -309,36 +309,55 @@ function parse_node(stream::EventStream; block=false, indentless_sequence=false)
             event = ScalarEvent(start_mark, end_mark, anchor, tag, implicit,
                                 token.value, token.style)
             stream.state = pop!(stream.states)
-        elseif typeof(token) == FlowSequenceStartToken
+        end
+
+        function parse!(token::FlowSequenceStartToken)
             end_mark = token.span.end_mark
             event = SequenceStartEvent(start_mark, end_mark, anchor, tag,
                                        implicit, true)
             stream.state = parse_flow_sequence_first_entry
-        elseif typeof(token) == FlowMappingStartToken
+        end
+        function parse!(token::FlowMappingStartToken)
             end_mark = token.span.end_mark
             event = MappingStartEvent(start_mark, end_mark, anchor, tag,
                                       implicit, true)
             stream.state = parse_flow_mapping_first_key
-        elseif block && typeof(token) == BlockSequenceStartToken
+        end
+
+        function parse!(token::BlockSequenceStartToken)
+            if !block 
+                return 
+            end
             end_mark = token.span.start_mark
             event = SequenceStartEvent(start_mark, end_mark, anchor, tag,
                                        implicit, false)
             stream.state = parse_block_sequence_first_entry
-        elseif block && typeof(token) == BlockMappingStartToken
+        end
+    
+        function parse!(token::BlockMappingStartToken)
+            if !block
+                return 
+            end
             end_mark = token.span.start_mark
             event = MappingStartEvent(start_mark, end_mark, anchor, tag,
                                       implicit, false)
             stream.state = parse_block_mapping_first_key
-        elseif anchor !== nothing || tag !== nothing
-            event = ScalarEvent(start_mark, end_mark, anchor, tag,
-                                (implicit, false), "")
-            stream.state = pop!(stream.states)
-        else
-            node = block ? "block" : "flow"
-            throw(ParserError("while parsing a $(node) node", start_mark,
-                    "expected the node content, but found $(typeof(token))",
-                    token.span.start_mark))
         end
+
+        function parse!(token::Any)
+            if anchor !== nothing || tag !== nothing
+                event = ScalarEvent(start_mark, end_mark, anchor, tag,
+                                    (implicit, false), "")
+                stream.state = pop!(stream.states)
+            else
+                node = block ? "block" : "flow"
+                throw(ParserError("while parsing a $(node) node", start_mark,
+                        "expected the node content, but found $(typeof(token))",
+                        token.span.start_mark))
+            end
+        end
+
+        parse!(token)
     end
 
     event
