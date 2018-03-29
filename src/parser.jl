@@ -450,7 +450,8 @@ end
 
 function parse_block_mapping_value(stream::EventStream)
     token = peek(stream.input)
-    if typeof(token) == ValueToken
+
+    function parse!(token::ValueToken)
         forward!(stream.input)
         if !in(typeof(peek(stream.input)), [KeyToken, ValueToken, BlockEndToken])
             push!(stream.states, parse_block_mapping_key)
@@ -459,10 +460,12 @@ function parse_block_mapping_value(stream::EventStream)
             stream.state = parse_block_mapping_key
             process_empty_scalar(stream, token.span.end_mark)
         end
-    else
+    end
+    function parse!(token::Any)
         stream.state = parse_block_mapping_key
         process_empty_scalar(stream, token.span.start_mark)
     end
+    parse!(token)
 end
 
 
