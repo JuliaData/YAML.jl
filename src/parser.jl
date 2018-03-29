@@ -160,7 +160,8 @@ function parse_document_start(stream::EventStream)
 
     # Parse explicit document.
     token = peek(stream.input)
-    if typeof(token) != StreamEndToken
+
+    function parse_start!(token::Any) 
         start_mark = token.span.start_mark
         version, tags = process_directives(stream)
         if typeof(peek(stream.input)) != DocumentStartToken
@@ -173,7 +174,9 @@ function parse_document_start(stream::EventStream)
         push!(stream.states, parse_document_end)
         stream.state = parse_document_content
         event
-    else
+    end
+
+    function parse_start!(token::StreamEndToken)
         # Parse the end of the stream
         token = forward!(stream.input)
         event = StreamEndEvent(token.span.start_mark, token.span.end_mark)
@@ -182,6 +185,8 @@ function parse_document_start(stream::EventStream)
         stream.state = nothing
         event
     end
+
+    parse_start!(token)
 end
 
 
