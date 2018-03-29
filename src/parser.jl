@@ -507,19 +507,25 @@ end
 
 function parse_flow_sequence_entry_mapping_key(stream::EventStream)
     token = forward!(stream.input)
-    if !in(typeof(token), [ValueToken, FlowEntryToken, FlowSequenceEndToken])
-        push!(stream.states, parse_flow_sequence_entry_mapping_value)
-        parse_flow_node(stream)
-    else
+
+    function parse!(token::Union{ValueToken,FlowEntryToken,FlowSequenceEndToken})
         stream.state = parse_flow_sequence_entry_mapping_value
         process_empty_scalar(stream, token.span.end_mark)
     end
+    
+    function parse!(token::Any)
+        push!(stream.states, parse_flow_sequence_entry_mapping_value)
+        parse_flow_node(stream)
+    end
+
+    parse!(token)
 end
 
 
 function parse_flow_sequence_entry_mapping_value(stream::EventStream)
     token = peek(stream.input)
-    if typeof(token) == ValueToken
+
+    function parse!(token::ValueToken)
         forward!(stream.input)
         if !in(typeof(peek(stream.input)), [FlowEntryToken, FlowSequenceEndToken])
             push!(stream.states, parse_flow_sequence_entry_mapping_end)
@@ -528,10 +534,13 @@ function parse_flow_sequence_entry_mapping_value(stream::EventStream)
             stream.state = parse_flow_sequence_entry_mapping_end
             process_empty_scalar(stream, token.span.end_mark)
         end
-    else
+    end
+    function parse!(token::Any)
         stream.state = parse_flow_sequence_entry_mapping_end
         process_empty_scalar(stream, token.span.start_mark)
     end
+
+    parse!(token)
 end
 
 
@@ -588,7 +597,8 @@ end
 
 function parse_flow_mapping_value(stream::EventStream)
     token = peek(stream.input)
-    if typeof(token) == ValueToken
+
+    function parse!(token::ValueToken)
         forward!(stream.input)
         if !in(typeof(peek(stream.input)), [FlowEntryToken, FlowMappingEndToken])
             push!(stream.states, parse_flow_mapping_key)
@@ -597,10 +607,14 @@ function parse_flow_mapping_value(stream::EventStream)
             stream.state = parse_flow_mapping_key
             process_empty_scalar(stream, token.span.end_mark)
         end
-    else
+    end
+
+    function parse!(token::Any)
         stream.state = parse_flow_mapping_key
         process_empty_scalar(stream, token.span.start_mark)
     end
+
+    parse!(token)
 end
 
 
