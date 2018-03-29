@@ -36,11 +36,14 @@ function compose(events)
     composer = Composer(events, Dict{AbstractString, Node}(), Resolver())
     @assert typeof(forward!(composer.input)) == StreamStartEvent
     node = compose_document(composer)
-    if typeof(peek(composer.input)) == StreamEndEvent
-        forward!(composer.input)
-    else
-        @assert typeof(peek(composer.input)) == DocumentStartEvent
+
+    function compose!(input)
+        peeked_value = peek(input)
+        c!!(::StreamEndEvent) = forward!(input)
+        c!!(::Any) = @assert typeof(peek(input)) == DocumentStartEvent
+        c!!(peeked_value)
     end
+    compose!(composer.input)
     node
 end
 
