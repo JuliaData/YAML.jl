@@ -401,13 +401,19 @@ function parse_indentless_sequence_entry(stream::EventStream)
     token = peek(stream.input)
     if typeof(token) == BlockEntryToken
         forward!(stream.input)
-        if !in(typeof(peek(stream.input)), [BlockEntryToken, KeyToken, ValueToken, BlockEndToken])
-            push!(stream.states, parse_indentless_sequence_entry)
-            return parse_block_node(stream)
-        else
+        peeked_value = peek(stream.input)
+
+        function parse!(token::Union{BlockEntryToken, KeyToken, ValueToken, BlockEndToken})
             stream.state = parse_indentless_sequence_entry
-            return process_empty_scalar(stream, token.end_mark)
+            process_empty_scalar(stream, token.end_mark)
         end
+
+        function parse!(token::Any)
+            push!(stream.states, parse_indentless_sequence_entry)
+            parse_block_node(stream)
+        end
+
+        return parse!(peeked_value)
     end
 
     stream.state = pop!(stream.states)
