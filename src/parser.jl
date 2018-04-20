@@ -4,12 +4,12 @@ include("events.jl")
 const DEFAULT_TAGS = Dict{AbstractString,AbstractString}("!" => "!", "!!" => "tag:yaml.org,2002:")
 
 
-immutable ParserError
-    context::Union{AbstractString, Void}
-    context_mark::Union{Mark, Void}
-    problem::Union{AbstractString, Void}
-    problem_mark::Union{Mark, Void}
-    note::Union{AbstractString, Void}
+struct ParserError
+    context::Union{AbstractString, Nothing}
+    context_mark::Union{Mark, Nothing}
+    problem::Union{AbstractString, Nothing}
+    problem_mark::Union{Mark, Nothing}
+    note::Union{AbstractString, Nothing}
 
     function ParserError(context=nothing, context_mark=nothing,
                          problem=nothing, problem_mark=nothing,
@@ -26,15 +26,15 @@ function show(io::IO, error::ParserError)
 end
 
 
-type EventStream
+mutable struct EventStream
     input::TokenStream
-    next_event::Union{Event, Void}
-    state::Union{Function, Void}
+    next_event::Union{Event, Nothing}
+    state::Union{Function, Nothing}
     states::Vector{Function}
     marks::Vector{Mark}
-    yaml_version::Union{Tuple, Void}
+    yaml_version::Union{Tuple, Nothing}
     tag_handles::Dict{AbstractString, AbstractString}
-    end_of_stream::Union{StreamEndEvent, Void}
+    end_of_stream::Union{StreamEndEvent, Nothing}
 
     function EventStream(input::TokenStream)
         new(input, nothing, parse_stream_start, Function[], Mark[],

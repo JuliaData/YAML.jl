@@ -5,110 +5,110 @@
 
 
 # The '%YAML' directive.
-immutable DirectiveToken <: Token
+struct DirectiveToken <: Token
     span::Span
     name::AbstractString
-    value::Union{Tuple, Void}
+    value::Union{Tuple, Nothing}
 end
 
 # '---'
-immutable DocumentStartToken <: Token
+struct DocumentStartToken <: Token
     span::Span
 end
 
 # '...'
-immutable DocumentEndToken <: Token
+struct DocumentEndToken <: Token
     span::Span
 end
 
 # The stream start
-immutable StreamStartToken <: Token
+struct StreamStartToken <: Token
     span::Span
     encoding::AbstractString
 end
 
 # The stream end
-immutable StreamEndToken <: Token
+struct StreamEndToken <: Token
     span::Span
 end
 
 #
-immutable BlockSequenceStartToken <: Token
+struct BlockSequenceStartToken <: Token
     span::Span
 end
 
 #
-immutable BlockMappingStartToken <: Token
+struct BlockMappingStartToken <: Token
     span::Span
 end
 
 #
-immutable BlockEndToken <: Token
+struct BlockEndToken <: Token
     span::Span
 end
 
 # '['
-immutable FlowSequenceStartToken <: Token
+struct FlowSequenceStartToken <: Token
     span::Span
 end
 
 # '{'
-immutable FlowMappingStartToken <: Token
+struct FlowMappingStartToken <: Token
     span::Span
 end
 
 # ']'
-immutable FlowSequenceEndToken <: Token
+struct FlowSequenceEndToken <: Token
     span::Span
 end
 
 # '}'
-immutable FlowMappingEndToken <: Token
+struct FlowMappingEndToken <: Token
     span::Span
 end
 
 # '?' or nothing (simple keys).
-immutable KeyToken <: Token
+struct KeyToken <: Token
     span::Span
 end
 
 # ':'
-immutable ValueToken <: Token
+struct ValueToken <: Token
     span::Span
 end
 
 # '-'
-immutable BlockEntryToken <: Token
+struct BlockEntryToken <: Token
     span::Span
 end
 
 # ','
-immutable FlowEntryToken <: Token
+struct FlowEntryToken <: Token
     span::Span
 end
 
 # '*anchor'
-immutable AliasToken <: Token
+struct AliasToken <: Token
     span::Span
     value::AbstractString
 end
 
 # '&anchor'
-immutable AnchorToken <: Token
+struct AnchorToken <: Token
     span::Span
     value::AbstractString
 end
 
 # '!handle!suffix'
-immutable TagToken <: Token
+struct TagToken <: Token
     span::Span
     value
 end
 
 # A scalar.
-immutable ScalarToken <: Token
+struct ScalarToken <: Token
     span::Span
     value::AbstractString
     plain::Bool
-    style::Union{Char, Void}
+    style::Union{Char, Nothing}
 end

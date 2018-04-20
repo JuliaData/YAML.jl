@@ -1,25 +1,25 @@
 
 @compat abstract type Event end
 
-immutable StreamStartEvent <: Event
+struct StreamStartEvent <: Event
     start_mark::Mark
     end_mark::Mark
     encoding::AbstractString
 end
 
 
-immutable StreamEndEvent <: Event
+struct StreamEndEvent <: Event
     start_mark::Mark
     end_mark::Mark
 end
 
 
-immutable DocumentStartEvent <: Event
+struct DocumentStartEvent <: Event
     start_mark::Mark
     end_mark::Mark
     explicit::Bool
-    version::Union{Tuple, Void}
-    tags::Union{Dict{AbstractString, AbstractString}, Void}
+    version::Union{Tuple, Nothing}
+    tags::Union{Dict{AbstractString, AbstractString}, Nothing}
 
     function DocumentStartEvent(start_mark::Mark,end_mark::Mark,
                                 explicit::Bool, version=nothing,
@@ -29,58 +29,58 @@ immutable DocumentStartEvent <: Event
 end
 
 
-immutable DocumentEndEvent <: Event
+struct DocumentEndEvent <: Event
     start_mark::Mark
     end_mark::Mark
     explicit::Bool
 end
 
 
-immutable AliasEvent <: Event
+struct AliasEvent <: Event
     start_mark::Mark
     end_mark::Mark
-    anchor::Union{AbstractString, Void}
+    anchor::Union{AbstractString, Nothing}
 end
 
 
-immutable ScalarEvent <: Event
+struct ScalarEvent <: Event
     start_mark::Mark
     end_mark::Mark
-    anchor::Union{AbstractString, Void}
-    tag::Union{AbstractString, Void}
+    anchor::Union{AbstractString, Nothing}
+    tag::Union{AbstractString, Nothing}
     implicit::Tuple
     value::AbstractString
-    style::Union{Char, Void}
+    style::Union{Char, Nothing}
 end
 
 
-immutable SequenceStartEvent <: Event
+struct SequenceStartEvent <: Event
     start_mark::Mark
     end_mark::Mark
-    anchor::Union{AbstractString, Void}
-    tag::Union{AbstractString, Void}
+    anchor::Union{AbstractString, Nothing}
+    tag::Union{AbstractString, Nothing}
     implicit::Bool
     flow_style::Bool
 end
 
 
-immutable SequenceEndEvent <: Event
+struct SequenceEndEvent <: Event
     start_mark::Mark
     end_mark::Mark
 end
 
 
-immutable MappingStartEvent <: Event
+struct MappingStartEvent <: Event
     start_mark::Mark
     end_mark::Mark
-    anchor::Union{AbstractString, Void}
-    tag::Union{AbstractString, Void}
+    anchor::Union{AbstractString, Nothing}
+    tag::Union{AbstractString, Nothing}
     implicit::Bool
     flow_style::Bool
 end
 
 
-immutable MappingEndEvent <: Event
+struct MappingEndEvent <: Event
     start_mark::Mark
     end_mark::Mark
 end

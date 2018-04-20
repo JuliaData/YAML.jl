@@ -58,7 +58,7 @@ const default_implicit_resolvers =
     ]
 
 
-type Resolver
+mutable struct Resolver
     implicit_resolvers::Vector
 
     function Resolver()
@@ -70,7 +70,7 @@ end
 function resolve(resolver::Resolver, ::Type{ScalarNode}, value, implicit)
     if implicit[1]
         for (tag, pat) in resolver.implicit_resolvers
-            if ismatch(pat, value)
+            if occursin(pat, value)
                 return tag
             end
         end

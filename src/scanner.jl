@@ -1,9 +1,19 @@
 
+using Compat.Printf
+
 include("queue.jl")
 include("buffered_input.jl")
 
+if VERSION < v"0.7.0-DEV.2915"
+    isnumeric(c::Char) = isnumber(c)
+end
+
+if VERSION < v"0.7.0-DEV.3526"
+    Base.parse(T::Type{<:Integer}, s; base = base) = parse(T, s, base)
+end
+
 # Position within the document being parsed
-immutable Mark
+struct Mark
     index::UInt64
     line::UInt64
     column::UInt64
@@ -16,13 +26,13 @@ end
 
 
 # Where in the stream a particular token lies.
-immutable Span
+struct Span
     start_mark::Mark
     end_mark::Mark
 end
 
 
-immutable SimpleKey
+struct SimpleKey
     token_number::UInt64
     required::Bool
     mark::Mark
@@ -30,9 +40,9 @@ end
 
 
 # Errors thrown by the scanner.
-immutable ScannerError <: Exception
-    context::Union{AbstractString, Void}
-    context_mark::Union{Mark, Void}
+struct ScannerError <: Exception
+    context::Union{AbstractString, Nothing}
+    context_mark::Union{Mark, Nothing}
     problem::AbstractString
     problem_mark::Mark
 end
@@ -49,7 +59,7 @@ include("tokens.jl")
 
 
 # A stream type for the scanner, which is just a IO stream with scanner state.
-type TokenStream
+mutable struct TokenStream
     input::BufferedInput
 
     # All tokens read.
@@ -101,7 +111,7 @@ type TokenStream
     function TokenStream(stream::IO)
         tokstream = new(BufferedInput(stream), false, Queue{Token}(),
                         1, 0, 1, 0, 0, -1,
-                        Vector{Int}(0), true, Dict())
+                        Vector{Int}(undef, 0), true, Dict())
         fetch_stream_start(tokstream)
         tokstream
     end
@@ -812,7 +822,7 @@ end
 function scan_directive_name(stream::TokenStream, start_mark::Mark)
     length = 0
     c = peek(stream.input)
-    while isalnum(c) || c == '-' || c == '_'
+    while isalpha(c) || isnumeric(c) || c == '-' || c == '_'
         length += 1
         c = peek(stream.input, length)
     end
@@ -935,7 +945,7 @@ function scan_anchor(stream::TokenStream, tokentype)
     forwardchars!(stream)
     length = 0
     c = peek(stream.input)
-    while isalnum(c) || c == '-' || c == '_'
+    while isalpha(c) || isnumeric(c) || c == '-' || c == '_'
         length += 1
         c = peek(stream.input, length)
     end
@@ -1254,7 +1264,7 @@ function scan_flow_scalar_non_spaces(stream::TokenStream, double::Bool,
                                            get_mark(stream)))
                     end
                 end
-                push!(chunks, Char(parse(Int, prefix(stream.input, length), 16)))
+                push!(chunks, Char(parse(Int, prefix(stream.input, length), base = 16)))
                 forwardchars!(stream, length)
             elseif in(c, "\r\n\u0085\u2028\u2029")
                 scan_line_break(stream)
@@ -1448,7 +1458,7 @@ function scan_tag_handle(stream::TokenStream, name::AbstractString, start_mark::
     length = 1
     c = peek(stream.input, length)
     if c != ' '
-        while isalnum(c) || c == '-' || c == '_'
+        while isalpha(c) || isnumeric(c) || c == '-' || c == '_'
             length += 1
             c = peek(stream.input, length)
         end
@@ -1472,7 +1482,7 @@ function scan_tag_uri(stream::TokenStream, name::AbstractString, start_mark::Mar
     chunks = Any[]
     length = 0
     c = peek(stream.input, length)
-    while isalnum(c) || in(c, "-;/?:@&=+\$,_.!~*\'()[]%")
+    while isalpha(c) || isnumeric(c) || in(c, "-;/?:@&=+\$,_.!~*\'()[]%")
         if c == '%'
             push!(chunks, prefix(stream.input, length))
             forwardchars!(stream, length)

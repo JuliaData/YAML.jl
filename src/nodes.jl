@@ -1,28 +1,28 @@
 
 @compat abstract type Node end
 
-type ScalarNode <: Node
+mutable struct ScalarNode <: Node
     tag::AbstractString
     value::AbstractString
-    start_mark::Union{Mark, Void}
-    end_mark::Union{Mark, Void}
-    style::Union{Char, Void}
+    start_mark::Union{Mark, Nothing}
+    end_mark::Union{Mark, Nothing}
+    style::Union{Char, Nothing}
 end
 
 
-type SequenceNode <: Node
+mutable struct SequenceNode <: Node
     tag::AbstractString
     value::Vector
-    start_mark::Union{Mark, Void}
-    end_mark::Union{Mark, Void}
+    start_mark::Union{Mark, Nothing}
+    end_mark::Union{Mark, Nothing}
     flow_style::Bool
 end
 
 
-type MappingNode <: Node
+mutable struct MappingNode <: Node
     tag::AbstractString
     value::Vector
-    start_mark::Union{Mark, Void}
-    end_mark::Union{Mark, Void}
+    start_mark::Union{Mark, Nothing}
+    end_mark::Union{Mark, Nothing}
     flow_style::Bool
 end
