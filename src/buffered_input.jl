@@ -4,14 +4,14 @@
 # ahead by maintaining a typically quite small buffer of a few characters.
 
 
-type BufferedInput
+mutable struct BufferedInput
     input::IO
     buffer::Vector{Char}
     offset::UInt64
     avail::UInt64
 
     function BufferedInput(input::IO)
-        return new(input, Vector{Char}(0), 0, 0)
+        return new(input, Vector{Char}(undef, 0), 0, 0)
     end
 end
 

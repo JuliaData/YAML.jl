@@ -1,4 +1,4 @@
-VERSION >= v"0.4-" && __precompile__()
+__precompile__(true)
 
 module YAML
 
@@ -13,7 +13,7 @@ include("parser.jl")
 include("composer.jl")
 include("constructor.jl")
 
-const _constructor = Union{Void,Dict}
+const _constructor = Union{Nothing, Dict}
 
 function load(ts::TokenStream, more_constructors::_constructor=nothing)
     events = EventStream(ts)
@@ -25,7 +25,7 @@ function load(input::IO, more_constructors::_constructor=nothing)
     load(TokenStream(input), more_constructors)
 end
 
-type YAMLDocIterator
+mutable struct YAMLDocIterator
     input::IO
     ts::TokenStream
     more_constructors::_constructor

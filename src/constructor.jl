@@ -1,11 +1,12 @@
 
+using Compat.Dates
 
-immutable ConstructorError
-    context::Union{AbstractString, Void}
-    context_mark::Union{Mark, Void}
-    problem::Union{AbstractString, Void}
-    problem_mark::Union{Mark, Void}
-    note::Union{AbstractString, Void}
+struct ConstructorError
+    context::Union{AbstractString, Nothing}
+    context_mark::Union{Mark, Nothing}
+    problem::Union{AbstractString, Nothing}
+    problem_mark::Union{Mark, Nothing}
+    note::Union{AbstractString, Nothing}
 
     function ConstructorError(context=nothing, context_mark=nothing,
                               problem=nothing, problem_mark=nothing,
@@ -23,11 +24,11 @@ function show(io::IO, error::ConstructorError)
 end
 
 
-type Constructor
+mutable struct Constructor
     constructed_objects::Dict{Node, Any}
     recursive_objects::Set{Node}
     deep_construct::Bool
-    yaml_constructors::Dict{Union{AbstractString, Void}, Function}
+    yaml_constructors::Dict{Union{AbstractString, Nothing}, Function}
 
     function Constructor(more_constructors::Dict{AbstractString,Function})
         new(Dict{Node, Any}(), Set{Node}(), false,
@@ -36,7 +37,7 @@ type Constructor
 end
 
 Constructor() = Constructor(Dict{AbstractString,Function}())
-Constructor(::Void) = Constructor(Dict{AbstractString,Function}())
+Constructor(::Nothing) = Constructor(Dict{AbstractString,Function}())
 
 function construct_document(constructor::Constructor, node::Node)
     data = construct_object(constructor, node)
@@ -183,7 +184,7 @@ end
 
 function construct_yaml_int(constructor::Constructor, node::Node)
     value = string(construct_scalar(constructor, node))
-    value = lowercase(replace(value, "_", ""))
+    value = lowercase(replace(value, "_" => ""))
 
     if in(':', value)
         # TODO
@@ -194,18 +195,18 @@ function construct_yaml_int(constructor::Constructor, node::Node)
     end
 
     if length(value) > 2 && value[1] == '0' && (value[2] == 'x' || value[2] == 'X')
-        return parse(Int, value[3:end], 16)
+        return parse(Int, value[3:end], base = 16)
     elseif length(value) > 1 && value[1] == '0'
-        return parse(Int, value, 8)
+        return parse(Int, value, base = 8)
     else
-        return parse(Int, value, 10)
+        return parse(Int, value, base = 10)
     end
 end
 
 
 function construct_yaml_float(constructor::Constructor, node::Node)
     value = string(construct_scalar(constructor, node))
-    value = lowercase(replace(value, "_", ""))
+    value = lowercase(replace(value, "_" => ""))
 
     if in(':', value)
         # TODO
@@ -349,11 +350,11 @@ end
 
 
 function construct_yaml_binary(constructor::Constructor, node::Node)
-    value = replace(string(construct_scalar(constructor, node)), "\n", "")
+    value = replace(string(construct_scalar(constructor, node)), "\n" => "")
     Codecs.decode(Codecs.Base64, value)
 end
 
-const default_yaml_constructors = Dict{Union{AbstractString, Void}, Function}(
+const default_yaml_constructors = Dict{Union{AbstractString, Nothing}, Function}(
         "tag:yaml.org,2002:null"      => construct_yaml_null,
         "tag:yaml.org,2002:bool"      => construct_yaml_bool,
         "tag:yaml.org,2002:int"       => construct_yaml_int,
