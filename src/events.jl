@@ -1,5 +1,5 @@
 
-@compat abstract type Event end
+abstract type Event end
 
 struct StreamStartEvent <: Event
     start_mark::Mark

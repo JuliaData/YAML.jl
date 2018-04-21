@@ -1,7 +1,7 @@
 
 # YAML Tokens.
 # Each token must include at minimum member "span::Span".
-@compat abstract type Token end
+abstract type Token end
 
 
 # The '%YAML' directive.

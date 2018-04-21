@@ -5,8 +5,16 @@ module YAML
 import Base: start, next, done, isempty, length, show
 import Codecs
 using Compat
-import Compat: AbstractString
-import Compat: Iterators
+using Compat.Dates
+using Compat.Printf
+
+if VERSION < v"0.7.0-DEV.2915"
+    isnumeric(c::Char) = isnumber(c)
+end
+
+if VERSION < v"0.7.0-DEV.3526"
+    Base.parse(T::Type{<:Integer}, s; base = base) = parse(T, s, base)
+end
 
 include("scanner.jl")
 include("parser.jl")

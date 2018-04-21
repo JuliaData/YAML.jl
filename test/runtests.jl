@@ -4,7 +4,6 @@ module YAMLTests
 
 import YAML
 using Compat.Test
-using Compat.Dates
 
 const tests = [
     "spec-02-01",

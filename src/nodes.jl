@@ -1,5 +1,5 @@
 
-@compat abstract type Node end
+abstract type Node end
 
 mutable struct ScalarNode <: Node
     tag::AbstractString
