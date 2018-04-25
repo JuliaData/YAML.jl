@@ -1,16 +1,6 @@
 
-using Compat.Printf
-
 include("queue.jl")
 include("buffered_input.jl")
-
-if VERSION < v"0.7.0-DEV.2915"
-    isnumeric(c::Char) = isnumber(c)
-end
-
-if VERSION < v"0.7.0-DEV.3526"
-    Base.parse(T::Type{<:Integer}, s; base = base) = parse(T, s, base)
-end
 
 # Position within the document being parsed
 struct Mark
