@@ -812,7 +812,7 @@ end
 function scan_directive_name(stream::TokenStream, start_mark::Mark)
     length = 0
     c = peek(stream.input)
-    while isalpha(c) || isnumeric(c) || c == '-' || c == '_'
+    while isletter(c) || isnumeric(c) || c == '-' || c == '_'
         length += 1
         c = peek(stream.input, length)
     end
@@ -935,7 +935,7 @@ function scan_anchor(stream::TokenStream, tokentype)
     forwardchars!(stream)
     length = 0
     c = peek(stream.input)
-    while isalpha(c) || isnumeric(c) || c == '-' || c == '_'
+    while isletter(c) || isnumeric(c) || c == '-' || c == '_'
         length += 1
         c = peek(stream.input, length)
     end
@@ -1448,7 +1448,7 @@ function scan_tag_handle(stream::TokenStream, name::AbstractString, start_mark::
     length = 1
     c = peek(stream.input, length)
     if c != ' '
-        while isalpha(c) || isnumeric(c) || c == '-' || c == '_'
+        while isletter(c) || isnumeric(c) || c == '-' || c == '_'
             length += 1
             c = peek(stream.input, length)
         end
@@ -1472,7 +1472,7 @@ function scan_tag_uri(stream::TokenStream, name::AbstractString, start_mark::Mar
     chunks = Any[]
     length = 0
     c = peek(stream.input, length)
-    while isalpha(c) || isnumeric(c) || in(c, "-;/?:@&=+\$,_.!~*\'()[]%")
+    while isletter(c) || isnumeric(c) || in(c, "-;/?:@&=+\$,_.!~*\'()[]%")
         if c == '%'
             push!(chunks, prefix(stream.input, length))
             forwardchars!(stream, length)
