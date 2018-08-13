@@ -2,10 +2,10 @@ __precompile__(true)
 
 module YAML
 
-import Base: start, next, isempty, length, show
+import Base: isempty, length, show
 
 if VERSION < v"1.0.0-rc1.0"
-    import Base: done
+    import Base: start, next, done
 else
     import Base: iterate
 end
