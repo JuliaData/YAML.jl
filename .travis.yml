@@ -17,4 +17,4 @@ script:
     - julia -e 'if VERSION >= v"0.7" using Pkg; Pkg.build() else Pkg.clone(pwd()) end'
     - julia -e 'if VERSION >= v"0.7" using Pkg end; Pkg.test("YAML", coverage=true)'
 after_success:
-    - julia -e 'if VERSION >= v"0.7" using Pkg end; cd(Pkg.dir("YAML")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
+    - julia -e 'if VERSION >= v"0.7" using Pkg end; cd(Pkg.dir("YAML")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
