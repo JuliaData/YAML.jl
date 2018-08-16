@@ -1,6 +1,6 @@
 name = "YAML"
 uuid = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
-version = "0.2.2"
+version = "0.3.0"
 
 [deps]
 Codecs = "19ecbf4d-ef7c-5e4b-b54a-0a0ff23c5aed"
