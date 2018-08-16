@@ -2,7 +2,14 @@ __precompile__(true)
 
 module YAML
 
-import Base: start, next, done, isempty, length, show
+import Base: isempty, length, show
+
+if VERSION < v"1.0.0-rc1.0"
+    import Base: start, next, done
+else
+    import Base: iterate
+end
+
 import Codecs
 using Compat
 using Compat.Dates
@@ -46,6 +53,7 @@ mutable struct YAMLDocIterator
     end
 end
 
+# Old iteration protocol:
 
 start(it::YAMLDocIterator) = nothing
 
@@ -61,6 +69,11 @@ function next(it::YAMLDocIterator, state)
 end
 
 done(it::YAMLDocIterator, state) = it.next_doc === nothing
+
+# 0.7 iteration protocol:
+
+iterate(it::YAMLDocIterator) = next(it, start(it))
+iterate(it::YAMLDocIterator, s) = done(it, s) ? nothing : next(it, s)
 
 function load_all(input::IO, more_constructors::_constructor=nothing)
     YAMLDocIterator(input, more_constructors)
