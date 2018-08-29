@@ -20,7 +20,7 @@ if VERSION < v"0.7.0-DEV.2915"
 end
 
 if VERSION < v"0.7.0-DEV.3526"
-    Base.parse(T::Type{<:Integer}, s; base = base) = parse(T, s, base)
+    Base.parse(T::Type{Int}, s::AbstractString; base = 10) = parse(T, s, base)
 end
 
 include("scanner.jl")
