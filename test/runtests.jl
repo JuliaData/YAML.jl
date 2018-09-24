@@ -39,7 +39,8 @@ const tests = [
     "issue39",
     "cartesian",
     "ar1",
-    "ar1_cartesian"
+    "ar1_cartesian",
+    "merge-01"
 ]
 
 
