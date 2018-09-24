@@ -126,7 +126,7 @@ function flatten_mapping(node::MappingNode)
     while index <= length(node.value)
         key_node, value_node = node.value[index]
         if key_node.tag == "tag:yaml.org,2002:merge"
-            node.value = node.value[setdiff(indices(node.value, 1), index)]
+            node.value = node.value[setdiff(Compat.axes(node.value, 1), index)]
             if typeof(value_node) == MappingNode
                 flatten_mapping(value_node)
                 append!(merge, value_node.value)
