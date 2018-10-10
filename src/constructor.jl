@@ -126,7 +126,26 @@ function flatten_mapping(node::MappingNode)
     while index <= length(node.value)
         key_node, value_node = node.value[index]
         if key_node.tag == "tag:yaml.org,2002:merge"
-            # TODO: stuff
+            node.value = node.value[setdiff(Compat.axes(node.value, 1), index)]
+            if typeof(value_node) == MappingNode
+                flatten_mapping(value_node)
+                append!(merge, value_node.value)
+            elseif typeof(value_node) == SequenceNode
+                submerge = []
+                for subnode in value_node.value
+                    if typeof(subnode) != MappingNode
+                        throw(ConstructorError("while constructing a mapping",
+                                               node.start_mark,
+                                               "expected a mapping node, but found $(typeof(subnode))",
+                                               subnode.start_mark))
+                    end
+                    flatten_mapping(subnode)
+                    push!(submerge, subnode.value)
+                    for value in reverse(submerge)
+                        append!(merge, value)
+                    end
+                end
+            end
         elseif key_node.tag == "tag:yaml.org,2002:value"
             key_node.tag = "tag:yaml.org,2002:str"
             index += 1
