@@ -96,7 +96,7 @@ mutable struct TokenStream
     #   (token_number, required, index, line, column, mark)
     # A simple key may start with ALIAS, ANCHOR, TAG, SCALAR(flow),
     # '[', or '{' tokens.
-    possible_simple_keys::Dict
+    possible_simple_keys::Dict{UInt64,SimpleKey}
 
     function TokenStream(stream::IO)
         tokstream = new(BufferedInput(stream), false, Queue{Token}(),
