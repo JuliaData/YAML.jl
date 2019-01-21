@@ -46,7 +46,7 @@ function construct_document(constructor::Constructor, node::Node)
 end
 
 
-function construct_object(constructor::Constructor, node::Node; deep=false)
+function construct_object(constructor::Constructor, node::Node, deep=false)
     if haskey(constructor.constructed_objects, node)
         return constructor.constructed_objects[node]
     end
@@ -109,14 +109,14 @@ function construct_scalar(constructor::Constructor, node::Node)
 end
 
 
-function construct_sequence(constructor::Constructor, node::Node; deep=false)
+function construct_sequence(constructor::Constructor, node::Node, deep=false)
     if typeof(node) != SequenceNode
         throw(ConstructorError(nothing, nothing,
                                "expected a sequence node, but found $(typeof(node))",
                                node.start_mark))
     end
 
-    [construct_object(constructor, child, deep=deep) for child in node.value]
+    [construct_object(constructor, child, deep) for child in node.value]
 end
 
 
@@ -160,7 +160,7 @@ function flatten_mapping(node::MappingNode)
 end
 
 
-function construct_mapping(constructor::Constructor, node::Node; deep=false)
+function construct_mapping(constructor::Constructor, node::Node, deep=false)
     if typeof(node) != MappingNode
         throw(ConstructorError(nothing, nothing,
                                "expected a mapping node, but found $(typeof(node))",
@@ -170,8 +170,8 @@ function construct_mapping(constructor::Constructor, node::Node; deep=false)
     flatten_mapping(node)
     mapping = Dict()
     for (key_node, value_node) in node.value
-        key = construct_object(constructor, key_node, deep=deep)
-        value = construct_object(constructor, value_node, deep=deep)
+        key = construct_object(constructor, key_node, deep)
+        value = construct_object(constructor, value_node, deep)
         mapping[key] = value
     end
     mapping

@@ -214,7 +214,7 @@ end
 
 
 function parse_block_node(stream::EventStream)
-    parse_node(stream, block=true)
+    parse_node(stream, true)
 end
 
 
@@ -224,11 +224,11 @@ end
 
 
 function parse_block_node_or_indentless_sequence(stream::EventStream)
-    parse_node(stream, block=true, indentless_sequence=true)
+    parse_node(stream, true, true)
 end
 
 
-function parse_node(stream::EventStream; block=false, indentless_sequence=false)
+function parse_node(stream::EventStream, block=false, indentless_sequence=false)
     token = peek(stream.input)
     if typeof(token) == AliasToken
         forward!(stream.input)
@@ -445,11 +445,11 @@ end
 function parse_flow_sequence_first_entry(stream::EventStream)
     token = forward!(stream.input)
     push!(stream.marks, token.span.start_mark)
-    parse_flow_sequence_entry(stream, first_entry=true)
+    parse_flow_sequence_entry(stream, true)
 end
 
 
-function parse_flow_sequence_entry(stream::EventStream; first_entry=false)
+function parse_flow_sequence_entry(stream::EventStream, first_entry=false)
     token = peek(stream.input)
     if typeof(token) != FlowSequenceEndToken
         if !first_entry
@@ -521,11 +521,11 @@ end
 function parse_flow_mapping_first_key(stream::EventStream)
     token = forward!(stream.input)
     push!(stream.marks, token.span.start_mark)
-    parse_flow_mapping_key(stream, first_entry=true)
+    parse_flow_mapping_key(stream, true)
 end
 
 
-function parse_flow_mapping_key(stream::EventStream; first_entry=false)
+function parse_flow_mapping_key(stream::EventStream, first_entry=false)
     token = peek(stream.input)
     if typeof(token) != FlowMappingEndToken
         if !first_entry
