@@ -4,11 +4,11 @@ include("resolver.jl")
 
 
 struct ComposerError
-    context::Union{AbstractString, Nothing}
+    context::Union{String, Nothing}
     context_mark::Union{Mark, Nothing}
-    problem::Union{AbstractString, Nothing}
+    problem::Union{String, Nothing}
     problem_mark::Union{Mark, Nothing}
-    note::Union{AbstractString, Nothing}
+    note::Union{String, Nothing}
 
     function ComposerError(context=nothing, context_mark=nothing,
                            problem=nothing, problem_mark=nothing,
@@ -27,13 +27,13 @@ end
 
 mutable struct Composer
     input::EventStream
-    anchors::Dict{AbstractString, Node}
+    anchors::Dict{String, Node}
     resolver::Resolver
 end
 
 
 function compose(events)
-    composer = Composer(events, Dict{AbstractString, Node}(), Resolver())
+    composer = Composer(events, Dict{String, Node}(), Resolver())
     @assert typeof(forward!(composer.input)) == StreamStartEvent
     node = compose_document(composer)
     if typeof(peek(composer.input)) == StreamEndEvent
@@ -90,7 +90,7 @@ function compose_node(composer::Composer, parent::Union{Node, Nothing},
 end
 
 
-function compose_scalar_node(composer::Composer, anchor::Union{AbstractString, Nothing})
+function compose_scalar_node(composer::Composer, anchor::Union{String, Nothing})
     event = forward!(composer.input)
     tag = event.tag
     if tag === nothing || tag == "!"
@@ -108,7 +108,7 @@ function compose_scalar_node(composer::Composer, anchor::Union{AbstractString, N
 end
 
 
-function compose_sequence_node(composer::Composer, anchor::Union{AbstractString, Nothing})
+function compose_sequence_node(composer::Composer, anchor::Union{String, Nothing})
     start_event = forward!(composer.input)
     tag = start_event.tag
     if tag === nothing || tag == "!"
@@ -135,7 +135,7 @@ function compose_sequence_node(composer::Composer, anchor::Union{AbstractString,
 end
 
 
-function compose_mapping_node(composer::Composer, anchor::Union{AbstractString, Nothing})
+function compose_mapping_node(composer::Composer, anchor::Union{String, Nothing})
     start_event = forward!(composer.input)
     tag = start_event.tag
     if tag === nothing || tag == "!"
