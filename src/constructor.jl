@@ -1,10 +1,10 @@
 
 struct ConstructorError
-    context::Union{AbstractString, Nothing}
+    context::Union{String, Nothing}
     context_mark::Union{Mark, Nothing}
-    problem::Union{AbstractString, Nothing}
+    problem::Union{String, Nothing}
     problem_mark::Union{Mark, Nothing}
-    note::Union{AbstractString, Nothing}
+    note::Union{String, Nothing}
 
     function ConstructorError(context=nothing, context_mark=nothing,
                               problem=nothing, problem_mark=nothing,
@@ -26,16 +26,16 @@ mutable struct Constructor
     constructed_objects::Dict{Node, Any}
     recursive_objects::Set{Node}
     deep_construct::Bool
-    yaml_constructors::Dict{Union{AbstractString, Nothing}, Function}
+    yaml_constructors::Dict{Union{String, Nothing}, Function}
 
-    function Constructor(more_constructors::Dict{AbstractString,Function})
+    function Constructor(more_constructors::Dict{String,Function})
         new(Dict{Node, Any}(), Set{Node}(), false,
             merge(copy(default_yaml_constructors), more_constructors))
     end
 end
 
-Constructor() = Constructor(Dict{AbstractString,Function}())
-Constructor(::Nothing) = Constructor(Dict{AbstractString,Function}())
+Constructor() = Constructor(Dict{String,Function}())
+Constructor(::Nothing) = Constructor(Dict{String,Function}())
 
 function construct_document(constructor::Constructor, node::Node)
     data = construct_object(constructor, node)
@@ -46,7 +46,7 @@ function construct_document(constructor::Constructor, node::Node)
 end
 
 
-function construct_object(constructor::Constructor, node::Node; deep=false)
+function construct_object(constructor::Constructor, node::Node, deep=false)
     if haskey(constructor.constructed_objects, node)
         return constructor.constructed_objects[node]
     end
@@ -109,14 +109,14 @@ function construct_scalar(constructor::Constructor, node::Node)
 end
 
 
-function construct_sequence(constructor::Constructor, node::Node; deep=false)
+function construct_sequence(constructor::Constructor, node::Node, deep=false)
     if typeof(node) != SequenceNode
         throw(ConstructorError(nothing, nothing,
                                "expected a sequence node, but found $(typeof(node))",
                                node.start_mark))
     end
 
-    [construct_object(constructor, child, deep=deep) for child in node.value]
+    [construct_object(constructor, child, deep) for child in node.value]
 end
 
 
@@ -160,7 +160,7 @@ function flatten_mapping(node::MappingNode)
 end
 
 
-function construct_mapping(constructor::Constructor, node::Node; deep=false)
+function construct_mapping(constructor::Constructor, node::Node, deep=false)
     if typeof(node) != MappingNode
         throw(ConstructorError(nothing, nothing,
                                "expected a mapping node, but found $(typeof(node))",
@@ -170,8 +170,8 @@ function construct_mapping(constructor::Constructor, node::Node; deep=false)
     flatten_mapping(node)
     mapping = Dict()
     for (key_node, value_node) in node.value
-        key = construct_object(constructor, key_node, deep=deep)
-        value = construct_object(constructor, value_node, deep=deep)
+        key = construct_object(constructor, key_node, deep)
+        value = construct_object(constructor, value_node, deep)
         mapping[key] = value
     end
     mapping
@@ -207,7 +207,7 @@ function construct_yaml_int(constructor::Constructor, node::Node)
         # TODO
         #throw(ConstructorError(nothing, nothing,
             #"sexagesimal integers not yet implemented", node.start_mark))
-        warn("sexagesimal integers not yet implemented. Returning AbstractString.")
+        warn("sexagesimal integers not yet implemented. Returning String.")
         return value
     end
 
@@ -229,7 +229,7 @@ function construct_yaml_float(constructor::Constructor, node::Node)
         # TODO
         # throw(ConstructorError(nothing, nothing,
         #     "sexagesimal floats not yet implemented", node.start_mark))
-        warn("sexagesimal floats not yet implemented. Returning AbstractString.")
+        warn("sexagesimal floats not yet implemented. Returning String.")
         return value
     end
 
@@ -371,7 +371,7 @@ function construct_yaml_binary(constructor::Constructor, node::Node)
     Codecs.decode(Codecs.Base64, value)
 end
 
-const default_yaml_constructors = Dict{Union{AbstractString, Nothing}, Function}(
+const default_yaml_constructors = Dict{Union{String, Nothing}, Function}(
         "tag:yaml.org,2002:null"      => construct_yaml_null,
         "tag:yaml.org,2002:bool"      => construct_yaml_bool,
         "tag:yaml.org,2002:int"       => construct_yaml_int,

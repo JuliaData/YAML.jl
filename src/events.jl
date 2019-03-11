@@ -4,7 +4,7 @@ abstract type Event end
 struct StreamStartEvent <: Event
     start_mark::Mark
     end_mark::Mark
-    encoding::AbstractString
+    encoding::String
 end
 
 
@@ -19,7 +19,7 @@ struct DocumentStartEvent <: Event
     end_mark::Mark
     explicit::Bool
     version::Union{Tuple, Nothing}
-    tags::Union{Dict{AbstractString, AbstractString}, Nothing}
+    tags::Union{Dict{String, String}, Nothing}
 
     function DocumentStartEvent(start_mark::Mark,end_mark::Mark,
                                 explicit::Bool, version=nothing,
@@ -39,17 +39,17 @@ end
 struct AliasEvent <: Event
     start_mark::Mark
     end_mark::Mark
-    anchor::Union{AbstractString, Nothing}
+    anchor::Union{String, Nothing}
 end
 
 
 struct ScalarEvent <: Event
     start_mark::Mark
     end_mark::Mark
-    anchor::Union{AbstractString, Nothing}
-    tag::Union{AbstractString, Nothing}
+    anchor::Union{String, Nothing}
+    tag::Union{String, Nothing}
     implicit::Tuple
-    value::AbstractString
+    value::String
     style::Union{Char, Nothing}
 end
 
@@ -57,8 +57,8 @@ end
 struct SequenceStartEvent <: Event
     start_mark::Mark
     end_mark::Mark
-    anchor::Union{AbstractString, Nothing}
-    tag::Union{AbstractString, Nothing}
+    anchor::Union{String, Nothing}
+    tag::Union{String, Nothing}
     implicit::Bool
     flow_style::Bool
 end
@@ -73,8 +73,8 @@ end
 struct MappingStartEvent <: Event
     start_mark::Mark
     end_mark::Mark
-    anchor::Union{AbstractString, Nothing}
-    tag::Union{AbstractString, Nothing}
+    anchor::Union{String, Nothing}
+    tag::Union{String, Nothing}
     implicit::Bool
     flow_style::Bool
 end

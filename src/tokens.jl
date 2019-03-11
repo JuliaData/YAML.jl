@@ -7,7 +7,7 @@ abstract type Token end
 # The '%YAML' directive.
 struct DirectiveToken <: Token
     span::Span
-    name::AbstractString
+    name::String
     value::Union{Tuple, Nothing}
 end
 
@@ -24,7 +24,7 @@ end
 # The stream start
 struct StreamStartToken <: Token
     span::Span
-    encoding::AbstractString
+    encoding::String
 end
 
 # The stream end
@@ -90,13 +90,13 @@ end
 # '*anchor'
 struct AliasToken <: Token
     span::Span
-    value::AbstractString
+    value::String
 end
 
 # '&anchor'
 struct AnchorToken <: Token
     span::Span
-    value::AbstractString
+    value::String
 end
 
 # '!handle!suffix'
@@ -108,7 +108,7 @@ end
 # A scalar.
 struct ScalarToken <: Token
     span::Span
-    value::AbstractString
+    value::String
     plain::Bool
     style::Union{Char, Nothing}
 end

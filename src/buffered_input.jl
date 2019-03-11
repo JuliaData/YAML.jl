@@ -17,9 +17,9 @@ end
 
 
 # Read and buffer n more characters
-function _fill(bi::BufferedInput, n::Integer)
+function __fill(bi::BufferedInput, bi_input::IO, n::Integer)
     for i in 1:n
-        c = eof(bi.input) ? '\0' : read(bi.input, Char)
+        c = eof(bi_input) ? '\0' : read(bi_input, Char)
         if bi.offset + bi.avail + 1 <= length(bi.buffer)
             bi.buffer[bi.offset + bi.avail + 1] = c
         else
@@ -29,6 +29,7 @@ function _fill(bi::BufferedInput, n::Integer)
     end
 end
 
+_fill(bi::BufferedInput, n::Integer) = __fill(bi, bi.input, n)
 
 # Peek the character in the i-th position relative to the current position.
 # (0-based)
@@ -46,7 +47,7 @@ function prefix(bi::BufferedInput, n::Integer=1)
     if bi.avail < n + 1
         _fill(bi, n + 1 - bi.avail)
     end
-    return string(bi.buffer[Int(bi.offset + 1):Int(bi.offset + n)]...)
+    return string(bi.buffer[(bi.offset + 1):(bi.offset + n)]...)
 end
 
 

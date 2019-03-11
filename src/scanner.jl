@@ -31,9 +31,9 @@ end
 
 # Errors thrown by the scanner.
 struct ScannerError <: Exception
-    context::Union{AbstractString, Nothing}
+    context::Union{String, Nothing}
     context_mark::Union{Mark, Nothing}
-    problem::AbstractString
+    problem::String
     problem_mark::Mark
 end
 
@@ -96,7 +96,7 @@ mutable struct TokenStream
     #   (token_number, required, index, line, column, mark)
     # A simple key may start with ALIAS, ANCHOR, TAG, SCALAR(flow),
     # '[', or '{' tokens.
-    possible_simple_keys::Dict
+    possible_simple_keys::Dict{UInt64,SimpleKey}
 
     function TokenStream(stream::IO)
         tokstream = new(BufferedInput(stream), false, Queue{Token}(),
@@ -1439,7 +1439,7 @@ function scan_plain_spaces(stream::TokenStream, indent::Integer,
 end
 
 
-function scan_tag_handle(stream::TokenStream, name::AbstractString, start_mark::Mark)
+function scan_tag_handle(stream::TokenStream, name::String, start_mark::Mark)
     c = peek(stream.input)
     if c != '!'
         throw(ScannerError("while scanning a $(name)", start_mark,
@@ -1468,7 +1468,7 @@ function scan_tag_handle(stream::TokenStream, name::AbstractString, start_mark::
 end
 
 
-function scan_tag_uri(stream::TokenStream, name::AbstractString, start_mark::Mark)
+function scan_tag_uri(stream::TokenStream, name::String, start_mark::Mark)
     chunks = Any[]
     length = 0
     c = peek(stream.input, length)
@@ -1500,7 +1500,7 @@ function scan_tag_uri(stream::TokenStream, name::AbstractString, start_mark::Mar
 end
 
 
-function scan_uri_escapes(stream::TokenStream, name::AbstractString, start_mark::Mark)
+function scan_uri_escapes(stream::TokenStream, name::String, start_mark::Mark)
     bytes = Any[]
     mark = get_mark(stream)
     while peek(stream.input) == '%'
