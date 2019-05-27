@@ -1,4 +1,3 @@
-
 struct ConstructorError
     context::Union{String, Nothing}
     context_mark::Union{Mark, Nothing}
@@ -27,15 +26,30 @@ mutable struct Constructor
     recursive_objects::Set{Node}
     deep_construct::Bool
     yaml_constructors::Dict{Union{String, Nothing}, Function}
+    yaml_multi_constructors::Dict{Union{String, Nothing}, Function}
 
-    function Constructor(more_constructors::Dict{String,Function})
+    function Constructor(single_constructors, multi_constructors)
         new(Dict{Node, Any}(), Set{Node}(), false,
-            merge(copy(default_yaml_constructors), more_constructors))
+            convert(Dict{Union{String, Nothing}, Function}, single_constructors),
+            convert(Dict{Union{String, Nothing}, Function}, multi_constructors)
+        )
     end
 end
 
-Constructor() = Constructor(Dict{String,Function}())
-Constructor(::Nothing) = Constructor(Dict{String,Function}())
+function add_constructor!(func::Function, constructor::Constructor, tag::Union{String, Nothing})
+    constructor.yaml_constructors[tag] = func
+    constructor
+end
+
+function add_multi_constructor!(func::Function, constructor::Constructor, tag::String)
+    constructor.yaml_multi_constructors[tag] = func
+    constructor
+end
+
+Constructor() = Constructor(Dict{String,Function}(), Dict())
+Constructor(::Nothing) = Constructor(Dict{String,Function}(), Dict())
+SafeConstructor() = Constructor(copy(default_yaml_constructors), Dict())
+
 
 function construct_document(constructor::Constructor, node::Node)
     data = construct_object(constructor, node)
@@ -69,15 +83,26 @@ function construct_object(constructor::Constructor, node::Node, deep=false)
         node_constructor = constructor.yaml_constructors[node.tag]
     else
         # TODO: Multi-constructors. Constructors that operate on prefixes.
-
-        if haskey(constructor.yaml_constructors, nothing)
-            node_constructor = constructor.yaml_constructors[nothing]
-        elseif typeof(node) == ScalarNode
-            node_constructor = construct_scalar
-        elseif typeof(node) == SequenceNode
-            node_constructor = construct_sequence
-        elseif typeof(node) == MappingNode
-            node_constructor = construct_mapping
+        for (tag_prefix, constructor) in constructor.yaml_constructors
+            if startswith(node.tag, tag_prefix)
+                tag_suffix = node.tag[length(tag_prefix):end]
+                node_constructor = constructor
+                break
+            end
+        end
+        if node_constructor === nothing
+            if haskey(constructor.yaml_multi_constructors, nothing)
+                tag_suffix = node.tag
+                node_constructor = constructor.yaml_multi_constructors[nothing]
+            elseif haskey(constructor.yaml_constructors, nothing)
+                node_constructor = constructor.yaml_constructors[nothing]
+            elseif typeof(node) == ScalarNode
+                node_constructor = construct_scalar
+            elseif typeof(node) == SequenceNode
+                node_constructor = construct_sequence
+            elseif typeof(node) == MappingNode
+                node_constructor = construct_mapping
+            end
         end
     end
 
@@ -370,6 +395,7 @@ function construct_yaml_binary(constructor::Constructor, node::Node)
     value = replace(string(construct_scalar(constructor, node)), "\n" => "")
     Codecs.decode(Codecs.Base64, value)
 end
+
 
 const default_yaml_constructors = Dict{Union{String, Nothing}, Function}(
         "tag:yaml.org,2002:null"      => construct_yaml_null,

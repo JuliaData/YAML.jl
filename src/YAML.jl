@@ -28,27 +28,27 @@ include("parser.jl")
 include("composer.jl")
 include("constructor.jl")
 
-const _constructor = Union{Nothing, Dict}
+# const _constructor = Union{Nothing, Dict}
 
-function load(ts::TokenStream, more_constructors::_constructor=nothing)
+function load(ts::TokenStream, constructor::Constructor = SafeConstructor())
     events = EventStream(ts)
     node = compose(events)
-    return construct_document(Constructor(more_constructors), node)
+    return construct_document(constructor, node)
 end
 
-function load(input::IO, more_constructors::_constructor=nothing)
-    load(TokenStream(input), more_constructors)
+function load(input::IO, constructor::Constructor = SafeConstructor())
+    load(TokenStream(input), constructor)
 end
 
 mutable struct YAMLDocIterator
     input::IO
     ts::TokenStream
-    more_constructors::_constructor
+    constructor::Constructor
     next_doc
 
-    function YAMLDocIterator(input::IO, more_constructors::_constructor=nothing)
-        it = new(input, TokenStream(input), more_constructors, nothing)
-        it.next_doc = eof(it.input) ? nothing : load(it.ts, it.more_constructors)
+    function YAMLDocIterator(input::IO, constructor::Constructor = SafeConstructor())
+        it = new(input, TokenStream(input), constructor, nothing)
+        it.next_doc = eof(it.input) ? nothing : load(it.ts, it.constructor)
         return it
     end
 end
@@ -63,7 +63,7 @@ function next(it::YAMLDocIterator, state)
         it.next_doc = nothing
     else
         reset!(it.ts)
-        it.next_doc = load(it.ts, it.more_constructors)
+        it.next_doc = load(it.ts, it.constructor)
     end
     return doc, nothing
 end
@@ -75,28 +75,28 @@ done(it::YAMLDocIterator, state) = it.next_doc === nothing
 iterate(it::YAMLDocIterator) = next(it, start(it))
 iterate(it::YAMLDocIterator, s) = done(it, s) ? nothing : next(it, s)
 
-function load_all(input::IO, more_constructors::_constructor=nothing)
-    YAMLDocIterator(input, more_constructors)
+function load_all(input::IO, constructor::Constructor = SafeConstructor())
+    YAMLDocIterator(input, constructor)
 end
 
-function load(input::AbstractString, more_constructors::_constructor=nothing)
-    load(IOBuffer(input), more_constructors)
+function load(input::AbstractString, constructor::Constructor = SafeConstructor())
+    load(IOBuffer(input), constructor)
 end
 
-function load_all(input::AbstractString, more_constructors::_constructor=nothing)
-    load_all(IOBuffer(input), more_constructors)
+function load_all(input::AbstractString, constructor::Constructor = SafeConstructor())
+    load_all(IOBuffer(input), constructor)
 end
 
-function load_file(filename::AbstractString, more_constructors::_constructor=nothing)
+function load_file(filename::AbstractString, constructor::Constructor = SafeConstructor())
     open(filename, "r") do input
-        load(input, more_constructors)
+        load(input, constructor)
     end
 end
 
 
-function load_all_file(filename::AbstractString, more_constructors::_constructor=nothing)
+function load_all_file(filename::AbstractString, constructor::Constructor = SafeConstructor())
     open(filename, "r") do input
-        load_all(input, more_constructors)
+        load_all(input, constructor)
     end
 end
 

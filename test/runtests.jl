@@ -92,6 +92,18 @@ function construct_type_map(t::Symbol, constructor::YAML.Constructor,
     mapping
 end
 
+function TestConstructor()
+    pairs = [("!Cartesian", :Cartesian),
+             ("!AR1", :AR1)]
+    ret = YAML.SafeConstructor()
+    for (t,s) in pairs
+        YAML.add_constructor!(ret, t) do c, n
+            construct_type_map(s, c, n)
+        end
+    end
+    ret
+end
+
 const more_constructors = let
     pairs = [("!Cartesian", :Cartesian),
              ("!AR1", :AR1)]
@@ -104,7 +116,7 @@ const testdir = dirname(@__FILE__)
 @testset for test in tests
     data = YAML.load_file(
         joinpath(testdir, string(test, ".data")),
-        more_constructors
+        TestConstructor()
     )
     expected = evalfile(joinpath(testdir, string(test, ".expected")))
     @test equivalent(data, expected)
