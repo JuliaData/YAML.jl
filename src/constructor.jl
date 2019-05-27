@@ -83,10 +83,10 @@ function construct_object(constructor::Constructor, node::Node, deep=false)
         node_constructor = constructor.yaml_constructors[node.tag]
     else
         # TODO: Multi-constructors. Constructors that operate on prefixes.
-        for (tag_prefix, constructor) in constructor.yaml_multi_constructors
+        for (tag_prefix, node_const) in constructor.yaml_multi_constructors
             if tag_prefix !== nothing && startswith(node.tag, tag_prefix)
                 tag_suffix = node.tag[length(tag_prefix) + 1:end]
-                node_constructor = constructor
+                node_constructor = node_const
                 break
             end
         end
