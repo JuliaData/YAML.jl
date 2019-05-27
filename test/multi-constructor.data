@@ -1,0 +1,6 @@
+process: !addtag:test
+    arg1: "Arg 1"
+    arg2: "Arg 2"
+process1: !addtag:test2
+    arg1: "Arg 1"
+    arg2: "Arg 2"
