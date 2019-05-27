@@ -104,9 +104,7 @@ function TestConstructor()
     end
 
     YAML.add_multi_constructor!(ret, "!addtag:") do constructor, tag, node
-        mapping = YAML.construct_mapping(constructor, node)
-        mapping[:tag] = Symbol(tag)
-        mapping
+        construct_type_map(Symbol(tag), constructor, node)
     end
 
     ret
@@ -119,15 +117,35 @@ const more_constructors = let
                            for (t, s) in pairs])
 end
 
+const multi_constructors = Dict{String, Function}(
+    "!addtag:" => (c, t, n) -> construct_type_map(Symbol(t), c, n)
+)
+
 
 const testdir = dirname(@__FILE__)
 @testset for test in tests
+    yamlString = open(joinpath(testdir, string(test, ".data"))) do f
+        read(f, String)
+    end
+
+    expected = evalfile(joinpath(testdir, string(test, ".expected")))
+
+    # Test Loading File with Constructor Object
     data = YAML.load_file(
         joinpath(testdir, string(test, ".data")),
         TestConstructor()
     )
-    expected = evalfile(joinpath(testdir, string(test, ".expected")))
     @test equivalent(data, expected)
+    dictData = YAML.load_file(
+        joinpath(testdir, string(test, ".data")),
+        more_constructors, multi_constructors
+    )
+    @test equivalent(dictData, expected)
+
+    stringData = YAML.load(yamlString, TestConstructor())
+    @test equivalent(stringData, expected)
+    dictStringData = YAML.load(yamlString, more_constructors, multi_constructors)
+    @test equivalent(dictStringData, expected)
 end
 
 end  # module
