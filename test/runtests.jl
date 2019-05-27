@@ -40,6 +40,7 @@ const tests = [
     "cartesian",
     "ar1",
     "ar1_cartesian",
+    "multi-constructor",
     "merge-01"
 ]
 
@@ -101,6 +102,13 @@ function TestConstructor()
             construct_type_map(s, c, n)
         end
     end
+
+    YAML.add_multi_constructor!(ret, "!addtag:") do constructor, tag, node
+        mapping = YAML.construct_mapping(constructor, node)
+        mapping[:tag] = Symbol(tag)
+        mapping
+    end
+
     ret
 end
 
