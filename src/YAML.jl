@@ -40,6 +40,8 @@ function load(input::IO, constructor::Constructor = SafeConstructor())
     load(TokenStream(input), constructor)
 end
 
+load(input, constructors::Dict, multi_constructors::Dict = Dict()) = load(input, SafeConstructor(constructors, multi_constructors))
+
 mutable struct YAMLDocIterator
     input::IO
     ts::TokenStream
@@ -52,6 +54,8 @@ mutable struct YAMLDocIterator
         return it
     end
 end
+
+YAMLDocIterator(input::IO, constructors::Dict, multi_constructors::Dict = Dict()) = YAMLDocIterator(io, SafeConstructor(constructors, multi_constructors))
 
 # Old iteration protocol:
 
@@ -75,28 +79,28 @@ done(it::YAMLDocIterator, state) = it.next_doc === nothing
 iterate(it::YAMLDocIterator) = next(it, start(it))
 iterate(it::YAMLDocIterator, s) = done(it, s) ? nothing : next(it, s)
 
-function load_all(input::IO, constructor::Constructor = SafeConstructor())
-    YAMLDocIterator(input, constructor)
+function load_all(input::IO, args...)
+    YAMLDocIterator(input, args...)
 end
 
 function load(input::AbstractString, constructor::Constructor = SafeConstructor())
     load(IOBuffer(input), constructor)
 end
 
-function load_all(input::AbstractString, constructor::Constructor = SafeConstructor())
-    load_all(IOBuffer(input), constructor)
+function load_all(input::AbstractString, args...)
+    load_all(IOBuffer(input), args...)
 end
 
-function load_file(filename::AbstractString, constructor::Constructor = SafeConstructor())
+function load_file(filename::AbstractString, args...)
     open(filename, "r") do input
-        load(input, constructor)
+        load(input, args...)
     end
 end
 
 
-function load_all_file(filename::AbstractString, constructor::Constructor = SafeConstructor())
+function load_all_file(filename::AbstractString, args...)
     open(filename, "r") do input
-        load_all(input, constructor)
+        load_all(input, args...)
     end
 end
 

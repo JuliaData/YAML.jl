@@ -48,7 +48,7 @@ end
 
 Constructor() = Constructor(Dict{String,Function}(), Dict())
 Constructor(::Nothing) = Constructor(Dict{String,Function}(), Dict())
-SafeConstructor() = Constructor(copy(default_yaml_constructors), Dict())
+SafeConstructor(constructors::Dict = Dict(), multi_constructors::Dict = Dict()) = Constructor(merge(copy(default_yaml_constructors), constructors), multi_constructors)
 
 
 function construct_document(constructor::Constructor, node::Node)
