@@ -147,6 +147,13 @@ const testdir = dirname(@__FILE__)
     @test equivalent(stringData, expected)
     dictStringData = YAML.load(yamlString, more_constructors, multi_constructors)
     @test equivalent(dictStringData, expected)
+
+
+    @test equivalent(first(YAML.load_all_file(joinpath(testdir, string(test, ".data")), TestConstructor())), expected)
+    @test equivalent(first(YAML.load_all_file(joinpath(testdir, string(test, ".data")), more_constructors, multi_constructors)), expected)
+
+    @test equivalent(first(YAML.load_all(yamlString, TestConstructor())), expected)
+    @test equivalent(first(YAML.load_all(yamlString, more_constructors, multi_constructors)), expected)
 end
 
 const test_errors = [

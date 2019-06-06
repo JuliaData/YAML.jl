@@ -55,7 +55,7 @@ mutable struct YAMLDocIterator
     end
 end
 
-YAMLDocIterator(input::IO, constructors::Dict, multi_constructors::Dict = Dict()) = YAMLDocIterator(io, SafeConstructor(constructors, multi_constructors))
+YAMLDocIterator(input::IO, constructors::Dict, multi_constructors::Dict = Dict()) = YAMLDocIterator(input, SafeConstructor(constructors, multi_constructors))
 
 # Old iteration protocol:
 
