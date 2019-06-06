@@ -40,6 +40,7 @@ const tests = [
     "cartesian",
     "ar1",
     "ar1_cartesian",
+    # "suffix-constructor",
     "multi-constructor",
     "merge-01"
 ]
@@ -103,7 +104,7 @@ function TestConstructor()
         end
     end
 
-    YAML.add_multi_constructor!(ret, "!addtag:") do constructor, tag, node
+    YAML.add_multi_constructor!(ret, "!addtag:") do constructor::YAML.Constructor, tag, node
         construct_type_map(Symbol(tag), constructor, node)
     end
 
@@ -146,6 +147,17 @@ const testdir = dirname(@__FILE__)
     @test equivalent(stringData, expected)
     dictStringData = YAML.load(yamlString, more_constructors, multi_constructors)
     @test equivalent(dictStringData, expected)
+end
+
+const test_errors = [
+    "invalid-tag"
+]
+
+@testset "YAML Errors" begin
+    
+    
+
+    @test_throws ConstructorError
 end
 
 end  # module
