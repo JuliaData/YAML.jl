@@ -28,7 +28,7 @@ mutable struct Constructor
     yaml_constructors::Dict{Union{String, Nothing}, Function}
     yaml_multi_constructors::Dict{Union{String, Nothing}, Function}
 
-    function Constructor(single_constructors, multi_constructors)
+    function Constructor(single_constructors = Dict(), multi_constructors = Dict())
         new(Dict{Node, Any}(), Set{Node}(), false,
             convert(Dict{Union{String, Nothing}, Function}, single_constructors),
             convert(Dict{Union{String, Nothing}, Function}, multi_constructors)
@@ -46,8 +46,7 @@ function add_multi_constructor!(func::Function, constructor::Constructor, tag::S
     constructor
 end
 
-Constructor() = Constructor(Dict{String,Function}(), Dict())
-Constructor(::Nothing) = Constructor(Dict{String,Function}(), Dict())
+Constructor(::Nothing) = Constructor()
 SafeConstructor(constructors::Dict = Dict(), multi_constructors::Dict = Dict()) = Constructor(merge(copy(default_yaml_constructors), constructors), multi_constructors)
 
 
