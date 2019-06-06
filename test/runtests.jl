@@ -40,7 +40,6 @@ const tests = [
     "cartesian",
     "ar1",
     "ar1_cartesian",
-    # "suffix-constructor",
     "multi-constructor",
     "merge-01"
 ]
