@@ -153,11 +153,11 @@ const test_errors = [
     "invalid-tag"
 ]
 
-@testset "YAML Errors" begin
-    
-    
-
-    @test_throws ConstructorError
+@testset "YAML Errors" "error test = $test" for test in test_errors
+    @test_throws YAML.ConstructorError YAML.load_file(
+        joinpath(testdir, string(test, ".data")),
+        TestConstructor()
+    )
 end
 
 end  # module
