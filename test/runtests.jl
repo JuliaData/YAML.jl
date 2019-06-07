@@ -166,4 +166,44 @@ const test_errors = [
     )
 end
 
+@testset "Custom Constructor" begin
+
+    function MySafeConstructor()
+        yaml_constructors = copy(YAML.default_yaml_constructors)
+        delete!(yaml_constructors, nothing)
+        YAML.Constructor(yaml_constructors)
+    end
+
+
+    function MyReallySafeConstructor()
+        yaml_constructors = copy(YAML.default_yaml_constructors)
+        delete!(yaml_constructors, nothing)
+        ret = YAML.Constructor(yaml_constructors)
+        YAML.add_multi_constructor!(ret, nothing) do constructor::YAML.Constructor, tag, node
+            throw(YAML.ConstructorError(nothing, nothing,
+                "could not determine a constructor for the tag '$(tag)'",
+                node.start_mark))
+        end
+        ret
+    end
+
+    yamlString = """
+    Test: !test
+        test1: !test data
+        test2: !test2
+            - test1
+            - test2
+    """
+
+    expected = Dict{Any,Any}("Test" => Dict{Any,Any}("test2"=>["test1", "test2"],"test1"=>"data"))
+
+    @test equivalent(YAML.load(yamlString, MySafeConstructor()), expected)
+    @test_throws YAML.ConstructorError YAML.load(
+        yamlString,
+        MyReallySafeConstructor()
+    )
+end
+
+
+
 end  # module

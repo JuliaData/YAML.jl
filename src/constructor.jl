@@ -41,7 +41,7 @@ function add_constructor!(func::Function, constructor::Constructor, tag::Union{S
     constructor
 end
 
-function add_multi_constructor!(func::Function, constructor::Constructor, tag::String)
+function add_multi_constructor!(func::Function, constructor::Constructor, tag::Union{String, Nothing})
     constructor.yaml_multi_constructors[tag] = func
     constructor
 end
