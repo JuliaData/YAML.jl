@@ -27,6 +27,7 @@ include("scanner.jl")
 include("parser.jl")
 include("composer.jl")
 include("constructor.jl")
+include("writer.jl") # write Julia dictionaries to YAML files
 
 const _constructor = Union{Nothing, Dict}
 
