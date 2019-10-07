@@ -57,6 +57,8 @@ _print(io::IO, arr::AbstractVector, level::Int=0, ignore_level::Bool=false) =
 function _print(io::IO, pair::Pair, level::Int=0, ignore_level::Bool=false)
     key = if typeof(pair[1]) == Nothing
         "null" # this is what the YAML parser interprets as 'nothing'
+    elseif typeof(pair[1]) <: Vector && VERSION < v"0.7.0"
+        string(convert(Array{Any}, pair[1]))[4:end] # v0.6 prepends the vector type -> remove it
     else
         string(pair[1]) # any useful case
     end
