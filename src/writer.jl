@@ -9,14 +9,10 @@
 
 Write some data (e.g. a dictionary or an array) to a YAML file.
 """
-function write_file(path::AbstractString, data::Any, prefix::AbstractString="")
-    if (!endswith(path, ".yml"))
-        warn("The path $path does not end on '.yml'.")
-    end # suggest to use the appropriate file name extension, but do not throw an error
+write_file(path::AbstractString, data::Any, prefix::AbstractString="") =
     open(path, "w") do io
         write(io, data, prefix)
     end
-end
 
 """
     write([io], data, prefix="")
