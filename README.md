@@ -82,9 +82,58 @@ Note that ints and floats are recognized, as well as timestamps which are parsed
 into CalendarTime objects. Also, anchors and references work as expected,
 without making a copy.
 
+## Writing to YAML
+
+Similar to reading files, you can emit Julia objects to YAML files by calling
+`write_file`, or to a string object by calling `write`.
+
+For example, you can reproduce the above file from the variable `data`
+
+```julia
+import YAML
+YAML.write_file("test-output.yml", data)
+```
+
+which gives you (omitting the precise format but maintaining the content)
+
+```yaml
+receipt: "Oz-Ware Purchase Invoice"
+items:
+  - part_no: "A4786"
+    price: 1.47
+    descrip: "Water Bucket (Filled)"
+    quantity: 4
+  - part_no: "E1628"
+    price: 100.27
+    size: 8
+    descrip: "High Heeled "Ruby" Slippers"
+    quantity: 1
+customer:
+  given: "Dorothy"
+  family: "Gale"
+ship-to:
+  city: "East Centerville"
+  street: |
+      123 Tornado Alley
+      Suite 16
+      
+  state: "KS"
+bill-to:
+  city: "East Centerville"
+  street: |
+      123 Tornado Alley
+      Suite 16
+      
+  state: "KS"
+specialDelivery: |
+    Follow the Yellow Brick Road to the Emerald City. Pay no attention to the man behind the curtain.
+    
+date: 2012-08-06
+```
+
 ## Not yet implemented
 
-  * Emitting julia objects to YAML.
+  * When writing YAML files, you cannot use additional constructors like you can when reading.
   * Parsing sexigesimal numbers.
   * Fractions of seconds in timestamps.
   * Specific time-zone offsets in timestamps.

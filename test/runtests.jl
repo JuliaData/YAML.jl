@@ -3,6 +3,7 @@
 module YAMLTests
 
 import YAML
+import Base.Filesystem
 using Compat.Test
 
 const tests = [
@@ -43,6 +44,15 @@ const tests = [
     "merge-01"
 ]
 
+# ignore some test cases in write_and_load testing
+const test_write_ignored = [
+    "spec-02-17",
+    "escape_sequences",
+    "cartesian",
+    "ar1",
+    "ar1_cartesian"
+]
+
 
 function equivalent(xs::Dict, ys::Dict)
     if Set(collect(keys(xs))) != Set(collect(keys(ys)))
@@ -79,6 +89,16 @@ function equivalent(x::Float64, y::Float64)
 end
 
 
+function equivalent(x::AbstractString, y::AbstractString)
+    while endswith(x, "\n")
+        x = x[1:end-1] # trailing newline characters are ambiguous
+    end
+    while endswith(y, "\n")
+        y = y[1:end-1]
+    end
+    x == y
+end
+
 function equivalent(x, y)
     x == y
 end
@@ -99,6 +119,17 @@ const more_constructors = let
                            for (t, s) in pairs])
 end
 
+# write a file, then load its contents to be tested again
+function write_and_load(data::Any)
+    path = Filesystem.tempname() * ".yml" # path to a temporary file
+    try
+        YAML.write_file(path, data)
+        return YAML.load_file(path, more_constructors)
+    finally
+        Filesystem.rm(path, force=true)
+    end
+end
+
 
 const testdir = dirname(@__FILE__)
 @testset for test in tests
@@ -108,6 +139,11 @@ const testdir = dirname(@__FILE__)
     )
     expected = evalfile(joinpath(testdir, string(test, ".expected")))
     @test equivalent(data, expected)
+    if !in(test, test_write_ignored)
+        @test equivalent(write_and_load(data), expected)
+    else
+        println("WARNING: I do not test the writing of $test")
+    end
 end
 
 end  # module
