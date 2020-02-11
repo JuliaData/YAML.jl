@@ -1,0 +1,4 @@
+name = "YAML"
+uuid = "fd37aa33-7750-4ecf-a282-4728db3c1eb5"
+authors = ["Daniel C Jones <dcjones@cs.washington.edu>"]
+version = "0.1.0"
