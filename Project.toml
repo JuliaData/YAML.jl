@@ -2,3 +2,7 @@ name = "YAML"
 uuid = "fd37aa33-7750-4ecf-a282-4728db3c1eb5"
 authors = ["Daniel C Jones <dcjones@cs.washington.edu>"]
 version = "0.1.0"
+
+[deps]
+Codecs = "19ecbf4d-ef7c-5e4b-b54a-0a0ff23c5aed"
+Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
