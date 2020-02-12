@@ -1,0 +1,11 @@
+name = "YAML"
+uuid = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
+version = "0.3.2"
+
+[deps]
+Codecs = "19ecbf4d-ef7c-5e4b-b54a-0a0ff23c5aed"
+Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
+
+[compat]
+Compat = "≥ 0.65.0"
+julia = "≥ 0.6.0"
