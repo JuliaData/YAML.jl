@@ -368,7 +368,7 @@ end
 
 function construct_yaml_binary(constructor::Constructor, node::Node)
     value = replace(string(construct_scalar(constructor, node)), "\n" => "")
-    Codecs.decode(Codecs.Base64, value)
+    base64decode(value)
 end
 
 const default_yaml_constructors = Dict{Union{String, Nothing}, Function}(

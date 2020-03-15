@@ -3,12 +3,11 @@ uuid = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 version = "0.4.0"
 
 [deps]
-Codecs = "19ecbf4d-ef7c-5e4b-b54a-0a0ff23c5aed"
+Base64 = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 
 [compat]
-Codecs = "0.5"
 julia = "1"
 
 [extras]

@@ -6,7 +6,7 @@ import Base: isempty, length, show
 
 import Base: iterate
 
-import Codecs
+using Base64: base64decode
 using Dates
 using Printf
 
