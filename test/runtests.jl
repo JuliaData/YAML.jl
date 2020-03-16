@@ -4,7 +4,7 @@ module YAMLTests
 
 import YAML
 import Base.Filesystem
-using Compat.Test
+using Test
 
 const tests = [
     "spec-02-01",

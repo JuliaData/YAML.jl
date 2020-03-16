@@ -1,10 +1,11 @@
 language: julia
 os:
     - linux
+    - osx
+    - windows
 julia:
-    - 0.6
-    - 0.7
     - 1.0
+    - 1.4
     - nightly
 notifications:
     email: false
@@ -12,5 +13,4 @@ matrix:
     allow_failures:
         - julia: nightly
 sudo: false
-after_success:
-    - julia -e 'if VERSION >= v"0.7" using Pkg end; cd(Pkg.dir("YAML")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
+codecov: true

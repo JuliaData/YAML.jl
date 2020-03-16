@@ -126,7 +126,7 @@ function flatten_mapping(node::MappingNode)
     while index <= length(node.value)
         key_node, value_node = node.value[index]
         if key_node.tag == "tag:yaml.org,2002:merge"
-            node.value = node.value[setdiff(Compat.axes(node.value, 1), index)]
+            node.value = node.value[setdiff(axes(node.value, 1), index)]
             if typeof(value_node) == MappingNode
                 flatten_mapping(value_node)
                 append!(merge, value_node.value)
@@ -368,7 +368,7 @@ end
 
 function construct_yaml_binary(constructor::Constructor, node::Node)
     value = replace(string(construct_scalar(constructor, node)), "\n" => "")
-    Codecs.decode(Codecs.Base64, value)
+    base64decode(value)
 end
 
 const default_yaml_constructors = Dict{Union{String, Nothing}, Function}(

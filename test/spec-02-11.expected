@@ -1,4 +1,4 @@
-using Compat.Dates
+using Dates
 
 Dict{Any,Any}(
  Any["Detroit Tigers", "Chicago cubs"] =>
