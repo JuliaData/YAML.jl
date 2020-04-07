@@ -1,4 +1,4 @@
-using Compat.Dates
+using Dates
 
 Dict{Any,Any}(
     "canonical" => DateTime(2001, 12, 15, 2,  59, 43, 100),

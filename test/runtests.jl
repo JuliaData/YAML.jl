@@ -3,7 +3,8 @@
 module YAMLTests
 
 import YAML
-using Compat.Test
+import Base.Filesystem
+using Test
 
 const tests = [
     "spec-02-01",
@@ -44,6 +45,16 @@ const tests = [
     "merge-01"
 ]
 
+# ignore some test cases in write_and_load testing
+const test_write_ignored = [
+    "spec-02-17",
+    "escape_sequences",
+    "cartesian",
+    "ar1",
+    "ar1_cartesian",
+    "multi-constructor"
+]
+
 
 function equivalent(xs::Dict, ys::Dict)
     if Set(collect(keys(xs))) != Set(collect(keys(ys)))
@@ -79,6 +90,16 @@ function equivalent(x::Float64, y::Float64)
     isnan(x) && isnan(y) ? true : x == y
 end
 
+
+function equivalent(x::AbstractString, y::AbstractString)
+    while endswith(x, "\n")
+        x = x[1:end-1] # trailing newline characters are ambiguous
+    end
+    while endswith(y, "\n")
+        y = y[1:end-1]
+    end
+    x == y
+end
 
 function equivalent(x, y)
     x == y
@@ -120,6 +141,16 @@ end
 const multi_constructors = Dict{String, Function}(
     "!addtag:" => (c, t, n) -> construct_type_map(Symbol(t), c, n)
 )
+# write a file, then load its contents to be tested again
+function write_and_load(data::Any)
+    path = Filesystem.tempname() * ".yml" # path to a temporary file
+    try
+        YAML.write_file(path, data)
+        return YAML.load_file(path, more_constructors)
+    finally
+        Filesystem.rm(path, force=true)
+    end
+end
 
 
 const testdir = dirname(@__FILE__)
@@ -153,6 +184,11 @@ const testdir = dirname(@__FILE__)
 
     @test equivalent(first(YAML.load_all(yamlString, TestConstructor())), expected)
     @test equivalent(first(YAML.load_all(yamlString, more_constructors, multi_constructors)), expected)
+    if !in(test, test_write_ignored)
+        @test equivalent(write_and_load(data), expected)
+    else
+        println("WARNING: I do not test the writing of $test")
+    end
 end
 
 const test_errors = [
