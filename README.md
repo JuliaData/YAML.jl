@@ -8,8 +8,7 @@
 [![](http://pkg.julialang.org/badges/YAML_1.0.svg)](http://pkg.julialang.org/?pkg=YAML)
 
 [![Build Status](https://travis-ci.org/JuliaData/YAML.jl.svg?branch=master)](https://travis-ci.org/JuliaData/YAML.jl)
-[![Coverage Status](https://coveralls.io/repos/dcjones/YAML.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/dcjones/YAML.jl?branch=master)
-
+[![codecov](https://codecov.io/gh/JuliaData/YAML.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaData/YAML.jl)
 
 [YAML](http://yaml.org/) is a flexible data serialization format that is
 designed to be easily read and written by human beings.
