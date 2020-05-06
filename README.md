@@ -7,7 +7,7 @@
 [![](http://pkg.julialang.org/badges/YAML_0.7.svg)](http://pkg.julialang.org/?pkg=YAML)
 [![](http://pkg.julialang.org/badges/YAML_1.0.svg)](http://pkg.julialang.org/?pkg=YAML)
 
-[![Build Status](https://travis-ci.org/BioJulia/YAML.jl.svg?branch=master)](https://travis-ci.org/BioJulia/YAML.jl)
+[![Build Status](https://travis-ci.org/JuliaData/YAML.jl.svg?branch=master)](https://travis-ci.org/JuliaData/YAML.jl)
 [![Coverage Status](https://coveralls.io/repos/dcjones/YAML.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/dcjones/YAML.jl?branch=master)
 
 
@@ -116,18 +116,18 @@ ship-to:
   street: |
       123 Tornado Alley
       Suite 16
-      
+
   state: "KS"
 bill-to:
   city: "East Centerville"
   street: |
       123 Tornado Alley
       Suite 16
-      
+
   state: "KS"
 specialDelivery: |
     Follow the Yellow Brick Road to the Emerald City. Pay no attention to the man behind the curtain.
-    
+
 date: 2012-08-06
 ```
 
@@ -138,4 +138,3 @@ date: 2012-08-06
   * Fractions of seconds in timestamps.
   * Specific time-zone offsets in timestamps.
   * Application specific tags.
-
