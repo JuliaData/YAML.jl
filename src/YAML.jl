@@ -4,24 +4,11 @@ module YAML
 
 import Base: isempty, length, show
 
-if VERSION < v"1.0.0-rc1.0"
-    import Base: start, next, done
-else
-    import Base: iterate
-end
+import Base: iterate
 
-import Codecs
-using Compat
-using Compat.Dates
-using Compat.Printf
-
-if VERSION < v"0.7.0-DEV.2915"
-    isnumeric(c::Char) = isnumber(c)
-end
-
-if VERSION < v"0.7.0-DEV.3526"
-    Base.parse(T::Type{Int}, s::AbstractString; base = 10) = parse(T, s, base)
-end
+using Base64: base64decode
+using Dates
+using Printf
 
 include("scanner.jl")
 include("parser.jl")
