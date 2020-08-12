@@ -146,4 +146,8 @@ const testdir = dirname(@__FILE__)
     end
 end
 
+# test that an OrderedDict is written in the correct order
+using OrderedCollections
+@test strip(YAML.yaml(OrderedDict(:c => 3, :b => 2, :a => 1))) == join(["c: 3", "b: 2", "a: 1"], "\n")
+
 end  # module
