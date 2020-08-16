@@ -41,7 +41,8 @@ const tests = [
     "cartesian",
     "ar1",
     "ar1_cartesian",
-    "merge-01"
+    "merge-01",
+    "version-colon"
 ]
 
 # ignore some test cases in write_and_load testing
