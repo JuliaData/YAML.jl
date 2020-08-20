@@ -31,8 +31,15 @@ function write(data::Any, prefix::AbstractString="")
     return String(take!(io))
 end
 
+"""
+    yaml(data)
+
+Return a YAML-formatted string of the `data`.
+"""
+yaml(data::Any) = write(data)
+
 # recursively print a dictionary
-_print(io::IO, dict::Dict, level::Int=0, ignore_level::Bool=false) =
+_print(io::IO, dict::AbstractDict, level::Int=0, ignore_level::Bool=false) =
     for (i, pair) in enumerate(dict)
         _print(io, pair, level, ignore_level ? i == 1 : false) # ignore indentation of first pair
     end
@@ -59,7 +66,7 @@ function _print(io::IO, pair::Pair, level::Int=0, ignore_level::Bool=false)
         string(pair[1]) # any useful case
     end
     print(io, _indent(key * ":", level, ignore_level)) # print the key
-    if (typeof(pair[2]) <: Dict || typeof(pair[2]) <: AbstractVector)
+    if (typeof(pair[2]) <: AbstractDict || typeof(pair[2]) <: AbstractVector)
         print(io, "\n") # a line break is needed before a recursive structure
     else
         print(io, " ") # a whitespace character is needed before a single value
