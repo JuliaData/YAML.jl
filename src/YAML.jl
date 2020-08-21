@@ -17,15 +17,31 @@ include("constructor.jl")
 include("writer.jl") # write Julia dictionaries to YAML files
 
 const _constructor = Union{Nothing, Dict}
+const _dicttype = Union{Type,Function}
 
-function load(ts::TokenStream, more_constructors::_constructor=nothing)
+function load(ts::TokenStream, more_constructors::_constructor=nothing; dicttype::_dicttype=Dict{Any, Any})
     events = EventStream(ts)
     node = compose(events)
-    return construct_document(Constructor(more_constructors), node)
+    return construct_document(Constructor(patch_constructors(more_constructors, dicttype)), node)
 end
 
-function load(input::IO, more_constructors::_constructor=nothing)
-    load(TokenStream(input), more_constructors)
+# add a dicttype-aware version of construct_mapping to the constructors
+function patch_constructors(more_constructors::_constructor, dicttype::_dicttype)
+    if more_constructors == nothing
+        more_constructors = Dict{String,Function}()
+    else
+        more_constructors = copy(more_constructors) # do not change the outside world
+    end
+    if !haskey(more_constructors, "tag:yaml.org,2002:map")
+        more_constructors["tag:yaml.org,2002:map"] = custom_mapping(dicttype) # map to the custom type
+    elseif dicttype != Dict{Any,Any} # only warn if another type has explicitly been set
+        @warn "dicttype=$dicttype has no effect because more_constructors has the key \"tag:yaml.org,2002:map\""
+    end
+    return more_constructors
+end
+
+function load(input::IO, more_constructors::_constructor=nothing; dicttype::_dicttype=Dict{Any, Any})
+    load(TokenStream(input), patch_constructors(more_constructors, dicttype))
 end
 
 mutable struct YAMLDocIterator
@@ -35,7 +51,7 @@ mutable struct YAMLDocIterator
     next_doc
 
     function YAMLDocIterator(input::IO, more_constructors::_constructor=nothing)
-        it = new(input, TokenStream(input), more_constructors, nothing)
+        it = new(input, TokenStream(input), patch_constructors(more_constructors, dicttype), nothing)
         it.next_doc = eof(it.input) ? nothing : load(it.ts, it.more_constructors)
         return it
     end
@@ -63,28 +79,28 @@ done(it::YAMLDocIterator, state) = it.next_doc === nothing
 iterate(it::YAMLDocIterator) = next(it, start(it))
 iterate(it::YAMLDocIterator, s) = done(it, s) ? nothing : next(it, s)
 
-function load_all(input::IO, more_constructors::_constructor=nothing)
-    YAMLDocIterator(input, more_constructors)
+function load_all(input::IO, more_constructors::_constructor=nothing; dicttype::_dicttype=Dict{Any, Any})
+    YAMLDocIterator(input, patch_constructors(more_constructors, dicttype))
 end
 
-function load(input::AbstractString, more_constructors::_constructor=nothing)
-    load(IOBuffer(input), more_constructors)
+function load(input::AbstractString, more_constructors::_constructor=nothing; dicttype::_dicttype=Dict{Any, Any})
+    load(IOBuffer(input), patch_constructors(more_constructors, dicttype))
 end
 
-function load_all(input::AbstractString, more_constructors::_constructor=nothing)
-    load_all(IOBuffer(input), more_constructors)
+function load_all(input::AbstractString, more_constructors::_constructor=nothing; dicttype::_dicttype=Dict{Any, Any})
+    load_all(IOBuffer(input), patch_constructors(more_constructors, dicttype))
 end
 
-function load_file(filename::AbstractString, more_constructors::_constructor=nothing)
+function load_file(filename::AbstractString, more_constructors::_constructor=nothing; dicttype::_dicttype=Dict{Any, Any})
     open(filename, "r") do input
-        load(input, more_constructors)
+        load(input, patch_constructors(more_constructors, dicttype))
     end
 end
 
 
-function load_all_file(filename::AbstractString, more_constructors::_constructor=nothing)
+function load_all_file(filename::AbstractString, more_constructors::_constructor=nothing; dicttype::_dicttype=Dict{Any, Any})
     open(filename, "r") do input
-        load_all(input, more_constructors)
+        load_all(input, patch_constructors(more_constructors, dicttype))
     end
 end
 
