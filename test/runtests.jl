@@ -55,13 +55,15 @@ const test_write_ignored = [
 ]
 
 
-function equivalent(xs::Dict, ys::Dict)
+function equivalent(xs::AbstractDict, ys::AbstractDict)
     if Set(collect(keys(xs))) != Set(collect(keys(ys)))
+        @info "Not equivalent" Set(collect(keys(xs))) Set(collect(keys(ys)))
         return false
     end
 
     for k in keys(xs)
         if !equivalent(xs[k], ys[k])
+            @info "Not equivalent" xs[k] ys[k]
             return false
         end
     end
@@ -72,11 +74,13 @@ end
 
 function equivalent(xs::AbstractArray, ys::AbstractArray)
     if length(xs) != length(ys)
+        @info "Not equivalent" length(xs) length(ys)
         return false
     end
 
     for (x, y) in zip(xs, ys)
         if !equivalent(x, y)
+            @info "Not equivalent" x y
             return false
         end
     end
@@ -209,5 +213,12 @@ end
     more_constructors;
     dicttype=() -> 3.0 # wrong type
 )
+
+# issue 81
+dict_content = ["key1" => [Dict("subkey1" => "subvalue1", "subkey2" => "subvalue2"), Dict()], "key2" => "value2"]
+order_one = OrderedDict(dict_content...)
+order_two = OrderedDict(dict_content[[2,1]]...) # reverse order
+@test YAML.yaml(order_one) != YAML.yaml(order_two)
+@test YAML.load(YAML.yaml(order_one)) == YAML.load(YAML.yaml(order_two))
 
 end  # module
