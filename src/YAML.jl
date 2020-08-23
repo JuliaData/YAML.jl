@@ -19,14 +19,11 @@ include("writer.jl") # write Julia dictionaries to YAML files
 const _constructor = Union{Nothing, Dict}
 const _dicttype = Union{Type,Function}
 
-function load(ts::TokenStream, more_constructors::_constructor=nothing; dicttype::_dicttype=Dict{Any, Any})
-    events = EventStream(ts)
-    node = compose(events)
-    return construct_document(Constructor(patch_constructors(more_constructors, dicttype)), node)
-end
+load(ts::TokenStream, more_constructors::_constructor=nothing; dicttype::_dicttype=Dict{Any, Any}) =
+    construct_document(Constructor(_patch_constructors(more_constructors, dicttype)), compose(EventStream(ts)))
 
 # add a dicttype-aware version of construct_mapping to the constructors
-function patch_constructors(more_constructors::_constructor, dicttype::_dicttype)
+function _patch_constructors(more_constructors::_constructor, dicttype::_dicttype)
     if more_constructors == nothing
         more_constructors = Dict{String,Function}()
     else
@@ -40,9 +37,8 @@ function patch_constructors(more_constructors::_constructor, dicttype::_dicttype
     return more_constructors
 end
 
-function load(input::IO, more_constructors::_constructor=nothing; dicttype::_dicttype=Dict{Any, Any})
-    load(TokenStream(input), patch_constructors(more_constructors, dicttype))
-end
+load(input::IO, more_constructors::_constructor=nothing; kwargs...) =
+    load(TokenStream(input), more_constructors; kwargs...)
 
 mutable struct YAMLDocIterator
     input::IO
@@ -50,15 +46,14 @@ mutable struct YAMLDocIterator
     more_constructors::_constructor
     next_doc
 
-    function YAMLDocIterator(input::IO, more_constructors::_constructor=nothing)
-        it = new(input, TokenStream(input), patch_constructors(more_constructors, dicttype), nothing)
+    function YAMLDocIterator(input::IO, more_constructors::_constructor=nothing; dicttype::_dicttype=Dict{Any, Any})
+        it = new(input, TokenStream(input), _patch_constructors(more_constructors, dicttype), nothing)
         it.next_doc = eof(it.input) ? nothing : load(it.ts, it.more_constructors)
         return it
     end
 end
 
 # Old iteration protocol:
-
 start(it::YAMLDocIterator) = nothing
 
 function next(it::YAMLDocIterator, state)
@@ -75,33 +70,26 @@ end
 done(it::YAMLDocIterator, state) = it.next_doc === nothing
 
 # 0.7 iteration protocol:
-
 iterate(it::YAMLDocIterator) = next(it, start(it))
 iterate(it::YAMLDocIterator, s) = done(it, s) ? nothing : next(it, s)
 
-function load_all(input::IO, more_constructors::_constructor=nothing; dicttype::_dicttype=Dict{Any, Any})
-    YAMLDocIterator(input, patch_constructors(more_constructors, dicttype))
-end
+load_all(input::IO, more_constructors::_constructor=nothing; kwargs...) =
+    YAMLDocIterator(input, more_constructors; kwargs...)
 
-function load(input::AbstractString, more_constructors::_constructor=nothing; dicttype::_dicttype=Dict{Any, Any})
-    load(IOBuffer(input), patch_constructors(more_constructors, dicttype))
-end
+load(input::AbstractString, more_constructors::_constructor=nothing; kwargs...) =
+    load(IOBuffer(input), more_constructors; kwargs...)
 
-function load_all(input::AbstractString, more_constructors::_constructor=nothing; dicttype::_dicttype=Dict{Any, Any})
-    load_all(IOBuffer(input), patch_constructors(more_constructors, dicttype))
-end
+load_all(input::AbstractString, more_constructors::_constructor=nothing; kwargs...) =
+    load_all(IOBuffer(input), more_constructors; kwargs...)
 
-function load_file(filename::AbstractString, more_constructors::_constructor=nothing; dicttype::_dicttype=Dict{Any, Any})
+load_file(filename::AbstractString, more_constructors::_constructor=nothing; kwargs...) =
     open(filename, "r") do input
-        load(input, patch_constructors(more_constructors, dicttype))
+        load(input, more_constructors; kwargs...)
     end
-end
 
-
-function load_all_file(filename::AbstractString, more_constructors::_constructor=nothing; dicttype::_dicttype=Dict{Any, Any})
+load_all_file(filename::AbstractString, more_constructors::_constructor=nothing; kwargs...) =
     open(filename, "r") do input
-        load_all(input, patch_constructors(more_constructors, dicttype))
+        load_all(input, more_constructors; kwargs...)
     end
-end
 
 end  # module
