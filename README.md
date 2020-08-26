@@ -13,8 +13,7 @@
 [YAML](http://yaml.org/) is a flexible data serialization format that is
 designed to be easily read and written by human beings.
 
-This library parses YAML documents into native Julia types. (Dumping Julia
-objects to YAML has not yet been implemented.)
+This library parses YAML documents into native Julia types and dumps them back into YAML documents.
 
 ## Synopsis
 
@@ -65,9 +64,7 @@ It can be loaded with
 
 ```julia
 import YAML
-
-data = YAML.load(open("test.yml"))
-
+data = YAML.load_file("test.yml")
 println(data)
 ```
 
@@ -80,6 +77,23 @@ Which will show you something like this.
 Note that ints and floats are recognized, as well as timestamps which are parsed
 into CalendarTime objects. Also, anchors and references work as expected,
 without making a copy.
+
+Dictionaries are parsed into instances of `Dict{Any,Any}` by default.
+You can, however, specify a custom type in which to parse all dictionaries.
+
+```julia
+# using Symbol keys
+data = YAML.load_file("test.yml"; dicttype=Dict{Symbol,Any})
+
+# maintaining the order from the YAML file
+using OrderedCollections
+data = YAML.load_file("test.yml"; dicttype=OrderedDict{String,Any})
+
+# specifying a default value
+using DataStructures
+data = YAML.load_file("test.yml"; dicttype=()->DefaultDict{String,Any}(Missing))
+```
+
 
 ## Writing to YAML
 

@@ -25,11 +25,10 @@ end
 mutable struct Constructor
     constructed_objects::Dict{Node, Any}
     recursive_objects::Set{Node}
-    deep_construct::Bool
     yaml_constructors::Dict{Union{String, Nothing}, Function}
 
     function Constructor(more_constructors::Dict{String,Function})
-        new(Dict{Node, Any}(), Set{Node}(), false,
+        new(Dict{Node, Any}(), Set{Node}(),
             merge(copy(default_yaml_constructors), more_constructors))
     end
 end
@@ -41,19 +40,13 @@ function construct_document(constructor::Constructor, node::Node)
     data = construct_object(constructor, node)
     empty!(constructor.constructed_objects)
     empty!(constructor.recursive_objects)
-    constructor.deep_construct = false
     data
 end
 
 
-function construct_object(constructor::Constructor, node::Node, deep=false)
+function construct_object(constructor::Constructor, node::Node)
     if haskey(constructor.constructed_objects, node)
         return constructor.constructed_objects[node]
-    end
-
-    if deep
-        old_deep = constructor.deep_construct
-        constructor.deep_construct = true
     end
 
     if in(node, constructor.recursive_objects)
@@ -91,9 +84,6 @@ function construct_object(constructor::Constructor, node::Node, deep=false)
 
     constructor.constructed_objects[node] = data
     delete!(constructor.recursive_objects, node)
-    if deep
-        constructor.deep_construct = old_deep
-    end
 
     data
 end
@@ -109,14 +99,14 @@ function construct_scalar(constructor::Constructor, node::Node)
 end
 
 
-function construct_sequence(constructor::Constructor, node::Node, deep=false)
+function construct_sequence(constructor::Constructor, node::Node)
     if typeof(node) != SequenceNode
         throw(ConstructorError(nothing, nothing,
                                "expected a sequence node, but found $(typeof(node))",
                                node.start_mark))
     end
 
-    [construct_object(constructor, child, deep) for child in node.value]
+    [construct_object(constructor, child) for child in node.value]
 end
 
 
@@ -160,21 +150,45 @@ function flatten_mapping(node::MappingNode)
 end
 
 
-function construct_mapping(constructor::Constructor, node::Node, deep=false)
-    if typeof(node) != MappingNode
-        throw(ConstructorError(nothing, nothing,
-                               "expected a mapping node, but found $(typeof(node))",
-                               node.start_mark))
-    end
-
+function construct_mapping(dicttype::Union{Type,Function}, constructor::Constructor, node::MappingNode)
     flatten_mapping(node)
-    mapping = Dict()
+    mapping = dicttype()
     for (key_node, value_node) in node.value
-        key = construct_object(constructor, key_node, deep)
-        value = construct_object(constructor, value_node, deep)
-        mapping[key] = value
+        key = construct_object(constructor, key_node)
+        value = construct_object(constructor, value_node)
+        if !(typeof(value) <: keytype(typeof(mapping)))
+            try
+                key = keytype(typeof(mapping))(key) # try to cast
+            catch
+                throw(ConstructorError(nothing, nothing,
+                                       "Cannot cast $key to the key type of $dicttype",
+                                       node.start_mark))
+            end
+        end
+        try
+            mapping[key] = value
+        catch
+            throw(ConstructorError(nothing, nothing,
+                                   "Cannot store $key=>$value in $dicttype",
+                                   node.start_mark))
+        end
     end
     mapping
+end
+
+construct_mapping(constructor::Constructor, node::Node) = construct_mapping(Dict{Any,Any}, constructor, node)
+
+# create a construct_mapping instance for a specific dicttype
+custom_mapping(dicttype::Type{D}) where D <: AbstractDict =
+    (constructor::Constructor, node::Node) -> construct_mapping(dicttype, constructor, node)
+function custom_mapping(dicttype::Function)
+    dicttype_test = try dicttype() catch
+        throw(ArgumentError("The dicttype Function cannot be called without arguments"))
+    end
+    if !(typeof(dicttype_test) <: AbstractDict)
+        throw(ArgumentError("The dicttype Function does not return an AbstractDict"))
+    end
+    return (constructor::Constructor, node::Node) -> construct_mapping(dicttype, constructor, node)
 end
 
 
