@@ -1,12 +1,6 @@
 
 # YAML
 
-[![](http://pkg.julialang.org/badges/YAML_0.4.svg)](http://pkg.julialang.org/?pkg=YAML)
-[![](http://pkg.julialang.org/badges/YAML_0.5.svg)](http://pkg.julialang.org/?pkg=YAML)
-[![](http://pkg.julialang.org/badges/YAML_0.6.svg)](http://pkg.julialang.org/?pkg=YAML)
-[![](http://pkg.julialang.org/badges/YAML_0.7.svg)](http://pkg.julialang.org/?pkg=YAML)
-[![](http://pkg.julialang.org/badges/YAML_1.0.svg)](http://pkg.julialang.org/?pkg=YAML)
-
 [![Build Status](https://travis-ci.org/JuliaData/YAML.jl.svg?branch=master)](https://travis-ci.org/JuliaData/YAML.jl)
 [![codecov](https://codecov.io/gh/JuliaData/YAML.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaData/YAML.jl)
 
