@@ -135,7 +135,6 @@ function write_and_load(data::Any)
     end
 end
 
-
 const testdir = dirname(@__FILE__)
 @testset for test in tests
     data = YAML.load_file(
@@ -220,5 +219,8 @@ order_one = OrderedDict(dict_content...)
 order_two = OrderedDict(dict_content[[2,1]]...) # reverse order
 @test YAML.yaml(order_one) != YAML.yaml(order_two)
 @test YAML.load(YAML.yaml(order_one)) == YAML.load(YAML.yaml(order_two))
+
+# issue 89 - quotes in strings
+@test YAML.load(YAML.yaml(Dict("a" => """a "quoted" string""")))["a"] == """a "quoted" string"""
 
 end  # module

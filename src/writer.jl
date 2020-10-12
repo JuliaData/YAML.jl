@@ -83,7 +83,7 @@ _print(io::IO, str::AbstractString, level::Int=0, ignore_level::Bool=false) =
         indentation = repeat("  ", level + 1)
         println(io, "|\n$indentation" * replace(str, "\n"=>"\n"*indentation)) # indent each line
     else
-        println(io, "\"" * str * "\"") # be very specific about strings
+        println(io, "\"" * replace(str, "\"" => "\\\"") * "\"") # quote all strings
     end
 
 # handle NaNs and Infs
