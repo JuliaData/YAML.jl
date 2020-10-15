@@ -77,14 +77,9 @@ function _print(io::IO, pair::Pair, level::Int=0, ignore_level::Bool=false)
     _print(io, pair[2], level + 1) # print the value
 end
 
-# _print a single string, which may contain multiple lines
+# _print a single string
 _print(io::IO, str::AbstractString, level::Int=0, ignore_level::Bool=false) =
-    if occursin("\n", str) # handle multi-line strings
-        indentation = repeat("  ", level + 1)
-        println(io, "|\n$indentation" * replace(str, "\n"=>"\n"*indentation)) # indent each line
-    else
-        println(io, "\"" * replace(str, "\"" => "\\\"") * "\"") # quote all strings
-    end
+    println(io, repr(MIME("text/plain"), str)) # quote and escape
 
 # handle NaNs and Infs
 _print(io::IO, val::Float64, level::Int=0, ignore_level::Bool=false) =
