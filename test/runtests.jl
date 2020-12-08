@@ -222,5 +222,6 @@ order_two = OrderedDict(dict_content[[2,1]]...) # reverse order
 
 # issue 89 - quotes in strings
 @test YAML.load(YAML.yaml(Dict("a" => """a "quoted" string""")))["a"] == """a "quoted" string"""
+@test YAML.load(YAML.yaml(Dict("a" => """a \\"quoted\\" string""")))["a"] == """a \\"quoted\\" string"""
 
 end  # module
