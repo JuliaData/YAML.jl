@@ -224,4 +224,11 @@ order_two = OrderedDict(dict_content[[2,1]]...) # reverse order
 @test YAML.load(YAML.yaml(Dict("a" => """a "quoted" string""")))["a"] == """a "quoted" string"""
 @test YAML.load(YAML.yaml(Dict("a" => """a \\"quoted\\" string""")))["a"] == """a \\"quoted\\" string"""
 
+@test YAML.load(YAML.yaml(Dict("a" => "")))["a"] == ""
+@test YAML.load(YAML.yaml(Dict("a" => "nl at end\n")))["a"] == "nl at end\n"
+@test YAML.load(YAML.yaml(Dict("a" => "one\nnl\n")))["a"] == "one\nnl\n"
+@test YAML.load(YAML.yaml(Dict("a" => "many\nnls\n\n\n")))["a"] == "many\nnls\n\n\n"
+@test YAML.load(YAML.yaml(Dict("a" => "no\ntrailing\nnls")))["a"] == "no\ntrailing\nnls"
+@test YAML.load(YAML.yaml(Dict("a" => "foo\n\"bar\\'")))["a"] == "foo\n\"bar\\'"
+
 end  # module

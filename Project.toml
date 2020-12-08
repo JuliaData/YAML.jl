@@ -1,6 +1,6 @@
 name = "YAML"
 uuid = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
-version = "0.4.3"
+version = "0.4.4"
 
 [deps]
 Base64 = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
@@ -11,9 +11,9 @@ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 julia = "1"
 
 [extras]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
+OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Test", "OrderedCollections", "DataStructures"]
