@@ -88,7 +88,7 @@ _print(io::IO, str::AbstractString, level::Int=0, ignore_level::Bool=false) =
         else                       # no trailing newlines: strip
             println(io, "|-")
         end
-        indent = repeat("  ", level)
+        indent = repeat("  ", max(level, 1))
         for line in split(str, "\n")
             println(io, indent, line)
         end
