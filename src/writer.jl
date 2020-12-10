@@ -40,13 +40,12 @@ yaml(data::Any) = write(data)
 
 # recursively print a dictionary
 _print(io::IO, dict::AbstractDict, level::Int=0, ignore_level::Bool=false) =
-    if length(dict) > 0
+    if isempty(dict)
+        println(io, "{}")
+    else
         for (i, pair) in enumerate(dict)
             _print(io, pair, level, ignore_level ? i == 1 : false) # ignore indentation of first pair
         end
-    else
-        @warn "Writing an empty $(typeof(dict)), which might be parsed as nothing"
-        print(io, "\n") # https://github.com/JuliaData/YAML.jl/issues/81
     end
 
 # recursively print an array
