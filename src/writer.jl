@@ -79,7 +79,22 @@ end
 
 # _print a single string
 _print(io::IO, str::AbstractString, level::Int=0, ignore_level::Bool=false) =
-    println(io, repr(MIME("text/plain"), str)) # quote and escape
+    if occursin('\n', strip(str)) || occursin('"', str)
+        if endswith(str, "\n\n")   # multiple trailing newlines: keep
+            println(io, "|+")
+            str = str[1:end-1]     # otherwise, we have one too many
+        elseif endswith(str, "\n") # one trailing newline: clip
+            println(io, "|")
+        else                       # no trailing newlines: strip
+            println(io, "|-")
+        end
+        indent = repeat("  ", max(level, 1))
+        for line in split(str, "\n")
+            println(io, indent, line)
+        end
+    else
+        println(io, repr(MIME("text/plain"), str)) # quote and escape
+    end
 
 # handle NaNs and Infs
 _print(io::IO, val::Float64, level::Int=0, ignore_level::Bool=false) =
