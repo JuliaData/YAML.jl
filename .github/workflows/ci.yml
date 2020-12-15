@@ -24,7 +24,7 @@ jobs:
           - x64
           - x86
         exclude:
-          - os: masOS-latest
+          - os: macOS-latest
             arch: x86
     steps:
       - uses: actions/checkout@v2
