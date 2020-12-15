@@ -31,10 +31,22 @@ function write(data::Any, prefix::AbstractString="")
     return String(take!(io))
 end
 
+"""
+    yaml(data)
+
+Return a YAML-formatted string of the `data`.
+"""
+yaml(data::Any) = write(data)
+
 # recursively print a dictionary
-_print(io::IO, dict::Dict, level::Int=0, ignore_level::Bool=false) =
-    for (i, pair) in enumerate(dict)
-        _print(io, pair, level, ignore_level ? i == 1 : false) # ignore indentation of first pair
+_print(io::IO, dict::AbstractDict, level::Int=0, ignore_level::Bool=false) =
+    if length(dict) > 0
+        for (i, pair) in enumerate(dict)
+            _print(io, pair, level, ignore_level ? i == 1 : false) # ignore indentation of first pair
+        end
+    else
+        @warn "Writing an empty $(typeof(dict)), which might be parsed as nothing"
+        print(io, "\n") # https://github.com/JuliaData/YAML.jl/issues/81
     end
 
 # recursively print an array
@@ -53,13 +65,11 @@ _print(io::IO, arr::AbstractVector, level::Int=0, ignore_level::Bool=false) =
 function _print(io::IO, pair::Pair, level::Int=0, ignore_level::Bool=false)
     key = if typeof(pair[1]) == Nothing
         "null" # this is what the YAML parser interprets as 'nothing'
-    elseif typeof(pair[1]) <: Vector && VERSION < v"0.7.0"
-        string(convert(Array{Any}, pair[1]))[4:end] # v0.6 prepends the vector type -> remove it
     else
         string(pair[1]) # any useful case
     end
     print(io, _indent(key * ":", level, ignore_level)) # print the key
-    if (typeof(pair[2]) <: Dict || typeof(pair[2]) <: AbstractVector)
+    if (typeof(pair[2]) <: AbstractDict || typeof(pair[2]) <: AbstractVector)
         print(io, "\n") # a line break is needed before a recursive structure
     else
         print(io, " ") # a whitespace character is needed before a single value

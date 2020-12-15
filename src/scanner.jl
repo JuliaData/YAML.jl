@@ -827,7 +827,7 @@ function scan_directive_name(stream::TokenStream, start_mark::Mark)
     forwardchars!(stream, length)
 
     c = peek(stream.input)
-    if !in(c, "\0 \r\n\u0085\u2028\u2029")
+    if !in(c, ":\0 \r\n\u0085\u2028\u2029")
         throw(ScannerError("while scanning a directive", start_mark,
                            "expected alphanumeric character, but found '$(c)'",
                            get_mark(stream)))
@@ -838,7 +838,7 @@ end
 
 
 function scan_yaml_directive_value(stream::TokenStream, start_mark::Mark)
-    while peek(stream.input) == ' '
+    while peek(stream.input) == ' ' || peek(stream.input) == ':'
         forwardchars!(stream)
     end
 
