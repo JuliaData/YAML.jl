@@ -187,6 +187,7 @@ const testdir = dirname(@__FILE__)
     @test equivalent(first(YAML.load_all_file(joinpath(testdir, string(test, ".data")), TestConstructor())), expected)
     @test equivalent(first(YAML.load_all_file(joinpath(testdir, string(test, ".data")), more_constructors, multi_constructors)), expected)
 
+    println(yamlString)
     @test equivalent(first(YAML.load_all(yamlString, TestConstructor())), expected)
     @test equivalent(first(YAML.load_all(yamlString, more_constructors, multi_constructors)), expected)
     if !in(test, test_write_ignored)
