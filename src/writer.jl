@@ -77,13 +77,23 @@ function _print(io::IO, pair::Pair, level::Int=0, ignore_level::Bool=false)
     _print(io, pair[2], level + 1) # print the value
 end
 
-# _print a single string, which may contain multiple lines
+# _print a single string
 _print(io::IO, str::AbstractString, level::Int=0, ignore_level::Bool=false) =
-    if occursin("\n", str) # handle multi-line strings
-        indentation = repeat("  ", level + 1)
-        println(io, "|\n$indentation" * replace(str, "\n"=>"\n"*indentation)) # indent each line
+    if occursin('\n', strip(str)) || occursin('"', str)
+        if endswith(str, "\n\n")   # multiple trailing newlines: keep
+            println(io, "|+")
+            str = str[1:end-1]     # otherwise, we have one too many
+        elseif endswith(str, "\n") # one trailing newline: clip
+            println(io, "|")
+        else                       # no trailing newlines: strip
+            println(io, "|-")
+        end
+        indent = repeat("  ", max(level, 1))
+        for line in split(str, "\n")
+            println(io, indent, line)
+        end
     else
-        println(io, "\"" * str * "\"") # be very specific about strings
+        println(io, repr(MIME("text/plain"), str)) # quote and escape
     end
 
 # handle NaNs and Infs

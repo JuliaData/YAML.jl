@@ -157,7 +157,6 @@ function write_and_load(data::Any)
     end
 end
 
-
 const testdir = dirname(@__FILE__)
 @testset for test in tests
     yamlString = open(joinpath(testdir, string(test, ".data"))) do f
@@ -316,5 +315,16 @@ order_one = OrderedDict(dict_content...)
 order_two = OrderedDict(dict_content[[2,1]]...) # reverse order
 @test YAML.yaml(order_one) != YAML.yaml(order_two)
 @test YAML.load(YAML.yaml(order_one)) == YAML.load(YAML.yaml(order_two))
+
+# issue 89 - quotes in strings
+@test YAML.load(YAML.yaml(Dict("a" => """a "quoted" string""")))["a"] == """a "quoted" string"""
+@test YAML.load(YAML.yaml(Dict("a" => """a \\"quoted\\" string""")))["a"] == """a \\"quoted\\" string"""
+
+@test YAML.load(YAML.yaml(Dict("a" => "")))["a"] == ""
+@test YAML.load(YAML.yaml(Dict("a" => "nl at end\n")))["a"] == "nl at end\n"
+@test YAML.load(YAML.yaml(Dict("a" => "one\nnl\n")))["a"] == "one\nnl\n"
+@test YAML.load(YAML.yaml(Dict("a" => "many\nnls\n\n\n")))["a"] == "many\nnls\n\n\n"
+@test YAML.load(YAML.yaml(Dict("a" => "no\ntrailing\nnls")))["a"] == "no\ntrailing\nnls"
+@test YAML.load(YAML.yaml(Dict("a" => "foo\n\"bar\\'")))["a"] == "foo\n\"bar\\'"
 
 end  # module
