@@ -26,15 +26,28 @@ mutable struct Constructor
     constructed_objects::Dict{Node, Any}
     recursive_objects::Set{Node}
     yaml_constructors::Dict{Union{String, Nothing}, Function}
+    yaml_multi_constructors::Dict{Union{String, Nothing}, Function}
 
-    function Constructor(more_constructors::Dict{String,Function})
+    function Constructor(single_constructors = Dict(), multi_constructors = Dict())
         new(Dict{Node, Any}(), Set{Node}(),
-            merge(copy(default_yaml_constructors), more_constructors))
+            convert(Dict{Union{String, Nothing},Function}, single_constructors),
+            convert(Dict{Union{String, Nothing},Function}, multi_constructors))
     end
 end
 
-Constructor() = Constructor(Dict{String,Function}())
+
+function add_constructor!(func::Function, constructor::Constructor, tag::Union{String, Nothing})
+    constructor.yaml_constructors[tag] = func
+    constructor
+end
+
+function add_multi_constructor!(func::Function, constructor::Constructor, tag::Union{String, Nothing})
+    constructor.yaml_multi_constructors[tag] = func
+    constructor
+end
+
 Constructor(::Nothing) = Constructor(Dict{String,Function}())
+SafeConstructor(constructors::Dict = Dict(), multi_constructors::Dict = Dict()) = Constructor(merge(copy(default_yaml_constructors), constructors), multi_constructors)
 
 function construct_document(constructor::Constructor, node::Node)
     data = construct_object(constructor, node)
@@ -61,16 +74,27 @@ function construct_object(constructor::Constructor, node::Node)
     if haskey(constructor.yaml_constructors, node.tag)
         node_constructor = constructor.yaml_constructors[node.tag]
     else
-        # TODO: Multi-constructors. Constructors that operate on prefixes.
+        for (tag_prefix, node_const) in constructor.yaml_multi_constructors
+            if tag_prefix !== nothing && startswith(node.tag, tag_prefix)
+                tag_suffix = node.tag[length(tag_prefix) + 1:end]
+                node_constructor = node_const
+                break
+            end
+        end
 
-        if haskey(constructor.yaml_constructors, nothing)
-            node_constructor = constructor.yaml_constructors[nothing]
-        elseif typeof(node) == ScalarNode
-            node_constructor = construct_scalar
-        elseif typeof(node) == SequenceNode
-            node_constructor = construct_sequence
-        elseif typeof(node) == MappingNode
-            node_constructor = construct_mapping
+        if node_constructor === nothing
+            if haskey(constructor.yaml_multi_constructors, nothing)
+                tag_suffix = node.tag
+                node_constructor = constructor.yaml_multi_constructors[nothing]
+            elseif haskey(constructor.yaml_constructors, nothing)
+                node_constructor = constructor.yaml_constructors[nothing]
+            elseif typeof(node) == ScalarNode
+                node_constructor = construct_scalar
+            elseif typeof(node) == SequenceNode
+                node_constructor = construct_sequence
+            elseif typeof(node) == MappingNode
+                node_constructor = construct_mapping
+            end
         end
     end
 
