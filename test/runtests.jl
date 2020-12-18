@@ -137,14 +137,45 @@ end
 
 const testdir = dirname(@__FILE__)
 @testset for test in tests
-    data = YAML.load_file(
-        joinpath(testdir, string(test, ".data")),
-        more_constructors
-    )
+    yamlString = open(joinpath(testdir, string(test, ".data"))) do f
+        chomp(read(f, String))
+    end
     expected = evalfile(joinpath(testdir, string(test, ".expected")))
-    @test equivalent(data, expected)
+
+    @testset "Load from File" begin
+        data = YAML.load_file(
+            joinpath(testdir, string(test, ".data")),
+            more_constructors
+        )
+        @test equivalent(data, expected)
+    end
+
+    @testset "Load from String" begin
+        stringData = YAML.load(
+            yamlString,
+            more_constructors
+        )
+        @test equivalent(stringData, expected)
+    end
+
+    @testset "Load All from File" begin
+        allData = YAML.load_all_file(joinpath(testdir, string(test, ".data")), more_constructors)
+        @test equivalent(first(allData), expected)
+    end
+
+    @testset "Load All from String" begin
+        allStringData = YAML.load_all(yamlString, more_constructors)
+        @test equivalent(first(allStringData), expected)
+    end
+
     if !in(test, test_write_ignored)
-        @test equivalent(write_and_load(data), expected)
+        @testset "Writing" begin
+            data = YAML.load_file(
+                joinpath(testdir, string(test, ".data")),
+                more_constructors
+            )
+            @test equivalent(write_and_load(data), expected)
+        end
     else
         println("WARNING: I do not test the writing of $test")
     end
