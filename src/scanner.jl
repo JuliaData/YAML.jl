@@ -1056,8 +1056,10 @@ function scan_block_scalar(stream::TokenStream, style::Char)
     end
 
     # Chomp the tail.
-    if chomping
+    if isnothing(chomping) || chomping
         push!(chunks, line_break)
+    end
+    if chomping == true
         append!(chunks, breaks)
     end
 
