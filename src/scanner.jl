@@ -1059,7 +1059,7 @@ function scan_block_scalar(stream::TokenStream, style::Char)
     if isnothing(chomping) || chomping
         push!(chunks, line_break)
     end
-    if !isnothing(chomping)
+    if chomping == true
         append!(chunks, breaks)
     end
 
