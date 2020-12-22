@@ -42,7 +42,8 @@ const tests = [
     "ar1",
     "ar1_cartesian",
     "merge-01",
-    "version-colon"
+    "version-colon",
+    "multi-constructor"
 ]
 
 # ignore some test cases in write_and_load testing
@@ -51,7 +52,8 @@ const test_write_ignored = [
     "escape_sequences",
     "cartesian",
     "ar1",
-    "ar1_cartesian"
+    "ar1_cartesian",
+    "multi-constructor"
 ]
 
 
@@ -117,12 +119,33 @@ function construct_type_map(t::Symbol, constructor::YAML.Constructor,
     mapping
 end
 
+function TestConstructor()
+    pairs = [("!Cartesian", :Cartesian),
+             ("!AR1", :AR1)]
+    ret = YAML.SafeConstructor()
+    for (t,s) in pairs
+        YAML.add_constructor!(ret, t) do c, n
+            construct_type_map(s, c, n)
+        end
+    end
+
+    YAML.add_multi_constructor!(ret, "!addtag:") do constructor::YAML.Constructor, tag, node
+        construct_type_map(Symbol(tag), constructor, node)
+    end
+
+    ret
+end
+
 const more_constructors = let
     pairs = [("!Cartesian", :Cartesian),
              ("!AR1", :AR1)]
     Dict{String,Function}([(t, (c, n) -> construct_type_map(s, c, n))
                            for (t, s) in pairs])
 end
+
+const multi_constructors = Dict{String, Function}(
+    "!addtag:" => (c, t, n) -> construct_type_map(Symbol(t), c, n)
+)
 
 # write a file, then load its contents to be tested again
 function write_and_load(data::Any)
@@ -143,38 +166,86 @@ const testdir = dirname(@__FILE__)
     expected = evalfile(joinpath(testdir, string(test, ".expected")))
 
     @testset "Load from File" begin
-        data = YAML.load_file(
-            joinpath(testdir, string(test, ".data")),
-            more_constructors
-        )
-        @test equivalent(data, expected)
+        @test begin
+            data = YAML.load_file(
+                joinpath(testdir, string(test, ".data")),
+                TestConstructor()
+            )
+            equivalent(data, expected)
+        end
+        @test begin
+            dictData = YAML.load_file(
+                joinpath(testdir, string(test, ".data")),
+                more_constructors, multi_constructors
+            )
+            equivalent(dictData, expected)
+        end
     end
 
     @testset "Load from String" begin
-        stringData = YAML.load(
-            yamlString,
-            more_constructors
-        )
-        @test equivalent(stringData, expected)
+        @test begin
+            data = YAML.load(
+                yamlString,
+                TestConstructor()
+            )
+            equivalent(data, expected)
+        end
+
+        @test begin
+            dictData = YAML.load(
+                yamlString,
+                more_constructors, multi_constructors
+            )
+            equivalent(dictData, expected)
+        end
     end
 
     @testset "Load All from File" begin
-        allData = YAML.load_all_file(joinpath(testdir, string(test, ".data")), more_constructors)
-        @test equivalent(first(allData), expected)
+        @test begin
+            data = YAML.load_all_file(
+                joinpath(testdir, string(test, ".data")),
+                TestConstructor()
+            )
+            equivalent(first(data), expected)
+        end
+
+        @test begin
+            dictData = YAML.load_all_file(
+                joinpath(testdir, string(test, ".data")),
+                more_constructors, multi_constructors
+            )
+            equivalent(first(dictData), expected)
+        end
     end
 
     @testset "Load All from String" begin
-        allStringData = YAML.load_all(yamlString, more_constructors)
-        @test equivalent(first(allStringData), expected)
+        @test begin
+            data = YAML.load_all(
+                yamlString,
+                TestConstructor()
+            )
+            equivalent(first(data), expected)
+        end
+
+        @test begin
+            dictData = YAML.load_all(
+                yamlString,
+                more_constructors, multi_constructors
+            )
+            equivalent(first(dictData), expected)
+        end
     end
+
 
     if !in(test, test_write_ignored)
         @testset "Writing" begin
-            data = YAML.load_file(
-                joinpath(testdir, string(test, ".data")),
-                more_constructors
-            )
-            @test equivalent(write_and_load(data), expected)
+            @test begin
+                data = YAML.load_file(
+                    joinpath(testdir, string(test, ".data")),
+                    more_constructors
+                )
+                equivalent(write_and_load(data), expected)
+            end
         end
     else
         println("WARNING: I do not test the writing of $test")
@@ -218,6 +289,56 @@ const dicttypes = [
         @test data[""] === missing
     end
 end
+
+const test_errors = [
+    "invalid-tag"
+]
+
+@testset "YAML Errors" "error test = $test" for test in test_errors
+    @test_throws YAML.ConstructorError YAML.load_file(
+        joinpath(testdir, string(test, ".data")),
+        TestConstructor()
+    )
+end
+
+@testset "Custom Constructor" begin
+
+    function MySafeConstructor()
+        yaml_constructors = copy(YAML.default_yaml_constructors)
+        delete!(yaml_constructors, nothing)
+        YAML.Constructor(yaml_constructors)
+    end
+
+
+    function MyReallySafeConstructor()
+        yaml_constructors = copy(YAML.default_yaml_constructors)
+        delete!(yaml_constructors, nothing)
+        ret = YAML.Constructor(yaml_constructors)
+        YAML.add_multi_constructor!(ret, nothing) do constructor::YAML.Constructor, tag, node
+            throw(YAML.ConstructorError(nothing, nothing,
+                "could not determine a constructor for the tag '$(tag)'",
+                node.start_mark))
+        end
+        ret
+    end
+
+    yamlString = """
+    Test: !test
+        test1: !test data
+        test2: !test2
+            - test1
+            - test2
+    """
+
+    expected = Dict{Any,Any}("Test" => Dict{Any,Any}("test2"=>["test1", "test2"],"test1"=>"data"))
+
+    @test equivalent(YAML.load(yamlString, MySafeConstructor()), expected)
+    @test_throws YAML.ConstructorError YAML.load(
+        yamlString,
+        MyReallySafeConstructor()
+    )
+end
+
 
 # also check that things break correctly
 @test_throws YAML.ConstructorError YAML.load_file(
