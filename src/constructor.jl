@@ -88,11 +88,11 @@ function construct_object(constructor::Constructor, node::Node)
                 node_constructor = constructor.yaml_multi_constructors[nothing]
             elseif haskey(constructor.yaml_constructors, nothing)
                 node_constructor = constructor.yaml_constructors[nothing]
-            elseif typeof(node) == ScalarNode
+            elseif node isa ScalarNode
                 node_constructor = construct_scalar
-            elseif typeof(node) == SequenceNode
+            elseif node isa SequenceNode
                 node_constructor = construct_sequence
-            elseif typeof(node) == MappingNode
+            elseif node isa MappingNode
                 node_constructor = construct_mapping
             end
         end
@@ -114,7 +114,7 @@ end
 
 
 function construct_scalar(constructor::Constructor, node::Node)
-    if typeof(node) != ScalarNode
+    if !(node isa ScalarNode)
         throw(ConstructorError(nothing, nothing,
                                "expected a scalar node, but found $(typeof(node))",
                                node.start_mark))
@@ -124,7 +124,7 @@ end
 
 
 function construct_sequence(constructor::Constructor, node::Node)
-    if typeof(node) != SequenceNode
+    if !(node isa SequenceNode)
         throw(ConstructorError(nothing, nothing,
                                "expected a sequence node, but found $(typeof(node))",
                                node.start_mark))
@@ -141,10 +141,10 @@ function flatten_mapping(node::MappingNode)
         key_node, value_node = node.value[index]
         if key_node.tag == "tag:yaml.org,2002:merge"
             node.value = node.value[setdiff(axes(node.value, 1), index)]
-            if typeof(value_node) == MappingNode
+            if value_node isa MappingNode
                 flatten_mapping(value_node)
                 append!(merge, value_node.value)
-            elseif typeof(value_node) == SequenceNode
+            elseif value_node isa SequenceNode
                 submerge = []
                 for subnode in value_node.value
                     if typeof(subnode) != MappingNode
@@ -180,9 +180,9 @@ function construct_mapping(dicttype::Union{Type,Function}, constructor::Construc
     for (key_node, value_node) in node.value
         key = construct_object(constructor, key_node)
         value = construct_object(constructor, value_node)
-        if !(typeof(value) <: keytype(typeof(mapping)))
+        if !(value isa keytype(mapping))
             try
-                key = keytype(typeof(mapping))(key) # try to cast
+                key = keytype(mapping)(key) # try to cast
             catch
                 throw(ConstructorError(nothing, nothing,
                                        "Cannot cast $key to the key type of $dicttype",
@@ -209,7 +209,7 @@ function custom_mapping(dicttype::Function)
     dicttype_test = try dicttype() catch
         throw(ArgumentError("The dicttype Function cannot be called without arguments"))
     end
-    if !(typeof(dicttype_test) <: AbstractDict)
+    if !(dicttype_test isa AbstractDict)
         throw(ArgumentError("The dicttype Function does not return an AbstractDict"))
     end
     return (constructor::Constructor, node::Node) -> construct_mapping(dicttype, constructor, node)
