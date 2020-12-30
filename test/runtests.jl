@@ -4,6 +4,7 @@ module YAMLTests
 
 import YAML
 import Base.Filesystem
+using StringEncodings: encode, @enc_str
 using Test
 
 const tests = [
@@ -43,7 +44,9 @@ const tests = [
     "ar1_cartesian",
     "merge-01",
     "version-colon",
-    "multi-constructor"
+    "multi-constructor",
+    "utf-8-bom",
+    "utf-32-be",
 ]
 
 # ignore some test cases in write_and_load testing
@@ -250,6 +253,29 @@ const testdir = dirname(@__FILE__)
     else
         println("WARNING: I do not test the writing of $test")
     end
+end
+
+const encodings = [
+    enc"UTF-8", enc"UTF-16BE", enc"UTF-16LE", enc"UTF-32BE", enc"UTF-32LE"
+]
+@testset for encoding in encodings
+    data = encode("test", encoding)
+    @test YAML.detect_encoding(IOBuffer(data)) == encoding
+    @test YAML.load(IOBuffer(data)) == "test"
+
+    #with explicit BOM
+    data = encode("\uFEFFtest", encoding)
+    @test YAML.detect_encoding(IOBuffer(data)) == encoding
+    @test YAML.load(IOBuffer(data)) == "test"
+end
+
+@testset "multi_doc_bom" begin
+    iterable = YAML.load_all("\ufeff---\r\ntest: 1\n\ufeff---\ntest: 2\n")
+    (val, state) = iterate(iterable)
+    @test equivalent(val, Dict("test" => 1))
+    (val, state) = iterate(iterable, state)
+    @test equivalent(val, Dict("test" => 2))
+    @test iterate(iterable, state) === nothing
 end
 
 # test that an OrderedDict is written in the correct order

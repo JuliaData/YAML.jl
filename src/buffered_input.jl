@@ -68,3 +68,10 @@ function forward!(bi::BufferedInput, n::Integer=1)
         end
     end
 end
+
+# Ugly hack to allow peeking of `StringDecoder`s
+function peek(io::StringDecoder, ::Type{UInt8})
+    c = read(io, UInt8)
+    io.skip -= 1
+    c
+end

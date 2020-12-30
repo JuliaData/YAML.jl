@@ -21,6 +21,11 @@ struct DocumentEndToken <: Token
     span::Span
 end
 
+# '\uFEFF'
+struct ByteOrderMarkToken <: Token
+	span::Span
+end
+
 # The stream start
 struct StreamStartToken <: Token
     span::Span
