@@ -75,3 +75,6 @@ function peek(io::StringDecoder, ::Type{UInt8})
     io.skip -= 1
     c
 end
+
+# The same but for Julia 1.3
+peek(io::StringDecoder) = peek(io, UInt8)
