@@ -40,36 +40,39 @@ yaml(data::Any) = write(data)
 
 # recursively print a dictionary
 _print(io::IO, dict::AbstractDict, level::Int=0, ignore_level::Bool=false) =
-    if length(dict) > 0
+    if isempty(dict)
+        println(io, "{}")
+    else
         for (i, pair) in enumerate(dict)
             _print(io, pair, level, ignore_level ? i == 1 : false) # ignore indentation of first pair
         end
-    else
-        @warn "Writing an empty $(typeof(dict)), which might be parsed as nothing"
-        print(io, "\n") # https://github.com/JuliaData/YAML.jl/issues/81
     end
 
 # recursively print an array
 _print(io::IO, arr::AbstractVector, level::Int=0, ignore_level::Bool=false) =
-    for (i, elem) in enumerate(arr)
-        if typeof(elem) <: AbstractVector # vectors of vectors must be handled differently
-            print(io, _indent("-\n", level))
-            _print(io, elem, level + 1)
-        else
-            print(io, _indent("- ", level))   # print the sequence element identifier '-'
-            _print(io, elem, level + 1, true) # print the value directly after
+    if isempty(arr)
+        println(io, "[]")
+    else
+        for elem in arr
+            if elem isa AbstractVector # vectors of vectors must be handled differently
+                print(io, _indent("-\n", level))
+                _print(io, elem, level + 1)
+            else
+                print(io, _indent("- ", level))   # print the sequence element identifier '-'
+                _print(io, elem, level + 1, true) # print the value directly after
+            end
         end
     end
 
 # print a single key-value pair
 function _print(io::IO, pair::Pair, level::Int=0, ignore_level::Bool=false)
-    key = if typeof(pair[1]) == Nothing
+    key = if pair[1] === nothing
         "null" # this is what the YAML parser interprets as 'nothing'
     else
         string(pair[1]) # any useful case
     end
     print(io, _indent(key * ":", level, ignore_level)) # print the key
-    if (typeof(pair[2]) <: AbstractDict || typeof(pair[2]) <: AbstractVector)
+    if (pair[2] isa AbstractDict || pair[2] isa AbstractVector) && !isempty(pair[2])
         print(io, "\n") # a line break is needed before a recursive structure
     else
         print(io, " ") # a whitespace character is needed before a single value

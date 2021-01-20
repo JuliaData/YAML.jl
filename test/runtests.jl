@@ -383,4 +383,7 @@ order_two = OrderedDict(dict_content[[2,1]]...) # reverse order
 @test YAML.load(YAML.yaml(Dict("a" => "no\ntrailing\nnls")))["a"] == "no\ntrailing\nnls"
 @test YAML.load(YAML.yaml(Dict("a" => "foo\n\"bar\\'")))["a"] == "foo\n\"bar\\'"
 
+@test YAML.load(YAML.yaml(Dict("a" => Dict()))) == Dict("a" => Dict())
+@test YAML.load(YAML.yaml(Dict("a" => []))) == Dict("a" => [])
+
 end  # module
