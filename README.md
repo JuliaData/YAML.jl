@@ -1,7 +1,6 @@
-
 # YAML
 
-[![Build Status](https://travis-ci.org/JuliaData/YAML.jl.svg?branch=master)](https://travis-ci.org/JuliaData/YAML.jl)
+[![CI](https://github.com/JuliaData/YAML.jl/workflows/CI/badge.svg)](https://github.com/JuliaData/YAML.jl/actions?query=workflow%3ACI)
 [![codecov](https://codecov.io/gh/JuliaData/YAML.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaData/YAML.jl)
 
 [YAML](http://yaml.org/) is a flexible data serialization format that is
