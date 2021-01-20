@@ -376,6 +376,9 @@ order_two = OrderedDict(dict_content[[2,1]]...) # reverse order
 @test YAML.load(YAML.yaml(Dict("a" => """a "quoted" string""")))["a"] == """a "quoted" string"""
 @test YAML.load(YAML.yaml(Dict("a" => """a \\"quoted\\" string""")))["a"] == """a \\"quoted\\" string"""
 
+# issue 108 - dollar signs in single-line strings
+@test YAML.yaml("foo \$ bar") == "\"foo \$ bar\"\n"
+
 @test YAML.load(YAML.yaml(Dict("a" => "")))["a"] == ""
 @test YAML.load(YAML.yaml(Dict("a" => "nl at end\n")))["a"] == "nl at end\n"
 @test YAML.load(YAML.yaml(Dict("a" => "one\nnl\n")))["a"] == "one\nnl\n"
