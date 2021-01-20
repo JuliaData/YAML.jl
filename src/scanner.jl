@@ -1057,7 +1057,7 @@ function scan_block_scalar(stream::TokenStream, style::Char)
 
     # Chomp the tail.
     # Chomping may be Nothing or Bool.
-    if isnothing(chomping)
+    if chomping === nothing
         push!(chunks, line_break)
     elseif chomping
         push!(chunks, line_break)
