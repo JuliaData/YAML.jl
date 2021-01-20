@@ -96,7 +96,8 @@ _print(io::IO, str::AbstractString, level::Int=0, ignore_level::Bool=false) =
             println(io, indent, line)
         end
     else
-        println(io, repr(MIME("text/plain"), str)) # quote and escape
+        # quote and escape
+        println(io, replace(repr(MIME("text/plain"), str), raw"\$" => raw"$"))
     end
 
 # handle NaNs and Infs
