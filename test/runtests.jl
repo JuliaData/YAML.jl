@@ -270,11 +270,21 @@ const encodings = [
 end
 
 @testset "multi_doc_bom" begin
-    iterable = YAML.load_all("\ufeff---\r\ntest: 1\n\ufeff---\ntest: 2\n")
+    iterable = YAML.load_all("""
+\ufeff---\r
+test: 1
+\ufeff---
+test: 2
+
+\ufeff---
+test: 3
+""")
     (val, state) = iterate(iterable)
     @test equivalent(val, Dict("test" => 1))
     (val, state) = iterate(iterable, state)
     @test equivalent(val, Dict("test" => 2))
+    (val, state) = iterate(iterable, state)
+    @test equivalent(val, Dict("test" => 3))
     @test iterate(iterable, state) === nothing
 end
 
