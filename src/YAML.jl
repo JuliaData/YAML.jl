@@ -2,13 +2,13 @@ __precompile__(true)
 
 module YAML
 
-import Base: isempty, length, show
-
+import Base: isempty, length, show, peek
 import Base: iterate
 
 using Base64: base64decode
 using Dates
 using Printf
+using StringEncodings
 
 include("scanner.jl")
 include("parser.jl")

@@ -48,9 +48,48 @@ end
 include("tokens.jl")
 
 
+function detect_encoding(input::IO)::Encoding
+    pos = position(input)
+    start_bytes = Array{UInt8}(undef, 4)
+    bytes_read = readbytes!(input, start_bytes, 4)
+    seek(input, pos)
+
+    start_bytes[bytes_read+1:end] .= 1  #fill blanks with non-special bytes
+    intro = UInt32(start_bytes[4]) << 24 +
+        UInt32(start_bytes[3]) << 16 +
+        UInt32(start_bytes[2]) << 8 +
+        UInt32(start_bytes[1])
+
+    # https://yaml.org/spec/1.2/spec.html#id2771184
+    if intro & 0x00ffffff == 0xbfbbef  #utf-8 bom
+        enc"UTF-8"
+    elseif intro == 0xfffe0000  #utf-32be BOM
+        enc"UTF-32BE"
+    elseif intro == 0x0000feff  #utf-32le BOM
+        enc"UTF-32LE"
+    elseif intro & 0xffff == 0xfffe  #utf-16be BOM
+        enc"UTF-16BE"
+    elseif intro & 0xffff == 0xfeff  #utf-16le BOM
+        enc"UTF-16LE"
+    elseif intro & 0x00ffffff == 0  #ascii char in utf-32be
+        enc"UTF-32BE"
+    elseif intro & 0xffffff00 == 0  #ascii char in utf-32le
+        enc"UTF-32LE"
+    elseif intro & 0x00ff == 0  #ascii char in utf-16be
+        enc"UTF-16BE"
+    elseif intro & 0xff00 == 0  #ascii char in utf-16le
+        enc"UTF-16LE"
+    else
+        enc"UTF-8"
+    end
+end
+
+
 # A stream type for the scanner, which is just a IO stream with scanner state.
 mutable struct TokenStream
     input::BufferedInput
+
+    encoding::Encoding
 
     # All tokens read.
     done::Bool
@@ -99,7 +138,10 @@ mutable struct TokenStream
     possible_simple_keys::Dict{UInt64,SimpleKey}
 
     function TokenStream(stream::IO)
-        tokstream = new(BufferedInput(stream), false, Queue{Token}(),
+        encoding = detect_encoding(stream)
+        decoded_stream = encoding == enc"UTF-8" ? stream : StringDecoder(stream, encoding)
+        tokstream = new(BufferedInput(decoded_stream),
+                        encoding, false, Queue{Token}(),
                         1, 0, 1, 0, 0, -1,
                         Vector{Int}(undef, 0), true, Dict())
         fetch_stream_start(tokstream)
@@ -230,6 +272,8 @@ function fetch_more_tokens(stream::TokenStream)
         fetch_single(stream)
     elseif c == '\"'
         fetch_double(stream)
+    elseif c == '\uFEFF'
+        fetch_byte_order_mark(stream)
     elseif check_plain(stream)
         fetch_plain(stream)
     else
@@ -328,6 +372,7 @@ function add_indent(stream::TokenStream, column)
 end
 
 
+
 # Checkers
 # --------
 
@@ -340,8 +385,8 @@ end
 
 function check_document_start(stream::TokenStream)
     stream.column == 0 &&
-    prefix(stream.input, 3) == "---" &&
-    in(peek(stream.input, 3), whitespace)
+        prefix(stream.input, 3) == "---" &&
+        in(peek(stream.input, 3), whitespace)
 end
 
  function check_document_end(stream::TokenStream)
@@ -364,7 +409,7 @@ function check_value(stream::TokenStream)
 end
 
 function check_plain(stream::TokenStream)
-    !in(peek(stream.input), "\0 \t\r\n\u0085\u2028\u2029-?:,[]{}#&*!|>\'\"%@`") ||
+    !in(peek(stream.input), "\0 \t\r\n\u0085\u2028\u2029-?:,[]{}#&*!|>\'\"%@`\uFEFF") ||
     (!in(peek(stream.input, 1), whitespace) &&
      (peek(stream.input) == '-' || (stream.flow_level == 0 &&
                               in(peek(stream.input), "?:"))))
@@ -376,9 +421,8 @@ end
 
 function fetch_stream_start(stream::TokenStream)
     mark = get_mark(stream)
-    # TODO: support other other encodings.
     enqueue!(stream.token_queue,
-             StreamStartToken(Span(mark, mark), "utf-8"))
+             StreamStartToken(Span(mark, mark), string(stream.encoding)))
 end
 
 
@@ -433,6 +477,18 @@ function fetch_document_indicator(stream::TokenStream, tokentype)
     forwardchars!(stream, 3)
     end_mark = get_mark(stream)
     enqueue!(stream.token_queue, tokentype(Span(start_mark, end_mark)))
+end
+
+
+function fetch_byte_order_mark(stream::TokenStream)
+    # Set the current intendation to -1.
+    unwind_indent(stream, -1)
+
+    start_mark = get_mark(stream)
+    forward!(stream.input)
+    stream.index += 1
+    end_mark = get_mark(stream)
+    enqueue!(stream.token_queue, ByteOrderMarkToken(Span(start_mark, end_mark)))
 end
 
 
@@ -755,10 +811,6 @@ end
 
 # Scan past whitespace to the next token.
 function scan_to_next_token(stream::TokenStream)
-    if stream.index == 0 && peek(stream.input) == '\uFEFF'
-        forwardchars!(stream)
-    end
-
     found = false
     while !found
         while peek(stream.input) == ' '
@@ -1407,6 +1459,9 @@ function scan_plain_spaces(stream::TokenStream, indent::Integer,
     if in(c, "\r\n\u0085\u2028\u2029")
         line_break = scan_line_break(stream)
         stream.allow_simple_key = true
+        if peek(stream.input) == '\uFEFF'
+            return Any[]
+        end
         pref = prefix(stream.input, 3)
         if pref == "---" || pref == "..." &&
             in(peek(stream.input, 3), "\0 \t\r\n\u0085\u2028\u2029")
@@ -1419,6 +1474,9 @@ function scan_plain_spaces(stream::TokenStream, indent::Integer,
                 forwardchars!(stream)
             else
                 push!(breaks, scan_line_break(stream))
+                if peek(stream.input) == '\uFEFF'
+                    return Any[]
+                end
                 pref = prefix(stream.input, 3)
                 if pref == "---" || pref == "..." &&
                     in(peek(stream.input, 3), "\0 \t\r\n\u0085\u2028\u2029")

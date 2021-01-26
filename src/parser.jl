@@ -137,6 +137,11 @@ end
 
 function parse_implicit_document_start(stream::EventStream)
     token = peek(stream.input)
+	# Parse a byte order mark
+	if typeof(token) == ByteOrderMarkToken
+		forward!(stream.input)
+		token = peek(stream.input)
+	end
     if !in(typeof(token), [DirectiveToken, DocumentStartToken, StreamEndToken])
         stream.tag_handles = DEFAULT_TAGS
         event = DocumentStartEvent(token.span.start_mark, token.span.start_mark,
@@ -158,8 +163,14 @@ function parse_document_start(stream::EventStream)
         stream.input = Iterators.rest(stream.input)
     end
 
+	token = peek(stream.input)
+	# Parse a byte order mark if it exists
+	if typeof(token) == ByteOrderMarkToken
+		forward!(stream.input)
+		token = peek(stream.input)
+	end
+
     # Parse explicit document.
-    token = peek(stream.input)
     if typeof(token) != StreamEndToken
         start_mark = token.span.start_mark
         version, tags = process_directives(stream)
