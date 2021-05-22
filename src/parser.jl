@@ -491,20 +491,22 @@ function _parse_flow_sequence_entry(token::Any, stream::EventStream, first_entry
             forward!(stream.input)
         else
             throw(ParserError("while parsing a flow sequence",
-                              stream.mark[end],
+                              stream.marks[end],
                               "expected ',' or ']', but got $(typeof(token))",
                               token.span.start_mark))
         end
     end
 
     token = peek(stream.input)
-    if typeof(token) == KeyToken
+    if isa(token, KeyToken)
         stream.state = parse_flow_sequence_entry_mapping_key
-        return MappingStartEvent(token.span.start_mark, token.span.end_mark,
-                                 nothing, nothing, true, true)
-    elseif typeof(token) != FlowSequenceEndToken
+        MappingStartEvent(token.span.start_mark, token.span.end_mark,
+                          nothing, nothing, true, true)
+    elseif isa(token, FlowSequenceEndToken)
+        nothing
+    else
         push!(stream.states, parse_flow_sequence_entry)
-        return parse_flow_node(stream)
+        parse_flow_node(stream)
     end
 end
 
