@@ -425,4 +425,13 @@ order_two = OrderedDict(dict_content[[2,1]]...) # reverse order
 @test YAML.load(YAML.yaml(Dict("a" => Dict()))) == Dict("a" => Dict())
 @test YAML.load(YAML.yaml(Dict("a" => []))) == Dict("a" => [])
 
+# issue 114 - gracefully handle extra commas in flow collections
+@testset "issue114" begin
+    @test YAML.load("[3,4,]") == [3,4]
+    @test YAML.load("{a:4,b:5,}") == Dict("a" => 4, "b" => 5)
+    @test YAML.load("[?a:4, ?b:5]") == [Dict("a" => 4), Dict("b" => 5)]
+    @test_throws YAML.ParserError YAML.load("[3,,4]")
+    @test_throws YAML.ParserError YAML.load("{a: 3,,b:3}")
+end
+
 end  # module
