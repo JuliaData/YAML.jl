@@ -131,6 +131,9 @@ function iterate(it::YAMLDocIterator, _ = nothing)
     return doc, nothing
 end
 
+Base.IteratorSize(::Type{YAMLDocIterator}) = Base.SizeUnknown()
+Base.IteratorEltype(::Type{YAMLDocIterator}) = Base.EltypeUnknown()
+
 """
     load_all(x::Union{AbstractString, IO}) -> YAMLDocIterator
 

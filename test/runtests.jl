@@ -288,9 +288,8 @@ end
     end
     iterable = YAML.load_all_file(fname)
     @test Base.IteratorSize(YAML.YAMLDocIterator) == Base.SizeUnknown()
-    @test Base.IteratorEltype(YAML.YAMLDocIterator) == Base.HasEltype()
-    @test eltype(iterable) == Dict{Any, Any}
-    @test length(collect(iterable)) == 3
+    @test Base.IteratorEltype(YAML.YAMLDocIterator) == Base.EltypeUnknown()
+    @test length(collect(iterable)) == 4
 end
 
 # test that an OrderedDict is written in the correct order
