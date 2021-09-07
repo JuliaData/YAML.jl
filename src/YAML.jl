@@ -164,8 +164,5 @@ load_file(filename::AbstractString, args...; kwargs...) =
 Parse the YAML file `filename`, and return corresponding YAML documents.
 """
 load_all_file(filename::AbstractString, args...; kwargs...) =
-    open(filename, "r") do input
-        load_all(input, args...; kwargs...)
-    end
-
+    load_all(open(filename, "r"), args...; kwargs...)
 end  # module
