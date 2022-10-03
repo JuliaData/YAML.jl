@@ -356,23 +356,6 @@ function construct_yaml_timestamp(constructor::Constructor, node::Node)
         tz = TimeZone(tzString)
         ZonedDateTime(yr, mn, dy, h, m, s, ms, tz)
     end
-
-    
-    #=
-    delta_hr = 0
-    delta_mn = 0
-
-    if mat.captures[9] !== nothing
-        delta_hr = parse(Int, mat.captures[9])
-    end
-
-    if mat.captures[10] !== nothing
-        delta_mn = parse(Int, mat.captures[10])
-    end
-    =#
-
-    # TODO: Also, I'm not sure if there is a way to numerically set the timezone
-    # in Calendar.
 end
 
 
