@@ -1229,10 +1229,12 @@ function scan_flow_scalar(stream::TokenStream, style::Char)
     start_mark = get_mark(stream)
     q = peek(stream.input) # quote
     forwardchars!(stream)
-    while peek(stream.input) != q
+
+    while peek(stream.input) != q || peek(stream.input, 1) == q
         append!(chunks, scan_flow_scalar_spaces(stream, double, start_mark))
         append!(chunks, scan_flow_scalar_non_spaces(stream, double, start_mark))
     end
+
     forwardchars!(stream)
     end_mark = get_mark(stream)
     ScalarToken(Span(start_mark, end_mark), string(chunks...), false, style)
