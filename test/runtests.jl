@@ -435,10 +435,10 @@ order_two = OrderedDict(dict_content[[2,1]]...) # reverse order
 end
 
 @testset "issue 125 (test_throw)" begin
-    @test_throws YAML.load(""" ''' """)
-    @test_throws YAML.load(""" ''''' """)
-    @test_throws YAML.load(""" ''a'' """)
-    @test_throws YAML.load(""" '''a'' """)
+    @test_throws YAML.ScannerError YAML.load(""" ''' """)
+    @test_throws YAML.ScannerError YAML.load(""" ''''' """)
+    @test_throws YAML.ParserError YAML.load(""" ''a'' """)
+    @test_throws YAML.ScannerError YAML.load(""" '''a'' """)
 end
 
 end  # module
