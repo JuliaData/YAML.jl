@@ -294,7 +294,7 @@ function __parse_node(token, stream::EventStream, block, start_mark, end_mark, a
     if anchor !== nothing || tag !== nothing
         stream.state = pop!(stream.states)
         return ScalarEvent(start_mark, end_mark, anchor, tag,
-                            (implicit, false), "")
+                            (implicit, false), "", nothing)
     else
         node = block ? "block" : "flow"
         throw(ParserError("while parsing a $(node) node", start_mark,
