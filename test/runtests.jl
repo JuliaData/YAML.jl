@@ -47,6 +47,7 @@ const tests = [
     "multi-constructor",
     "utf-8-bom",
     "utf-32-be",
+    "empty_tag",
 ]
 
 # ignore some test cases in write_and_load testing
