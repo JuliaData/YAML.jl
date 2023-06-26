@@ -327,11 +327,8 @@ function construct_yaml_timestamp(constructor::Constructor, node::Node)
     m = parse(Int, mat.captures[5])
     s = parse(Int, mat.captures[6])
 
-    if mat.captures[7] === nothing
-        return DateTime(yr, mn, dy, h, m, s)
-    end
-
     ms = 0
+    
     if mat.captures[7] !== nothing
         ms = mat.captures[7]
         if length(ms) > 3
@@ -339,22 +336,26 @@ function construct_yaml_timestamp(constructor::Constructor, node::Node)
         end
         ms = parse(Int, string(ms, repeat("0", 3 - length(ms))))
     end
-
-    delta_hr = 0
-    delta_mn = 0
-
-    if mat.captures[9] !== nothing
-        delta_hr = parse(Int, mat.captures[9])
+    
+    if mat.captures[8] === nothing
+        return DateTime(yr, mn, dy, h, m, s, ms)
+    else
+        tzString = mat.captures[8]
+        
+        if mat.captures[8] != "Z"
+            
+            # TimeZones.jl doesn't accept a time zone like "-5",
+            # so we'll insert an extra zero to get something like "-05"
+            delta_hr = mat.captures[9]
+            if length(delta_hr) == 1
+                tzString = tzString[1]*"0"*tzString[2:end]
+            end
+            
+        end
+        
+        tz = TimeZone(tzString)
+        ZonedDateTime(yr, mn, dy, h, m, s, ms, tz)
     end
-
-    if mat.captures[10] !== nothing
-        delta_mn = parse(Int, mat.captures[10])
-    end
-
-    # TODO: Also, I'm not sure if there is a way to numerically set the timezone
-    # in Calendar.
-
-    return DateTime(yr, mn, dy, h, m, s, ms)
 end
 
 

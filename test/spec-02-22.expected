@@ -1,8 +1,9 @@
 using Dates
+using TimeZones
 
 Dict{Any,Any}(
-    "canonical" => DateTime(2001, 12, 15, 2,  59, 43, 100),
-    "iso8601"   => DateTime(2001, 12, 14, 21, 59, 43, 100),
-    "spaced"    => DateTime(2001, 12, 14, 21, 59, 43, 100),
+    "canonical" => ZonedDateTime(2001, 12, 15, 2,  59, 43, 100, TimeZone("00:00")),
+    "iso8601"   => ZonedDateTime(2001, 12, 14, 21, 59, 43, 100, TimeZone("-05:00")),
+    "spaced"    => ZonedDateTime(2001, 12, 14, 21, 59, 43, 100, TimeZone("-05:00")),
     "date"      => Date(2002, 12, 14)
 )
