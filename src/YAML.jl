@@ -82,6 +82,10 @@ done(it::YAMLDocIterator, state) = it.next_doc === nothing
 iterate(it::YAMLDocIterator) = next(it, start(it))
 iterate(it::YAMLDocIterator, s) = done(it, s) ? nothing : next(it, s)
 
+Base.IteratorSize(::Type{YAMLDocIterator}) = Base.SizeUnknown()
+Base.IteratorEltype(::Type{YAMLDocIterator}) = Base.HasEltype()
+Base.eltype(it::YAMLDocIterator) = Dict{Any, Any}
+
 load_all(input::IO, args...; kwargs...) =
     YAMLDocIterator(input, args...; kwargs...)
 
@@ -97,8 +101,5 @@ load_file(filename::AbstractString, args...; kwargs...) =
     end
 
 load_all_file(filename::AbstractString, args...; kwargs...) =
-    open(filename, "r") do input
-        load_all(input, args...; kwargs...)
-    end
-
+    load_all(open(filename, "r"), args...; kwargs...)
 end  # module

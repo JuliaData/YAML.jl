@@ -270,8 +270,7 @@ const encodings = [
     @test YAML.load(IOBuffer(data)) == "test"
 end
 
-@testset "multi_doc_bom" begin
-    iterable = YAML.load_all("""
+const multidoc_contents = """
 \ufeff---\r
 test: 1
 \ufeff---
@@ -279,7 +278,10 @@ test: 2
 
 \ufeff---
 test: 3
-""")
+"""
+
+@testset "multi_doc_bom" begin
+    iterable = YAML.load_all(multidoc_contents)
     (val, state) = iterate(iterable)
     @test equivalent(val, Dict("test" => 1))
     (val, state) = iterate(iterable, state)
@@ -287,6 +289,33 @@ test: 3
     (val, state) = iterate(iterable, state)
     @test equivalent(val, Dict("test" => 3))
     @test iterate(iterable, state) === nothing
+end
+
+@testset "multi_doc_file" begin
+    fname = tempname() # cleanup=true, file will be deleted on process exit
+    open(fname, "w") do f
+        write(f, multidoc_contents)
+    end
+    iterable = YAML.load_all_file(fname)
+    (val, state) = iterate(iterable)
+    @test equivalent(val, Dict("test" => 1))
+    (val, state) = iterate(iterable, state)
+    @test equivalent(val, Dict("test" => 2))
+    (val, state) = iterate(iterable, state)
+    @test equivalent(val, Dict("test" => 3))
+    @test iterate(iterable, state) === nothing
+end
+
+@testset "multi_doc_iteration_protocol" begin
+    fname = tempname() # cleanup=true, file will be deleted on process exit
+    open(fname, "w") do f
+        write(f, multidoc_contents)
+    end
+    iterable = YAML.load_all_file(fname)
+    @test Base.IteratorSize(YAML.YAMLDocIterator) == Base.SizeUnknown()
+    @test Base.IteratorEltype(YAML.YAMLDocIterator) == Base.HasEltype()
+    @test eltype(iterable) == Dict{Any, Any}
+    @test length(collect(iterable)) == 3
 end
 
 # test that an OrderedDict is written in the correct order
