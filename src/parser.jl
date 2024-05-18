@@ -412,7 +412,7 @@ function parse_indentless_sequence_entry(stream::EventStream)
             return parse_block_node(stream)
         else
             stream.state = parse_indentless_sequence_entry
-            return process_empty_scalar(stream, token.end_mark)
+            return process_empty_scalar(stream, token.span.end_mark)
         end
     end
 
