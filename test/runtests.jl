@@ -48,6 +48,7 @@ const tests = [
     "utf-8-bom",
     "utf-32-be",
     "empty_tag",
+    "empty_list_elem",
 ]
 
 # ignore some test cases in write_and_load testing
