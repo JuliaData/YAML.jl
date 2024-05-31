@@ -191,8 +191,7 @@ function construct_mapping(dicttype::Union{Type,Function}, constructor::Construc
         end
         try
             if haskey(mapping, key)
-                @error "Duplicate key detected in mapping" node key
-                strict_unique_keys && error("Duplicate key `$(key)` detected in mapping.")
+                strict_unique_keys ? error("Duplicate key `$(key)` detected in mapping.") : @error "Duplicate key detected in mapping" node key
             end
             mapping[key] = value
         catch
