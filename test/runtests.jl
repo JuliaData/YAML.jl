@@ -279,6 +279,8 @@ test: 2
 
 \ufeff---
 test: 3
+\ufeff---
+42
 """
 
 @testset "multi_doc_bom" begin
@@ -289,6 +291,8 @@ test: 3
     @test equivalent(val, Dict("test" => 2))
     (val, state) = iterate(iterable, state)
     @test equivalent(val, Dict("test" => 3))
+    (val, state) = iterate(iterable, state)
+    @test equivalent(val, 42)
     @test iterate(iterable, state) === nothing
 end
 
@@ -304,6 +308,8 @@ end
     @test equivalent(val, Dict("test" => 2))
     (val, state) = iterate(iterable, state)
     @test equivalent(val, Dict("test" => 3))
+    (val, state) = iterate(iterable, state)
+    @test equivalent(val, 42)
     @test iterate(iterable, state) === nothing
 end
 
@@ -314,9 +320,8 @@ end
     end
     iterable = YAML.load_all_file(fname)
     @test Base.IteratorSize(YAML.YAMLDocIterator) == Base.SizeUnknown()
-    @test Base.IteratorEltype(YAML.YAMLDocIterator) == Base.HasEltype()
-    @test eltype(iterable) == Dict{Any, Any}
-    @test length(collect(iterable)) == 3
+    @test Base.IteratorEltype(YAML.YAMLDocIterator) == Base.EltypeUnknown()
+    @test length(collect(iterable)) == 4
 end
 
 # test that an OrderedDict is written in the correct order

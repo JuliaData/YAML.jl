@@ -83,8 +83,7 @@ iterate(it::YAMLDocIterator) = next(it, start(it))
 iterate(it::YAMLDocIterator, s) = done(it, s) ? nothing : next(it, s)
 
 Base.IteratorSize(::Type{YAMLDocIterator}) = Base.SizeUnknown()
-Base.IteratorEltype(::Type{YAMLDocIterator}) = Base.HasEltype()
-Base.eltype(it::YAMLDocIterator) = Dict{Any, Any}
+Base.IteratorEltype(::Type{YAMLDocIterator}) = Base.EltypeUnknown()
 
 load_all(input::IO, args...; kwargs...) =
     YAMLDocIterator(input, args...; kwargs...)
