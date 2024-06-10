@@ -1,5 +1,3 @@
-__precompile__(true)
-
 module YAML
 
 import Base: isempty, length, show, peek
