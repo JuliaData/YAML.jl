@@ -850,7 +850,9 @@ function scan_directive(stream::TokenStream)
         value = (tag_handle, tag_prefix)
         end_mark = get_mark(stream)
     else
+        # Otherwise we warn and ignore the directive.
         end_mark = get_mark(stream)
+        @warn """unknown directive name: "$name" at $end_mark. We ignore this."""
         while !in(peek(stream.input), "\0\r\n\u0085\u2028\u2029")
             forwardchars!(stream)
         end
