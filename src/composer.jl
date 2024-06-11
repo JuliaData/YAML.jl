@@ -31,8 +31,7 @@ mutable struct Composer
     resolver::Resolver
 end
 
-
-function compose(events)
+function compose(events::EventStream)
     composer = Composer(events, Dict{String, Node}(), Resolver())
     @assert typeof(forward!(composer.input)) == StreamStartEvent
     node = compose_document(composer)
@@ -53,8 +52,7 @@ function compose_document(composer::Composer)
     node
 end
 
-
-function handle_event(event::AliasEvent, composer)
+function handle_event(event::AliasEvent, composer::Composer)
     anchor = event.anchor
     forward!(composer.input)
     haskey(composer.anchors, anchor) || throw(ComposerError(
@@ -68,26 +66,25 @@ handle_error(event, composer, anchor) =
                 composer.anchors[anchor].start_mark, "second occurence",
                 event.start_mark))
 
-function handle_event(event::ScalarEvent, composer)
+function handle_event(event::ScalarEvent, composer::Composer)
     anchor = event.anchor
     handle_error(event, composer, anchor)
     compose_scalar_node(composer, anchor)
 end
 
-function handle_event(event::SequenceStartEvent, composer)
+function handle_event(event::SequenceStartEvent, composer::Composer)
     anchor = event.anchor
     handle_error(event, composer, anchor)
     compose_sequence_node(composer, anchor)
 end
 
-function handle_event(event::MappingStartEvent, composer)
+function handle_event(event::MappingStartEvent, composer::Composer)
     anchor = event.anchor
     handle_error(event, composer, anchor)
     compose_mapping_node(composer, anchor)
 end
 
-handle_event(event, composer) = nothing
-
+handle_event(event::Event, composer::Composer) = nothing
 
 function compose_node(composer::Composer)
     event = peek(composer.input)
@@ -114,14 +111,13 @@ end
 compose_scalar_node(composer::Composer, anchor::Union{String, Nothing}) =
     _compose_scalar_node(forward!(composer.input), composer, anchor)
 
-
-__compose_sequence_node(event::SequenceEndEvent, composer, node) = false
+__compose_sequence_node(event::SequenceEndEvent, composer::Composer, node::Node) = false
 function __compose_sequence_node(event::Event, composer, node)
     push!(node.value, compose_node(composer))
     true
 end
 
-function _compose_sequence_node(start_event::SequenceStartEvent, composer, anchor)
+function _compose_sequence_node(start_event::SequenceStartEvent, composer::Composer, anchor::Union{String, Nothing})
     tag = start_event.tag
     if tag === nothing || tag == "!"
         tag = resolve(composer.resolver, SequenceNode,
@@ -147,9 +143,8 @@ end
 compose_sequence_node(composer::Composer, anchor::Union{String, Nothing}) =
     _compose_sequence_node(forward!(composer.input), composer, anchor)
 
-
-__compose_mapping_node(event::MappingEndEvent, composer, node) = false
-function __compose_mapping_node(event::Event, composer, node)
+__compose_mapping_node(event::MappingEndEvent, composer::Composer, node::Node) = false
+function __compose_mapping_node(event::Event, composer::Composer, node::Node)
     item_key = compose_node(composer)
     item_value = compose_node(composer)
     push!(node.value, (item_key, item_value))
