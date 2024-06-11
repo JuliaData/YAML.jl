@@ -11,7 +11,7 @@ mutable struct BufferedInput
     avail::UInt64
 
     function BufferedInput(input::IO)
-        return new(input, Vector{Char}(undef, 0), 0, 0)
+        return new(input, Char[], 0, 0)
     end
 end
 
