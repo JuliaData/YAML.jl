@@ -39,7 +39,7 @@ function peek(bi::BufferedInput, i::Integer=0)
     if bi.avail < i1
         _fill(bi, i1 - bi.avail)
     end
-    return bi.buffer[bi.offset + i1]
+    bi.buffer[bi.offset + i1]
 end
 
 
