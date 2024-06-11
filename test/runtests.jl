@@ -58,9 +58,8 @@ const test_write_ignored = [
     "cartesian",
     "ar1",
     "ar1_cartesian",
-    "multi-constructor"
+    "multi-constructor",
 ]
-
 
 function equivalent(xs::AbstractDict, ys::AbstractDict)
     if Set(collect(keys(xs))) != Set(collect(keys(ys)))
@@ -78,7 +77,6 @@ function equivalent(xs::AbstractDict, ys::AbstractDict)
     true
 end
 
-
 function equivalent(xs::AbstractArray, ys::AbstractArray)
     if length(xs) != length(ys)
         @info "Not equivalent" length(xs) length(ys)
@@ -95,11 +93,9 @@ function equivalent(xs::AbstractArray, ys::AbstractArray)
     true
 end
 
-
 function equivalent(x::Float64, y::Float64)
     isnan(x) && isnan(y) ? true : x == y
 end
-
 
 function equivalent(x::AbstractString, y::AbstractString)
     while endswith(x, "\n")
@@ -115,20 +111,17 @@ function equivalent(x, y)
     x == y
 end
 
-
 # test custom tags
-function construct_type_map(t::Symbol, constructor::YAML.Constructor,
-                            node::YAML.Node)
+function construct_type_map(t::Symbol, constructor::YAML.Constructor, node::YAML.Node)
     mapping = YAML.construct_mapping(constructor, node)
     mapping[:tag] = t
     mapping
 end
 
 function TestConstructor()
-    pairs = [("!Cartesian", :Cartesian),
-             ("!AR1", :AR1)]
+    pairs = [("!Cartesian", :Cartesian), ("!AR1", :AR1)]
     ret = YAML.SafeConstructor()
-    for (t,s) in pairs
+    for (t, s) in pairs
         YAML.add_constructor!(ret, t) do c, n
             construct_type_map(s, c, n)
         end
@@ -142,15 +135,12 @@ function TestConstructor()
 end
 
 const more_constructors = let
-    pairs = [("!Cartesian", :Cartesian),
-             ("!AR1", :AR1)]
-    Dict{String,Function}([(t, (c, n) -> construct_type_map(s, c, n))
-                           for (t, s) in pairs])
+    pairs = [("!Cartesian", :Cartesian), ("!AR1", :AR1)]
+    Dict{String, Function}([(t, (c, n) -> construct_type_map(s, c, n)) for (t, s) in pairs])
 end
 
-const multi_constructors = Dict{String, Function}(
-    "!addtag:" => (c, t, n) -> construct_type_map(Symbol(t), c, n)
-)
+const multi_constructors =
+    Dict{String, Function}("!addtag:" => (c, t, n) -> construct_type_map(Symbol(t), c, n))
 
 # write a file, then load its contents to be tested again
 function write_and_load(data::Any)
@@ -172,16 +162,15 @@ const testdir = dirname(@__FILE__)
 
     @testset "Load from File" begin
         @test begin
-            data = YAML.load_file(
-                joinpath(testdir, string(test, ".data")),
-                TestConstructor()
-            )
+            data =
+                YAML.load_file(joinpath(testdir, string(test, ".data")), TestConstructor())
             equivalent(data, expected)
         end
         @test begin
             dictData = YAML.load_file(
                 joinpath(testdir, string(test, ".data")),
-                more_constructors, multi_constructors
+                more_constructors,
+                multi_constructors,
             )
             equivalent(dictData, expected)
         end
@@ -189,18 +178,12 @@ const testdir = dirname(@__FILE__)
 
     @testset "Load from String" begin
         @test begin
-            data = YAML.load(
-                yamlString,
-                TestConstructor()
-            )
+            data = YAML.load(yamlString, TestConstructor())
             equivalent(data, expected)
         end
 
         @test begin
-            dictData = YAML.load(
-                yamlString,
-                more_constructors, multi_constructors
-            )
+            dictData = YAML.load(yamlString, more_constructors, multi_constructors)
             equivalent(dictData, expected)
         end
     end
@@ -209,7 +192,7 @@ const testdir = dirname(@__FILE__)
         @test begin
             data = YAML.load_all_file(
                 joinpath(testdir, string(test, ".data")),
-                TestConstructor()
+                TestConstructor(),
             )
             equivalent(first(data), expected)
         end
@@ -217,7 +200,8 @@ const testdir = dirname(@__FILE__)
         @test begin
             dictData = YAML.load_all_file(
                 joinpath(testdir, string(test, ".data")),
-                more_constructors, multi_constructors
+                more_constructors,
+                multi_constructors,
             )
             equivalent(first(dictData), expected)
         end
@@ -225,29 +209,22 @@ const testdir = dirname(@__FILE__)
 
     @testset "Load All from String" begin
         @test begin
-            data = YAML.load_all(
-                yamlString,
-                TestConstructor()
-            )
+            data = YAML.load_all(yamlString, TestConstructor())
             equivalent(first(data), expected)
         end
 
         @test begin
-            dictData = YAML.load_all(
-                yamlString,
-                more_constructors, multi_constructors
-            )
+            dictData = YAML.load_all(yamlString, more_constructors, multi_constructors)
             equivalent(first(dictData), expected)
         end
     end
-
 
     if !in(test, test_write_ignored)
         @testset "Writing" begin
             @test begin
                 data = YAML.load_file(
                     joinpath(testdir, string(test, ".data")),
-                    more_constructors
+                    more_constructors,
                 )
                 equivalent(write_and_load(data), expected)
             end
@@ -257,9 +234,7 @@ const testdir = dirname(@__FILE__)
     end
 end
 
-const encodings = [
-    enc"UTF-8", enc"UTF-16BE", enc"UTF-16LE", enc"UTF-32BE", enc"UTF-32LE"
-]
+const encodings = [enc"UTF-8", enc"UTF-16BE", enc"UTF-16LE", enc"UTF-32BE", enc"UTF-32LE"]
 @testset for encoding in encodings
     data = encode("test", encoding)
     @test YAML.detect_encoding(IOBuffer(data)) == encoding
@@ -292,21 +267,22 @@ end
 
 # test that an OrderedDict is written in the correct order
 using OrderedCollections, DataStructures
-@test strip(YAML.yaml(OrderedDict(:c => 3, :b => 2, :a => 1))) == join(["c: 3", "b: 2", "a: 1"], "\n")
+@test strip(YAML.yaml(OrderedDict(:c => 3, :b => 2, :a => 1))) ==
+      join(["c: 3", "b: 2", "a: 1"], "\n")
 
 # test that arbitrary dicttypes can be parsed
 const dicttypes = [
-    Dict{Any,Any},
-    Dict{String,Any},
-    Dict{Symbol,Any},
-    OrderedDict{String,Any},
-    () -> DefaultDict{String,Any}(Missing),
+    Dict{Any, Any},
+    Dict{String, Any},
+    Dict{Symbol, Any},
+    OrderedDict{String, Any},
+    () -> DefaultDict{String, Any}(Missing),
 ]
 @testset for dicttype in dicttypes
     data = YAML.load_file(
         joinpath(testdir, "nested-dicts.data"),
         more_constructors;
-        dicttype=dicttype
+        dicttype=dicttype,
     )
     if typeof(dicttype) <: Function
         dicttype = typeof(dicttype())
@@ -319,8 +295,8 @@ const dicttypes = [
 
     # type-specific tests
     if dicttype <: OrderedDict
-        @test [k for (k,v) in data] == [_key("outer"), _key("anything_later")] # correct order
-    elseif [k for (k,v) in data] == [_key("outer"), _key("anything_later")]
+        @test [k for (k, v) in data] == [_key("outer"), _key("anything_later")] # correct order
+    elseif [k for (k, v) in data] == [_key("outer"), _key("anything_later")]
         @warn "Test of OrderedDict might not be discriminative: the order is also correct in $dicttype"
     end
     if dicttype <: DefaultDict
@@ -328,34 +304,38 @@ const dicttypes = [
     end
 end
 
-const test_errors = [
-    "invalid-tag"
-]
+const test_errors = ["invalid-tag"]
 
 @testset "YAML Errors" "error test = $test" for test in test_errors
     @test_throws YAML.ConstructorError YAML.load_file(
         joinpath(testdir, string(test, ".data")),
-        TestConstructor()
+        TestConstructor(),
     )
 end
 
 @testset "Custom Constructor" begin
-
     function MySafeConstructor()
         yaml_constructors = copy(YAML.default_yaml_constructors)
         delete!(yaml_constructors, nothing)
         YAML.Constructor(yaml_constructors)
     end
 
-
     function MyReallySafeConstructor()
         yaml_constructors = copy(YAML.default_yaml_constructors)
         delete!(yaml_constructors, nothing)
         ret = YAML.Constructor(yaml_constructors)
-        YAML.add_multi_constructor!(ret, nothing) do constructor::YAML.Constructor, tag, node
-            throw(YAML.ConstructorError(nothing, nothing,
-                "could not determine a constructor for the tag '$(tag)'",
-                node.start_mark))
+        YAML.add_multi_constructor!(
+            ret,
+            nothing,
+        ) do constructor::YAML.Constructor, tag, node
+            throw(
+                YAML.ConstructorError(
+                    nothing,
+                    nothing,
+                    "could not determine a constructor for the tag '$(tag)'",
+                    node.start_mark,
+                ),
+            )
         end
         ret
     end
@@ -368,51 +348,54 @@ end
             - test2
     """
 
-    expected = Dict{Any,Any}("Test" => Dict{Any,Any}("test2"=>["test1", "test2"],"test1"=>"data"))
+    expected = Dict{Any, Any}(
+        "Test" => Dict{Any, Any}("test2" => ["test1", "test2"], "test1" => "data"),
+    )
 
     @test equivalent(YAML.load(yamlString, MySafeConstructor()), expected)
-    @test_throws YAML.ConstructorError YAML.load(
-        yamlString,
-        MyReallySafeConstructor()
-    )
+    @test_throws YAML.ConstructorError YAML.load(yamlString, MyReallySafeConstructor())
 end
-
 
 # also check that things break correctly
 @test_throws YAML.ConstructorError YAML.load_file(
     joinpath(testdir, "nested-dicts.data"),
     more_constructors;
-    dicttype=Dict{Float64,Any}
+    dicttype=Dict{Float64, Any},
 )
 
 @test_throws YAML.ConstructorError YAML.load_file(
     joinpath(testdir, "nested-dicts.data"),
     more_constructors;
-    dicttype=Dict{Any,Float64}
+    dicttype=Dict{Any, Float64},
 )
 
 @test_throws ArgumentError YAML.load_file(
     joinpath(testdir, "nested-dicts.data"),
     more_constructors;
-    dicttype=(mistaken_argument) -> DefaultDict{String,Any}(mistaken_argument)
+    dicttype=(mistaken_argument) -> DefaultDict{String, Any}(mistaken_argument),
 )
 
 @test_throws ArgumentError YAML.load_file(
     joinpath(testdir, "nested-dicts.data"),
     more_constructors;
-    dicttype=() -> 3.0 # wrong type
+    dicttype=() -> 3.0, # wrong type
 )
 
 # issue 81
-dict_content = ["key1" => [Dict("subkey1" => "subvalue1", "subkey2" => "subvalue2"), Dict()], "key2" => "value2"]
+dict_content = [
+    "key1" => [Dict("subkey1" => "subvalue1", "subkey2" => "subvalue2"), Dict()],
+    "key2" => "value2",
+]
 order_one = OrderedDict(dict_content...)
-order_two = OrderedDict(dict_content[[2,1]]...) # reverse order
+order_two = OrderedDict(dict_content[[2, 1]]...) # reverse order
 @test YAML.yaml(order_one) != YAML.yaml(order_two)
 @test YAML.load(YAML.yaml(order_one)) == YAML.load(YAML.yaml(order_two))
 
 # issue 89 - quotes in strings
-@test YAML.load(YAML.yaml(Dict("a" => """a "quoted" string""")))["a"] == """a "quoted" string"""
-@test YAML.load(YAML.yaml(Dict("a" => """a \\"quoted\\" string""")))["a"] == """a \\"quoted\\" string"""
+@test YAML.load(YAML.yaml(Dict("a" => """a "quoted" string""")))["a"] ==
+      """a "quoted" string"""
+@test YAML.load(YAML.yaml(Dict("a" => """a \\"quoted\\" string""")))["a"] ==
+      """a \\"quoted\\" string"""
 
 # issue 108 - dollar signs in single-line strings
 @test YAML.yaml("foo \$ bar") == "\"foo \$ bar\"\n"
@@ -429,7 +412,7 @@ order_two = OrderedDict(dict_content[[2,1]]...) # reverse order
 
 # issue 114 - gracefully handle extra commas in flow collections
 @testset "issue114" begin
-    @test YAML.load("[3,4,]") == [3,4]
+    @test YAML.load("[3,4,]") == [3, 4]
     @test YAML.load("{a:4,b:5,}") == Dict("a" => 4, "b" => 5)
     @test YAML.load("[?a:4, ?b:5]") == [Dict("a" => 4), Dict("b" => 5)]
     @test_throws YAML.ParserError YAML.load("[3,,4]")
@@ -445,8 +428,16 @@ end
 
 # issue #148 - warn unknown directives
 @testset "issue #148" begin
-    @test (@test_logs (:warn, """unknown directive name: "FOO" at line 1, column 4. We ignore this.""") YAML.load("""%FOO  bar baz\n\n--- "foo\"""")) == "foo"
-    @test (@test_logs (:warn, """unknown directive name: "FOO" at line 1, column 4. We ignore this.""") (:warn, """unknown directive name: "BAR" at line 2, column 4. We ignore this.""") YAML.load("""%FOO\n%BAR\n--- foo""")) == "foo"
+    @test (@test_logs (
+        :warn,
+        """unknown directive name: "FOO" at line 1, column 4. We ignore this.""",
+    ) YAML.load("""%FOO  bar baz\n\n--- "foo\"""")) == "foo"
+    @test (@test_logs (
+        :warn,
+        """unknown directive name: "FOO" at line 1, column 4. We ignore this.""",
+    ) (:warn, """unknown directive name: "BAR" at line 2, column 4. We ignore this.""") YAML.load(
+        """%FOO\n%BAR\n--- foo""",
+    )) == "foo"
 end
 
 end  # module
