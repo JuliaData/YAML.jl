@@ -50,7 +50,7 @@ function prefix(bi::BufferedInput, n::Integer=1)
     if bi.avail < n1
         _fill(bi, n1 - bi.avail)
     end
-    return string(bi.buffer[(bi.offset + 1):(bi.offset + n)]...)
+    String(bi.buffer[bi.offset .+ (1:n)])
 end
 
 
