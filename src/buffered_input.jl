@@ -18,10 +18,11 @@ end
 
 # Read and buffer n more characters
 function __fill(bi::BufferedInput, bi_input::IO, n::Integer)
-    for i in 1:n
+    for _ in 1:n
         c = eof(bi_input) ? '\0' : read(bi_input, Char)
-        if bi.offset + bi.avail + 1 <= length(bi.buffer)
-            bi.buffer[bi.offset + bi.avail + 1] = c
+        i = bi.offset + bi.avail + 1
+        if i ≤ length(bi.buffer)
+            bi.buffer[i] = c
         else
             push!(bi.buffer, c)
         end
