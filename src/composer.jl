@@ -60,7 +60,7 @@ function handle_event(event::AliasEvent, composer::Composer)
     return composer.anchors[anchor]
 end
 
-handle_error(event, composer, anchor) =
+handle_error(event::Event, composer::Composer, anchor::Union{String, Nothing}) =
     anchor !== nothing && haskey(composer.anchors, anchor) && throw(ComposerError(
                 "found duplicate anchor '$(anchor)'; first occurance",
                 composer.anchors[anchor].start_mark, "second occurence",
