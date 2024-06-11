@@ -8,8 +8,14 @@ using Dates
 using Printf
 using StringEncodings
 
+include("queue.jl")
+include("buffered_input.jl")
+include("tokens.jl")
 include("scanner.jl")
+include("events.jl")
 include("parser.jl")
+include("nodes.jl")
+include("resolver.jl")
 include("composer.jl")
 include("constructor.jl")
 include("writer.jl") # write Julia dictionaries to YAML files

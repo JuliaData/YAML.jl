@@ -1,4 +1,24 @@
 
+# Position within the document being parsed
+struct Mark
+    index::UInt64
+    line::UInt64
+    column::UInt64
+end
+
+
+function show(io::IO, mark::Mark)
+    @printf(io, "line %d, column %d", mark.line, mark.column)
+end
+
+
+# Where in the stream a particular token lies.
+struct Span
+    start_mark::Mark
+    end_mark::Mark
+end
+
+
 # YAML Tokens.
 # Each token must include at minimum member "span::Span".
 abstract type Token end
