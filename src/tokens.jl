@@ -3,7 +3,6 @@
 # Each token must include at minimum member "span::Span".
 abstract type Token end
 
-
 # The '%YAML' directive.
 struct DirectiveToken <: Token
     span::Span
@@ -23,7 +22,7 @@ end
 
 # '\uFEFF'
 struct ByteOrderMarkToken <: Token
-	span::Span
+    span::Span
 end
 
 # The stream start

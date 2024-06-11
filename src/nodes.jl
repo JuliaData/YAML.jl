@@ -9,7 +9,6 @@ mutable struct ScalarNode <: Node
     style::Union{Char, Nothing}
 end
 
-
 mutable struct SequenceNode <: Node
     tag::String
     value::Vector
@@ -17,7 +16,6 @@ mutable struct SequenceNode <: Node
     end_mark::Union{Mark, Nothing}
     flow_style::Bool
 end
-
 
 mutable struct MappingNode <: Node
     tag::String

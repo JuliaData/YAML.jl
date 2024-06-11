@@ -112,12 +112,10 @@ _print(io::IO, val::Float64, level::Int=0, ignore_level::Bool=false) =
         println(io, "-.inf")
     end
 
-_print(io::IO, val::Nothing, level::Int=0, ignore_level::Bool=false) =
-    println(io, "~") # this is what the YAML parser interprets as nothing
+_print(io::IO, val::Nothing, level::Int=0, ignore_level::Bool=false) = println(io, "~") # this is what the YAML parser interprets as nothing
 
 # _print any other single value
-_print(io::IO, val::Any, level::Int=0, ignore_level::Bool=false) =
-    println(io, string(val)) # no indentation is required
+_print(io::IO, val::Any, level::Int=0, ignore_level::Bool=false) = println(io, string(val)) # no indentation is required
 
 # add indentation to a string
 _indent(str::AbstractString, level::Int, ignore_level::Bool=false) =
