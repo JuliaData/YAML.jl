@@ -35,18 +35,20 @@ _fill(bi::BufferedInput, n::Integer) = __fill(bi, bi.input, n)
 # Peek the character in the i-th position relative to the current position.
 # (0-based)
 function peek(bi::BufferedInput, i::Integer=0)
-    if bi.avail < i + 1
-        _fill(bi, i + 1 - bi.avail)
+    i1 = i + 1
+    if bi.avail < i1
+        _fill(bi, i1 - bi.avail)
     end
-    return bi.buffer[bi.offset + i + 1]
+    return bi.buffer[bi.offset + i1]
 end
 
 
 # Return the string formed from the first n characters from the current position
 # of the stream.
 function prefix(bi::BufferedInput, n::Integer=1)
-    if bi.avail < n + 1
-        _fill(bi, n + 1 - bi.avail)
+    n1 = n + 1
+    if bi.avail < n1
+        _fill(bi, n1 - bi.avail)
     end
     return string(bi.buffer[(bi.offset + 1):(bi.offset + n)]...)
 end
