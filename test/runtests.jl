@@ -477,4 +477,15 @@ end
     @test_throws YAML.ScannerError YAML.load(""" '''a'' """)
 end
 
+# issue #148 - warn unknown directives
+@testset "issue #148" begin
+    @test (@test_logs (:warn, """unknown directive name: "FOO" at line 1, column 4. We ignore this.""") YAML.load("""%FOO  bar baz\n\n--- "foo\"""")) == "foo"
+    @test (@test_logs (:warn, """unknown directive name: "FOO" at line 1, column 4. We ignore this.""") (:warn, """unknown directive name: "BAR" at line 2, column 4. We ignore this.""") YAML.load("""%FOO\n%BAR\n--- foo""")) == "foo"
+end
+
+# issue #144
+@testset "issue #144" begin
+    @test YAML.load("---") === nothing
+end
+
 end  # module

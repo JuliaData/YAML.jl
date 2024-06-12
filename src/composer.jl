@@ -1,8 +1,4 @@
 
-include("nodes.jl")
-include("resolver.jl")
-
-
 struct ComposerError
     context::Union{String, Nothing}
     context_mark::Union{Mark, Nothing}
@@ -18,7 +14,7 @@ struct ComposerError
 end
 
 function show(io::IO, error::ComposerError)
-    if error.context != nothing
+    if error.context !== nothing
         print(io, error.context, " at ", error.context_mark, ": ")
     end
     print(io, error.problem, " at ", error.problem_mark)
@@ -34,21 +30,21 @@ end
 
 function compose(events)
     composer = Composer(events, Dict{String, Node}(), Resolver())
-    @assert typeof(forward!(composer.input)) == StreamStartEvent
+    @assert forward!(composer.input) isa StreamStartEvent
     node = compose_document(composer)
-    if typeof(peek(composer.input)) == StreamEndEvent
+    if peek(composer.input) isa StreamEndEvent
         forward!(composer.input)
     else
-        @assert typeof(peek(composer.input)) == DocumentStartEvent
+        @assert peek(composer.input) isa DocumentStartEvent
     end
     node
 end
 
 
 function compose_document(composer::Composer)
-    @assert typeof(forward!(composer.input)) == DocumentStartEvent
+    @assert forward!(composer.input) isa DocumentStartEvent
     node = compose_node(composer)
-    @assert typeof(forward!(composer.input)) == DocumentEndEvent
+    @assert forward!(composer.input) isa DocumentEndEvent
     empty!(composer.anchors)
     node
 end
@@ -134,7 +130,9 @@ function _compose_sequence_node(start_event::SequenceStartEvent, composer, ancho
         composer.anchors[anchor] = node
     end
 
-    while (event = peek(composer.input)) !== nothing
+    while true
+        event = peek(composer.input)
+        event === nothing && break
         __compose_sequence_node(event, composer, node) || break
     end
 

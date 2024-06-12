@@ -15,7 +15,7 @@ struct ConstructorError
 end
 
 function show(io::IO, error::ConstructorError)
-    if error.context != nothing
+    if error.context !== nothing
         print(io, error.context, " at ", error.context_mark, ": ")
     end
     print(io, error.problem, " at ", error.problem_mark)
@@ -147,7 +147,7 @@ function flatten_mapping(node::MappingNode)
             elseif value_node isa SequenceNode
                 submerge = []
                 for subnode in value_node.value
-                    if typeof(subnode) != MappingNode
+                    if !(subnode isa MappingNode)
                         throw(ConstructorError("while constructing a mapping",
                                                node.start_mark,
                                                "expected a mapping node, but found $(typeof(subnode))",
