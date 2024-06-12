@@ -1551,7 +1551,7 @@ function scan_uri_escapes(stream::TokenStream, name::String, start_mark::Mark)
                                    get_mark(stream)))
             end
         end
-        push!(bytes, char(parse_hex(prefix(stream.input, 2))))
+        push!(bytes, Char(parse(Int, prefix(stream.input, 2), base=16)))
         forwardchars!(stream, 2)
     end
 
