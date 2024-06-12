@@ -134,7 +134,9 @@ function _compose_sequence_node(start_event::SequenceStartEvent, composer, ancho
         composer.anchors[anchor] = node
     end
 
-    while (event = peek(composer.input)) !== nothing
+    while true
+        event = peek(composer.input)
+        event === nothing && break
         __compose_sequence_node(event, composer, node) || break
     end
 
