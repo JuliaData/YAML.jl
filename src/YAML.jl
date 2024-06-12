@@ -1,3 +1,22 @@
+"""
+    YAML
+
+A package to treat YAML.
+https://github.com/JuliaData/YAML.jl
+
+Reading:
+
+* `YAML.load` parses the first YAML document of a YAML file as a Julia object.
+* `YAML.load_all` parses the all YAML documents of a YAML file.
+* `YAML.load_file` is same with `YAML.load` except it reads from a file.
+* `YAML.load_all_file` is same with `YAML.load_all` except it reads from a file.
+
+Writing:
+
+* `YAML.write` prints a Julia object as a YAML file.
+* `YAML.write_file` is same with `YAML.write` except it writes to a file.
+* `YAML.yaml` converts a given Julia object to a YAML-formatted string.
+"""
 module YAML
 
 import Base: isempty, length, show, peek
@@ -8,8 +27,14 @@ using Dates
 using Printf
 using StringEncodings
 
+include("queue.jl")
+include("buffered_input.jl")
+include("tokens.jl")
 include("scanner.jl")
+include("events.jl")
 include("parser.jl")
+include("nodes.jl")
+include("resolver.jl")
 include("composer.jl")
 include("constructor.jl")
 include("writer.jl") # write Julia dictionaries to YAML files
@@ -19,7 +44,7 @@ const _dicttype = Union{Type,Function}
 
 # add a dicttype-aware version of construct_mapping to the constructors
 function _patch_constructors(more_constructors::_constructor, dicttype::_dicttype)
-    if more_constructors == nothing
+    if more_constructors === nothing
         more_constructors = Dict{String,Function}()
     else
         more_constructors = copy(more_constructors) # do not change the outside world
@@ -33,6 +58,12 @@ function _patch_constructors(more_constructors::_constructor, dicttype::_dicttyp
 end
 
 
+"""
+    load(x::Union{AbstractString, IO})
+
+Parse the string or stream `x` as a YAML file, and return the first YAML document as a
+Julia object.
+"""
 load(ts::TokenStream, constructor::Constructor) =
     construct_document(constructor, compose(EventStream(ts)))
 
@@ -45,6 +76,12 @@ load(ts::TokenStream, more_constructors::_constructor = nothing, multi_construct
 load(input::IO, more_constructors::_constructor = nothing, multi_constructors::Dict = Dict(); kwargs...) =
     load(TokenStream(input), more_constructors, multi_constructors ; kwargs...)
 
+"""
+    YAMLDocIterator
+
+An iterator type to represent multiple YAML documents. You can retrieve each YAML document
+as a Julia object by iterating.
+"""
 mutable struct YAMLDocIterator
     input::IO
     ts::TokenStream
@@ -80,6 +117,11 @@ done(it::YAMLDocIterator, state) = it.next_doc === nothing
 iterate(it::YAMLDocIterator) = next(it, start(it))
 iterate(it::YAMLDocIterator, s) = done(it, s) ? nothing : next(it, s)
 
+"""
+    load_all(x::Union{AbstractString, IO}) -> YAMLDocIterator
+
+Parse the string or stream `x` as a YAML file, and return corresponding YAML documents.
+"""
 load_all(input::IO, args...; kwargs...) =
     YAMLDocIterator(input, args...; kwargs...)
 
@@ -89,11 +131,21 @@ load(input::AbstractString, args...; kwargs...) =
 load_all(input::AbstractString, args...; kwargs...) =
     load_all(IOBuffer(input), args...; kwargs...)
 
+"""
+    load_file(filename::AbstractString)
+
+Parse the YAML file `filename`, and return the first YAML document as a Julia object.
+"""
 load_file(filename::AbstractString, args...; kwargs...) =
     open(filename, "r") do input
         load(input, args...; kwargs...)
     end
 
+"""
+    load_all_file(filename::AbstractString) -> YAMLDocIterator
+
+Parse the YAML file `filename`, and return corresponding YAML documents.
+"""
 load_all_file(filename::AbstractString, args...; kwargs...) =
     open(filename, "r") do input
         load_all(input, args...; kwargs...)
