@@ -214,7 +214,7 @@ end
 
 
 function parse_document_content(stream::EventStream)
-    if peek(stream.input) isa Union{DirectiveToken, DocumentStartToken, DocumentEndToken,StreamEndToken}
+    if peek(stream.input) isa Union{DirectiveToken, DocumentStartToken, DocumentEndToken, StreamEndToken}
         event = process_empty_scalar(stream, peek(stream.input).span.start_mark)
         stream.state = pop!(stream.states)
         event
