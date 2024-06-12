@@ -1,6 +1,4 @@
 
-include("events.jl")
-
 const DEFAULT_TAGS = Dict{String,String}("!" => "!", "!!" => "tag:yaml.org,2002:")
 
 
@@ -19,7 +17,7 @@ struct ParserError
 end
 
 function show(io::IO, error::ParserError)
-    if error.context != nothing
+    if error.context !== nothing
         print(io, error.context, " at ", error.context_mark, ": ")
     end
     print(io, error.problem, " at ", error.problem_mark)
@@ -248,9 +246,9 @@ end
 function __parse_node(token::ScalarToken, stream::EventStream, block, start_mark, end_mark, anchor, tag, implicit)
     forward!(stream.input)
     end_mark = token.span.end_mark
-    if (token.plain && tag == nothing) || tag == "!"
+    if (token.plain && tag === nothing) || tag == "!"
         implicit = true, false
-    elseif tag == nothing
+    elseif tag === nothing
         implicit = false, true
     else
         implicit = false, false
@@ -347,7 +345,7 @@ function _parse_node(token, stream::EventStream, block, indentless_sequence)
     end
 
     token = peek(stream.input)
-    if start_mark == nothing
+    if start_mark === nothing
         start_mark = end_mark = token.span.start_mark
     end
 

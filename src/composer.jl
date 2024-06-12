@@ -1,8 +1,4 @@
 
-include("nodes.jl")
-include("resolver.jl")
-
-
 struct ComposerError
     context::Union{String, Nothing}
     context_mark::Union{Mark, Nothing}
@@ -18,7 +14,7 @@ struct ComposerError
 end
 
 function show(io::IO, error::ComposerError)
-    if error.context != nothing
+    if error.context !== nothing
         print(io, error.context, " at ", error.context_mark, ": ")
     end
     print(io, error.problem, " at ", error.problem_mark)
@@ -134,7 +130,9 @@ function _compose_sequence_node(start_event::SequenceStartEvent, composer, ancho
         composer.anchors[anchor] = node
     end
 
-    while (event = peek(composer.input)) !== nothing
+    while true
+        event = peek(composer.input)
+        event === nothing && break
         __compose_sequence_node(event, composer, node) || break
     end
 
