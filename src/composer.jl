@@ -14,7 +14,7 @@ struct ComposerError
 end
 
 function show(io::IO, error::ComposerError)
-    if error.context != nothing
+    if error.context !== nothing
         print(io, error.context, " at ", error.context_mark, ": ")
     end
     print(io, error.problem, " at ", error.problem_mark)
