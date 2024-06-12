@@ -4,7 +4,7 @@ include("events.jl")
 const DEFAULT_TAGS = Dict{String,String}("!" => "!", "!!" => "tag:yaml.org,2002:")
 
 
-struct ParserError
+struct ParserError <: Exception
     context::Union{String, Nothing}
     context_mark::Union{Mark, Nothing}
     problem::Union{String, Nothing}
