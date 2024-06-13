@@ -142,5 +142,4 @@ date: 2012-08-06
   * When writing YAML files, you cannot use additional constructors like you can when reading.
   * Parsing sexigesimal numbers.
   * Fractions of seconds in timestamps.
-  * Specific time-zone offsets in timestamps.
   * Application specific tags.
