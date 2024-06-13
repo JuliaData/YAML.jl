@@ -66,18 +66,16 @@ _print(io::IO, arr::AbstractVector, level::Int=0, ignore_level::Bool=false) =
 
 # print a single key-value pair
 function _print(io::IO, pair::Pair, level::Int=0, ignore_level::Bool=false)
-    key = if pair[1] === nothing
-        "null" # this is what the YAML parser interprets as 'nothing'
-    else
-        string(pair[1]) # any useful case
-    end
+    p0 = first(pair)
+    p1 = last(pair)
+    key = p0 ≡ nothing ? "null" : string(p0)
     print(io, _indent(key * ":", level, ignore_level)) # print the key
-    if (pair[2] isa AbstractDict || pair[2] isa AbstractVector) && !isempty(pair[2])
-        print(io, "\n") # a line break is needed before a recursive structure
+    if (p1 isa AbstractDict || p1 isa AbstractVector) && !isempty(p1)
+        print(io, '\n') # a line break is needed before a recursive structure
     else
-        print(io, " ") # a whitespace character is needed before a single value
+        print(io, ' ') # a whitespace character is needed before a single value
     end
-    _print(io, pair[2], level + 1) # print the value
+    _print(io, p1, level + 1) # print the value
 end
 
 # _print a single string
