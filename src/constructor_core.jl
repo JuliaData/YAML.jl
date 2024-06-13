@@ -32,7 +32,7 @@ function construct_core_schema_int(constructor::Constructor, node::Node)
         # decimal
         tryparse(Int, value, base=10)
     n !== nothing ? n :
-    throw(ConstructorError("could not construct a int '$value' in the Core schema", node.start_mark))
+    throw(ConstructorError("could not construct an int '$value' in the Core schema", node.start_mark))
 end
 
 function construct_core_schema_float(construct::Constructor, node::Node)
