@@ -10,7 +10,7 @@ construct_undefined_failsafe_schema(constructor::Constructor, node::Node) =
     throw(ConstructorError("could not determine a constructor for the tag '$(node.tag)' in the failsafe schema", node.start_mark))
 
 construct_failsafe_schema_str(constructor::Constructor, node::Node) =
-    string(construct_scalar(constructor, node))
+    construct_scalar(constructor, node)
 
 construct_failsafe_schema_seq(constructor::Constructor, node::Node) =
     construct_sequence(constructor, node)

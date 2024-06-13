@@ -4,7 +4,7 @@ construct_undefined_yaml_jl_0_4_10_schema(constructor::Constructor, node::Node) 
     throw(ConstructorError("could not determine a constructor for the tag '$(node.tag)' the YAML.jl v0.4.0 schema", node.start_mark))
 
 construct_yaml_jl_0_4_10_schema_str(constructor::Constructor, node::Node) =
-    string(construct_scalar(constructor, node))
+    construct_scalar(constructor, node)
 
 construct_yaml_jl_0_4_10_schema_seq(constructor::Constructor, node::Node) =
     construct_sequence(constructor, node)
