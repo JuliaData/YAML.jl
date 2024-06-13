@@ -70,8 +70,16 @@ load(ts::TokenStream, constructor::Constructor) =
 load(input::IO, constructor::Constructor) =
     load(TokenStream(input), constructor)
 
-load(ts::TokenStream, more_constructors::_constructor = nothing, multi_constructors::Dict = Dict(); dicttype::_dicttype = Dict{Any, Any}, constructorType::Function = SafeConstructor) =
-    load(ts, constructorType(_patch_constructors(more_constructors, dicttype), multi_constructors))
+load(
+    ts::TokenStream,
+    more_constructors::_constructor=nothing,
+    multi_constructors::Dict=Dict();
+    dicttype::_dicttype=Dict{Any, Any},
+    constructorType::Function=SafeConstructor,
+) = load(
+    ts,
+    constructorType(_patch_constructors(more_constructors, dicttype), multi_constructors),
+)
 
 load(input::IO, more_constructors::_constructor = nothing, multi_constructors::Dict = Dict(); kwargs...) =
     load(TokenStream(input), more_constructors, multi_constructors ; kwargs...)
@@ -95,7 +103,16 @@ mutable struct YAMLDocIterator
     end
 end
 
-YAMLDocIterator(input::IO, more_constructors::_constructor=nothing, multi_constructors::Dict = Dict(); dicttype::_dicttype=Dict{Any, Any}, constructorType::Function = SafeConstructor) = YAMLDocIterator(input, constructorType(_patch_constructors(more_constructors, dicttype), multi_constructors))
+YAMLDocIterator(
+    input::IO,
+    more_constructors::_constructor=nothing,
+    multi_constructors::Dict=Dict();
+    dicttype::_dicttype=Dict{Any, Any},
+    constructorType::Function=SafeConstructor,
+) = YAMLDocIterator(
+    input,
+    constructorType(_patch_constructors(more_constructors, dicttype), multi_constructors),
+)
 
 # Old iteration protocol:
 start(it::YAMLDocIterator) = nothing
