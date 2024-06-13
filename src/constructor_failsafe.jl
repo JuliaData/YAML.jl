@@ -1,5 +1,11 @@
 # Constructors for the failsafe schema.
 
+# Parsing utils
+
+struct FailsafeSchemaParseError <: Exception end
+
+# Construct functions
+
 construct_undefined_failsafe_schema(constructor::Constructor, node::Node) =
     throw(ConstructorError("could not determine a constructor for the tag '$(node.tag)' in the failsafe schema", node.start_mark))
 
