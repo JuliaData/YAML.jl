@@ -342,20 +342,21 @@ end
 @testset "Custom Constructor" begin
 
     function MySafeConstructor()
-        yaml_constructors = copy(YAML.default_yaml_constructors)
+        yaml_constructors = copy(YAML.yaml_jl_0_4_10_schema_constructors)
         delete!(yaml_constructors, nothing)
         YAML.Constructor(yaml_constructors)
     end
 
 
     function MyReallySafeConstructor()
-        yaml_constructors = copy(YAML.default_yaml_constructors)
+        yaml_constructors = copy(YAML.yaml_jl_0_4_10_schema_constructors)
         delete!(yaml_constructors, nothing)
         ret = YAML.Constructor(yaml_constructors)
         YAML.add_multi_constructor!(ret, nothing) do constructor::YAML.Constructor, tag, node
-            throw(YAML.ConstructorError(nothing, nothing,
-                "could not determine a constructor for the tag '$(tag)'",
-                node.start_mark))
+            throw(YAML.ConstructorError(
+                "could not determine a constructor for the tag '$(tag)' in the YAML.jl v0.4.10 schema",
+                node.start_mark,
+            ))
         end
         ret
     end
