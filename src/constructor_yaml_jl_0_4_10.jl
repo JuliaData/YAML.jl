@@ -33,51 +33,51 @@ const yaml_jl_0_4_10_schema_bool_values = Dict(
 )
 
 function construct_yaml_jl_0_4_10_schema_bool(constructor::Constructor, node::Node)
-    value = construct_scalar(constructor, node)
-    yaml_jl_0_4_10_schema_bool_values[lowercase(value)]
+    str = construct_scalar(constructor, node)
+    yaml_jl_0_4_10_schema_bool_values[lowercase(str)]
 end
 
 function construct_yaml_jl_0_4_10_schema_int(constructor::Constructor, node::Node)
-    value = string(construct_scalar(constructor, node))
-    value = lowercase(replace(value, "_" => ""))
+    str = construct_scalar(constructor, node)
+    str = lowercase(replace(str, "_" => ""))
 
     # sexagesimal integers
-    if in(':', value)
+    if in(':', str)
         # TODO:
         # throw(ConstructorError("sexagesimal integers not yet implemented", node.start_mark))
         @warn "sexagesimal integers not yet implemented. Returning String."
-        return value
+        return str
     end
 
     # hexadecimal
-    if length(value) > 2 && value[1] == '0' && (value[2] == 'x' || value[2] == 'X')
-        parse(Int, value[3:end], base=16)
+    if length(str) > 2 && str[1] == '0' && (str[2] == 'x' || str[2] == 'X')
+        parse(Int, str[3:end], base=16)
     # octal
-    elseif length(value) > 1 && value[1] == '0'
-        parse(Int, value, base=8)
+    elseif length(str) > 1 && str[1] == '0'
+        parse(Int, str, base=8)
     # decimal
     else
-        parse(Int, value, base=10)
+        parse(Int, str, base=10)
     end
 end
 
 function construct_yaml_jl_0_4_10_schema_float(constructor::Constructor, node::Node)
-    value = string(construct_scalar(constructor, node))
-    value = lowercase(replace(value, "_" => ""))
+    str = construct_scalar(constructor, node)
+    str = lowercase(replace(str, "_" => ""))
 
     # sexagesimal float
-    if in(':', value)
+    if in(':', str)
         # TODO:
         # throw(ConstructorError("sexagesimal floats not yet implemented", node.start_mark))
         @warn "sexagesimal floats not yet implemented. Returning String."
-        return value
+        return str
     end
 
     # not a number
-    value == ".nan" && return NaN
+    str == ".nan" && return NaN
 
     # infinity
-    m = match(r"^([+\-]?)\.inf$", value)
+    m = match(r"^([+\-]?)\.inf$", str)
     if m !== nothing
         # negative infinity
         if m.captures[1] == "-"
@@ -89,10 +89,10 @@ function construct_yaml_jl_0_4_10_schema_float(constructor::Constructor, node::N
     end
 
     # fixed or exponential
-    parse(Float64, value)
+    parse(Float64, str)
 end
 
-const timestamp_pat = r"^
+const yaml_jl_0_4_10_schema_timestamp_regex = r"^
     (\d{4})- (?# year)
     (\d\d?)- (?# month)
     (\d\d?)  (?# day)
@@ -115,8 +115,8 @@ const timestamp_pat = r"^
 $"x
 
 function construct_yaml_jl_0_4_10_schema_timestamp(constructor::Constructor, node::Node)
-    value = construct_scalar(constructor, node)
-    mat = match(timestamp_pat, value)
+    str = construct_scalar(constructor, node)
+    mat = match(yaml_jl_0_4_10_schema_timestamp_regex, str)
     mat === nothing && throw(ConstructorError("could not make sense of timestamp format", node.start_mark))
 
     yr = parse(Int, mat.captures[1])
@@ -168,8 +168,9 @@ construct_yaml_jl_0_4_10_schema_object(constructor::Constructor, node::Node) =
     throw(ConstructorError("object type not yet implemented", node.start_mark))
 
 function construct_yaml_jl_0_4_10_schema_binary(constructor::Constructor, node::Node)
-    value = replace(string(construct_scalar(constructor, node)), "\n" => "")
-    base64decode(value)
+    str = construct_scalar(constructor, node)
+    str = replace(str, "\n" => "")
+    base64decode(str)
 end
 
 const yaml_jl_0_4_10_schema_constructors = Dict{Union{String, Nothing}, Function}(
