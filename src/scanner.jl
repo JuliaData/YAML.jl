@@ -1125,37 +1125,32 @@ function scan_block_scalar_indicators(stream::TokenStream, start_mark::Mark)
         chomping = c == '+'
         forwardchars!(stream)
         c = peek(stream.input)
-        if in(c, "0123456789")
-            increment = parse(Int, string(c))
-            if increment == 0
-                throw(ScannerError("while scanning a block scalar", start_mark,
-                    "expected indentation indicator in the range 1-9, but found 0",
-                    get_mark(stream)))
-            end
+        if '0' ≤ c ≤ '9'
+            increment = parse(Int, c)
+            increment == 0 && throw(ScannerError(
+                "while scanning a block scalar", start_mark,
+                "expected indentation indicator in the range 1-9, but found 0", get_mark(stream),
+            ))
         end
-    elseif in(c, "0123456789")
-        increment = parse(Int, string(c))
-        if increment == 0
-            throw(ScannerError("while scanning a block scalar", start_mark,
-                "expected indentation indicator in the range 1-9, but found 0",
-                get_mark(stream)))
-        end
+    elseif '0' ≤ c ≤ '9'
+        increment = parse(Int, c)
+        increment == 0 && throw(ScannerError(
+            "while scanning a block scalar", start_mark,
+            "expected indentation indicator in the range 1-9, but found 0", get_mark(stream),
+        ))
         forwardchars!(stream)
-
         c = peek(stream.input)
         if c == '+' || c == '-'
-            comping = c == '+'
+            chomping = c == '+'
             forwardchars!(stream)
         end
     end
-
     c = peek(stream.input)
-    if !in(c, "\0 \r\n\u0085\u2028\u2029")
-        throw(ScannerError("while scanning a block scalar", start_mark,
-            "expected chomping or indentation indicators, but found '$(c)'",
-            get_mark(stream)))
-    end
-
+    # c ∉ "\0 \r\n\u0085\u2028\u2029"
+    !(c == '\0' || c == ' ' || c == '\r' || c == '\n' || c == '\u85' || c == '\u2028' || c == '\u2029') && throw(ScannerError(
+        "while scanning a block scalar", start_mark,
+        "expected chomping or indentation indicators, but found '$c'", get_mark(stream),
+    ))
     chomping, increment
 end
 
