@@ -455,4 +455,60 @@ end
     @test YAML.load("---") === nothing
 end
 
+@testset "failsafe schema" begin
+end
+
+@testset "JSON schema" begin
+    @test YAML.tryparse_json_schema_null("A null") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_null("null") === nothing
+    @test YAML.tryparse_json_schema_null("Null") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_bool("true") == true
+    @test YAML.tryparse_json_schema_bool("True") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_bool("false") == false
+    @test YAML.tryparse_json_schema_bool("FALSE") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_int("0") == 0
+    @test YAML.tryparse_json_schema_int("7") == 7
+    @test YAML.tryparse_json_schema_int("58") == 58
+    @test YAML.tryparse_json_schema_int("-19") == -19
+    @test YAML.tryparse_json_schema_int("0o7") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_int("0x3A") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_float("0.") == 0.0
+    @test YAML.tryparse_json_schema_float("-0.0") == -0.0
+    @test YAML.tryparse_json_schema_float(".5") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_float("12e03") == 12000
+    @test YAML.tryparse_json_schema_float("+12e03") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_float("-2E+05") == -200000
+    @test YAML.tryparse_json_schema_float(".inf") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_float("-.Inf") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_float("+.INF") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_float(".NAN") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_float("+12.3") isa YAML.JSONSchemaParseError
+
+end
+
+@testset "Core schema" begin
+    @test YAML.tryparse_core_schema_null("A null") isa YAML.CoreSchemaParseError
+    @test YAML.tryparse_core_schema_null("null") === nothing
+    @test YAML.tryparse_core_schema_bool("true") == true
+    @test YAML.tryparse_core_schema_bool("True") == true
+    @test YAML.tryparse_core_schema_bool("false") == false
+    @test YAML.tryparse_core_schema_bool("FALSE") == false
+    @test YAML.tryparse_core_schema_int("0") == 0
+    @test YAML.tryparse_core_schema_int("7") == 7
+    @test YAML.tryparse_core_schema_int("58") == 58
+    @test YAML.tryparse_core_schema_int("-19") == -19
+    @test YAML.tryparse_core_schema_float("0.") == 0.0
+    @test YAML.tryparse_core_schema_float("-0.0") == -0.0
+    @test YAML.tryparse_core_schema_float(".5") == 0.5
+    @test YAML.tryparse_core_schema_float("+12e03") == 12000
+    @test YAML.tryparse_core_schema_float("-2E+05") == -200000
+    @test YAML.tryparse_core_schema_float(".inf") == Inf
+    @test YAML.tryparse_core_schema_float("-.Inf") == -Inf
+    @test YAML.tryparse_core_schema_float("+.INF") == Inf
+    @test YAML.tryparse_core_schema_float(".NAN") |> isnan
+end
+
+@testset "YAML.jl v0.4.0 schema" begin
+end
+
 end  # module
