@@ -17,46 +17,41 @@ end
 
 function tryparse_json_schema_int(str::String)::Union{Int, JSONSchemaParseError}
     len = length(str)
-    if len > 1
+    if len ≥ 1
         if str[1] == '+'
             # plus sign
-            JSONSchemaParseError()
+            return JSONSchemaParseError()
         elseif str[1] == '0'
             # leading zero
-            JSONSchemaParseError()
+            return JSONSchemaParseError()
         elseif len > 2 && str[1] == '-' && str[2] == '0'
             # minus sign + leading zero
-            JSONSchemaParseError()
-        else
-            # decimal
-            n = tryparse(Int, str, base=10)
-            n === nothing ? JSONSchemaParseError() : n
+            return JSONSchemaParseError() 
         end
-    else
-        # decimal
-        n = tryparse(Int, str, base=10)
-        n === nothing ? JSONSchemaParseError() : n
     end
+    # decimal
+    n = tryparse(Int, str, base=10)
+    n === nothing && return JSONSchemaParseError()
+    n
 end
 
 function tryparse_json_schema_float(str::String)::Union{Float64, JSONSchemaParseError}
     len = length(str)
-    if len > 1
-        if str[1] == '+'
-            # plus sign
-            return JSONSchemaParseError()
-        elseif str[1] == '0'
-            # leading zero
-            return JSONSchemaParseError()
-        elseif len > 2 && str[1] == '-' && str[3] == '0'
-            # minus sign + leading zero
-            return JSONSchemaParseError()
-        end
-    end
+    # plus sign
+    len ≥ 1 && str[1] == '+' && return JSONSchemaParseError()
+    # leading dot
+    len ≥ 1 && str[1] == '.' && return JSONSchemaParseError()
+    # minus sign + leading dot
+    len ≥ 2 && str[1] == '-' && str[2] == '.' && return JSONSchemaParseError()
+    # leading zero
+    len ≥ 2 && str[1] == '0' && str[2] ≠ '.' && return JSONSchemaParseError()
+    # minus sign + leading zero
+    len ≥ 3 && str[1] == '-' && str[2] == '0' && str[3] ≠ '.' && return JSONSchemaParseError()
     # fixed or exponential
     x = tryparse(Float64, str)
-    x !== nothing && isfinite(x) ? x :
-    JSONSchemaParseError()
+    x === nothing && return JSONSchemaParseError()
+    !isfinite(x) && return JSONSchemaParseError()
+    x
 end
 
 # Construct functions
