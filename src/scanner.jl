@@ -117,7 +117,7 @@ mutable struct TokenStream
         tokstream = new(BufferedInput(decoded_stream),
                         encoding, false, Queue{Token}(),
                         1, 0, 1, 0, 0, -1,
-                        Vector{Int}(undef, 0), true, Dict())
+                        Int[], true, Dict())
         fetch_stream_start(tokstream)
         tokstream
     end
