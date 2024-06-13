@@ -9,61 +9,43 @@ const construct_core_schema_seq = construct_failsafe_schema_seq
 
 const construct_core_schema_map = construct_failsafe_schema_map
 
-const core_schema_null_values = Dict(
-    "null" => nothing,
-    "Null" => nothing,
-    "NULL" => nothing,
-    "~"    => nothing,
-)
-
 function construct_core_schema_null(constructor::Constructor, node::Node)
     value = construct_scalar(constructor, node)
-    core_schema_null_values[value]
+    value == "null" || value == "Null" || value == "NULL" || value == "~" ? nothing :
+    throw(ConstructorError("could not construct a null '$value' in the Core schema", node.start_mark))
 end
-
-const core_schema_bool_values = Dict(
-    "true"  => true,
-    "True"  => true,
-    "TRUE"  => true,
-    "false" => false,
-    "False" => false,
-    "FALSE" => false,
-)
 
 function construct_core_schema_bool(constructor::Constructor, node::Node)
     value = construct_scalar(constructor, node)
-    core_schema_bool_values[value]
+    value == "true"  || value == "True"  || value == "TRUE"  ? true  :
+    value == "false" || value == "False" || value == "FALSE" ? false :
+    throw(ConstructorError("could not construct a bool '$value' in the Core schema", node.start_mark))
 end
 
 function construct_core_schema_int(constructor::Constructor, node::Node)
-    value = string(construct_scalar(constructor, node))
-    # hexadecimal
-    if length(value) > 2 && value[1] == '0' && (value[2] == 'x' || value[2] == 'X')
-        parse(Int, value[3:end], base=16)
-    # octal
-    elseif length(value) > 1 && value[1] == '0'
-        parse(Int, value, base=8)
-    # decimal
-    else
-        parse(Int, value, base=10)
-    end
+    value = construct_scalar(constructor, node)
+    n =
+        # hexadecimal
+        length(value) > 2 && value[1] == '0' && value[2] == 'x' ? tryparse(Int, value[3:end], base=16) :
+        # octal
+        length(value) > 2 && value[1] == '0' && value[2] == 'o' ? tryparse(Int, value[3:end], base=8)  :
+        # decimal
+        tryparse(Int, value, base=10)
+    n !== nothing ? n :
+    throw(ConstructorError("could not construct a int '$value' in the Core schema", node.start_mark))
 end
 
 function construct_core_schema_float(construct::Constructor, node::Node)
-    value = string(construct_scalar(constructor, node))
+    value = construct_scalar(constructor, node)
     # not a number
-    value == ".nan" && return NaN
+    (value == ".nan" || value == ".NaN" || value == ".NAN") && return NaN
     # infinity
-    m = match(r"^([+\-]?)\.inf$", value)
-    if m !== nothing
-        if m.captures[1] == "-"
-            return -Inf
-        else
-            return Inf
-        end
-    end
+    m = match(r"^([-+]?)(\.inf|\.Inf|\.INF)$", value)
+    m !== nothing && return m.captures[1] == "-" ? -Inf : Inf
     # fixed or exponential
-    parse(Float64, value)
+    x = tryparse(Float64, value)
+    x !== nothing && isfinite(x) ? x :
+    throw(ConstructorError("could not construct a float '$value' in the Core schema", node.start_mark))
 end
 
 const core_schema_constructors = Dict{Union{String, Nothing}, Function}(
