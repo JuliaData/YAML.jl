@@ -17,7 +17,7 @@ end
 
 function tryparse_json_schema_int(str::String)::Union{Int, JSONSchemaParseError}
     len = length(str)
-    if len ≥ 1
+    if len ≥ 2
         if str[1] == '+'
             # plus sign
             return JSONSchemaParseError()
