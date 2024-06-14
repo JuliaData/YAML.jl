@@ -14,7 +14,7 @@ Reading:
 Writing:
 
 * `YAML.write` prints a Julia object as a YAML file.
-* `YAML.write_file` is same as `YAML.write` except it writes to a file.
+* `YAML.write_file` is the same as `YAML.write` except it writes to a file.
 * `YAML.yaml` converts a given Julia object to a YAML-formatted string.
 """
 module YAML
