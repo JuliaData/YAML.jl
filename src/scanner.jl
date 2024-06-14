@@ -1397,7 +1397,7 @@ function scan_plain(stream::TokenStream)
         # It's not clear what we should do with ':' in the flow context.
         c = peek(stream.input)
         if stream.flow_level != 0 && c == ':' &&
-            !in(peek(stream.input, length + 1), "\0 \t\r\n\0u0085\u2028\u2029,[]{}")
+            !in(peek(stream.input, length + 1), "\0 \t\r\n\u0085\u2028\u2029,[]{}")
             forwardchars!(stream, length)
             throw(ScannerError("while scanning a plain scalar", start_mark,
                                "found unexpected ':'", get_mark(stream)))
