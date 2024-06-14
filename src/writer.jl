@@ -28,7 +28,9 @@ end
 function write(data::Any, prefix::AbstractString="")
     io = IOBuffer()
     write(io, data, prefix)
-    return String(take!(io))
+    str = String(take!(io))
+    close(io)
+    str
 end
 
 """
