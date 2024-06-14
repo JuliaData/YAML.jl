@@ -8,8 +8,8 @@ Reading:
 
 * `YAML.load` parses the first YAML document of a YAML file as a Julia object.
 * `YAML.load_all` parses all YAML documents of a YAML file.
-* `YAML.load_file` is same as `YAML.load` except it reads from a file.
-* `YAML.load_all_file` is same as `YAML.load_all` except it reads from a file.
+* `YAML.load_file` is the same as `YAML.load` except it reads from a file.
+* `YAML.load_all_file` is the same as `YAML.load_all` except it reads from a file.
 
 Writing:
 
