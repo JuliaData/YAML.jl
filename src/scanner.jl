@@ -437,7 +437,7 @@ function fetch_document_end(stream::TokenStream)
 end
 
 
-function fetch_document_indicator(stream::TokenStream, tokentype)
+function fetch_document_indicator(stream::TokenStream, TokenType::Type{<:Token})
     # Set the current intendation to -1.
     unwind_indent(stream, -1)
 
@@ -450,7 +450,7 @@ function fetch_document_indicator(stream::TokenStream, tokentype)
     start_mark = get_mark(stream)
     forwardchars!(stream, 3)
     end_mark = get_mark(stream)
-    enqueue!(stream.token_queue, tokentype(Span(start_mark, end_mark)))
+    enqueue!(stream.token_queue, TokenType(Span(start_mark, end_mark)))
 end
 
 
@@ -476,7 +476,7 @@ function fetch_flow_mapping_start(stream::TokenStream)
 end
 
 
-function fetch_flow_collection_start(stream::TokenStream, tokentype)
+function fetch_flow_collection_start(stream::TokenStream, TokenType::Type{<:Token})
     # '[' and '{' may start a simple key.
     save_possible_simple_key(stream)
 
@@ -491,7 +491,7 @@ function fetch_flow_collection_start(stream::TokenStream, tokentype)
     start_mark = get_mark(stream)
     forwardchars!(stream)
     end_mark = get_mark(stream)
-    enqueue!(stream.token_queue, tokentype(Span(start_mark, end_mark)))
+    enqueue!(stream.token_queue, TokenType(Span(start_mark, end_mark)))
 end
 
 
@@ -505,7 +505,7 @@ function fetch_flow_mapping_end(stream::TokenStream)
 end
 
 
-function fetch_flow_collection_end(stream::TokenStream, tokentype)
+function fetch_flow_collection_end(stream::TokenStream, TokenType::Type{<:Token})
     # Reset possible simple key on the current level.
     remove_possible_simple_key(stream)
 
@@ -519,7 +519,7 @@ function fetch_flow_collection_end(stream::TokenStream, tokentype)
     start_mark = get_mark(stream)
     forwardchars!(stream)
     end_mark = get_mark(stream)
-    enqueue!(stream.token_queue, tokentype(Span(start_mark, end_mark)))
+    enqueue!(stream.token_queue, TokenType(Span(start_mark, end_mark)))
 end
 
 
@@ -952,7 +952,7 @@ function scan_directive_ignored_line(stream::TokenStream, start_mark::Mark)
 end
 
 
-function scan_anchor(stream::TokenStream, tokentype)
+function scan_anchor(stream::TokenStream, TokenType::Type{<:Token})
     start_mark = get_mark(stream)
     indicator = peek(stream.input)
     if indicator == '*'
@@ -981,7 +981,7 @@ function scan_anchor(stream::TokenStream, tokentype)
                            get_mark(stream)))
     end
     end_mark = get_mark(stream)
-    tokentype(Span(start_mark, end_mark), value)
+    TokenType(Span(start_mark, end_mark), value)
 end
 
 
