@@ -1,5 +1,5 @@
 #
-# Writing Julia dictionaries to YAML files is implemented with multiple dispatch and recursion:
+# Writing Julia collections to YAML files is implemented with multiple dispatch and recursion:
 # Depending on the value type, Julia chooses the appropriate _print function, which may add a
 # level of recursion.
 #

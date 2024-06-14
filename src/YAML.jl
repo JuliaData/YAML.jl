@@ -37,7 +37,7 @@ include("nodes.jl")
 include("resolver.jl")
 include("composer.jl")
 include("constructor.jl")
-include("writer.jl") # write Julia dictionaries to YAML files
+include("writer.jl")
 
 const _constructor = Union{Nothing, Dict}
 const _dicttype = Union{Type,Function}
