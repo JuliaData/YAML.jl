@@ -87,20 +87,20 @@ function process_directives(stream::EventStream)
             if stream.yaml_version !== nothing
                 throw(ParserError(nothing, nothing,
                                   "found duplicate YAML directive",
-                                  token.start_mark))
+                                  firstmark(token)))
             end
             major, minor = token.value
             if major != 1
                 throw(ParserError(nothing, nothing,
                     "found incompatible YAML document (version 1.* is required)",
-                    token.start_mark))
+                    firstmark(token)))
             end
             stream.yaml_version = token.value
         elseif token.name == "TAG"
             handle, prefix = token.value
             if haskey(stream.tag_handles, handle)
                 throw(ParserError(nothing, nothing,
-                    "duplicate tag handle $(handle)", token.start_mark))
+                    "duplicate tag handle $(handle)", firstmark(token)))
             end
             stream.tag_handles[handle] = prefix
         end
@@ -325,7 +325,7 @@ function _parse_node(token, stream::EventStream, block, indentless_sequence)
         token = peek(stream.input)
         if token isa AnchorToken
             forward!(stream.input)
-            end_mark = token.end_mark
+            end_mark = lastmark(token)
             anchor = token.value
         end
     end
