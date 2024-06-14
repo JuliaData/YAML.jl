@@ -1,7 +1,10 @@
 # YAML Tokens.
-# Each token must include at minimum member "span::Span".
-abstract type Token end
+abstract type Token
+    # span::Span
+end
 
+firstmark(token::Token) = first(token.span)
+lastmark(token::Token) = last(token.span)
 
 # The '%YAML' directive.
 struct DirectiveToken <: Token
