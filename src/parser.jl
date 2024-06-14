@@ -213,7 +213,7 @@ end
 
 function parse_document_content(stream::EventStream)
     if peek(stream.input) isa Union{DirectiveToken, DocumentStartToken, DocumentEndToken, StreamEndToken}
-        event = process_empty_scalar(stream, peek(stream.input).span.start_mark)
+        event = process_empty_scalar(stream, firstmark(peek(stream.input)))
         stream.state = pop!(stream.states)
         event
     else
@@ -614,7 +614,7 @@ end
 
 function parse_flow_mapping_empty_value(stream::EventStream)
     stream.state = parse_flow_mapping_key
-    process_empty_scalar(stream, peek(stream.input).span.start_mark)
+    process_empty_scalar(stream, firstmark(peek(stream.input)))
 end
 
 
