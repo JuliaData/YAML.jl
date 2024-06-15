@@ -755,6 +755,9 @@ end
 # Scanners
 # --------
 
+# [41] ns-ascii-letter ::= [#x41-#x5A] /*A-Z*/ | [#61-#x7A] /*a-z*/
+yaml_1_1_is_ns_ascii_letter(c::Char) = 'A' ≤ c ≤ 'Z' || 'a' ≤ c ≤ 'z'
+
 # If the stream is at a line break, advance past it.
 #
 # Returns:
@@ -840,7 +843,7 @@ end
 function scan_directive_name(stream::TokenStream, start_mark::Mark)
     length = 0
     c = peek(stream.input)
-    while isletter(c) || isnumeric(c) || c == '-' || c == '_'
+    while yaml_1_1_is_ns_ascii_letter(c) || isnumeric(c) || c == '-' || c == '_'
         length += 1
         c = peek(stream.input, length)
     end
@@ -963,7 +966,7 @@ function scan_anchor(stream::TokenStream, tokentype)
     forwardchars!(stream)
     length = 0
     c = peek(stream.input)
-    while isletter(c) || isnumeric(c) || c == '-' || c == '_'
+    while yaml_1_1_is_ns_ascii_letter(c) || isnumeric(c) || c == '-' || c == '_'
         length += 1
         c = peek(stream.input, length)
     end
@@ -1509,7 +1512,7 @@ function scan_tag_uri(stream::TokenStream, name::String, start_mark::Mark)
     chunks = Any[]
     length = 0
     c = peek(stream.input, length)
-    while isletter(c) || isnumeric(c) || in(c, "-;/?:@&=+\$,_.!~*\'()[]%")
+    while yaml_1_1_is_ns_ascii_letter(c) || isnumeric(c) || in(c, "-;/?:@&=+\$,_.!~*\'()[]%")
         if c == '%'
             push!(chunks, prefix(stream.input, length))
             forwardchars!(stream, length)
