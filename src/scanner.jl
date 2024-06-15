@@ -785,8 +785,7 @@ end
 
 # Scan past whitespace to the next token.
 function scan_to_next_token(stream::TokenStream)
-    found = false
-    while !found
+    while true
         while peek(stream.input) == ' '
             forwardchars!(stream)
         end
@@ -803,7 +802,7 @@ function scan_to_next_token(stream::TokenStream)
                 stream.allow_simple_key = true
             end
         else
-            found = true
+            break
         end
     end
 end
