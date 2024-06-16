@@ -1125,14 +1125,14 @@ function scan_block_scalar_indicators(stream::TokenStream, start_mark::Mark)
         chomping = c == '+'
         forwardchars!(stream)
         c = peek(stream.input)
-        if '0' ≤ c ≤ '9'
+        if isdigit(c)
             increment = parse(Int, c)
             increment == 0 && throw(ScannerError(
                 "while scanning a block scalar", start_mark,
                 "expected indentation indicator in the range 1-9, but found 0", get_mark(stream),
             ))
         end
-    elseif '0' ≤ c ≤ '9'
+    elseif isdigit(c)
         increment = parse(Int, c)
         increment == 0 && throw(ScannerError(
             "while scanning a block scalar", start_mark,
