@@ -153,6 +153,7 @@ function forwardchars!(stream::TokenStream, k::Integer=1)
         end
     end
     stream.index += k
+    nothing
 end
 
 
