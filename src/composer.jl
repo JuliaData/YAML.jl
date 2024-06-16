@@ -27,8 +27,8 @@ mutable struct Composer
     resolver::Resolver
 end
 
-function compose(events::EventStream)
-    composer = Composer(events, Dict{String, Node}(), Resolver())
+function compose(events::EventStream, resolver::Resolver)
+    composer = Composer(events, Dict{String, Node}(), resolver)
     @assert forward!(composer.input) isa StreamStartEvent
     node = compose_document(composer)
     if peek(composer.input) isa StreamEndEvent
