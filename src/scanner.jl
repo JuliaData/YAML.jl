@@ -1,5 +1,9 @@
-# [27] b-char ::= b-line-feed | b-carriage-return | b-next-line | b-line-separator | b-paragraph-separator
+# YAML 1.1 [27] b-char ::= b-line-feed | b-carriage-return | b-next-line | b-line-separator | b-paragraph-separator
 yaml_1_1_is_b_char(c::Char) = c == '\n' || c == '\r' || c == '\u85' || c == '\u2028' || c == '\u2029'
+
+# YAML 1.1 [41] ns-ascii-letter ::= [#x41-#x5A] /*A-Z*/ | [#61-#x7A] /*a-z*/
+# YAML 1.2 [37] ns-ascii-letter ::= [x41-x5A] | [x61-x7A] # A-Z a-z
+is_ns_ascii_letter(c::Char) = 'A' ≤ c ≤ 'Z' || 'a' ≤ c ≤ 'z'
 
 struct SimpleKey
     token_number::UInt64
@@ -138,7 +142,7 @@ end
 
 
 # Advance the stream by k characters.
-function forwardchars!(stream::TokenStream, k::Integer)
+function forwardchars!(stream::TokenStream, k::Integer=1)
     for _ in 1:k
         c = peek(stream.input)
         forward!(stream.input)
@@ -152,9 +156,8 @@ function forwardchars!(stream::TokenStream, k::Integer)
         end
     end
     stream.index += k
+    nothing
 end
-
-forwardchars!(stream::TokenStream) = forwardchars!(stream, 1)
 
 
 function need_more_tokens(stream::TokenStream)
@@ -439,7 +442,7 @@ function fetch_document_end(stream::TokenStream)
 end
 
 
-function fetch_document_indicator(stream::TokenStream, tokentype)
+function fetch_document_indicator(stream::TokenStream, ::Type{T}) where {T<:Token}
     # Set the current intendation to -1.
     unwind_indent(stream, -1)
 
@@ -452,7 +455,7 @@ function fetch_document_indicator(stream::TokenStream, tokentype)
     start_mark = get_mark(stream)
     forwardchars!(stream, 3)
     end_mark = get_mark(stream)
-    enqueue!(stream.token_queue, tokentype(Span(start_mark, end_mark)))
+    enqueue!(stream.token_queue, T(Span(start_mark, end_mark)))
 end
 
 
@@ -478,7 +481,7 @@ function fetch_flow_mapping_start(stream::TokenStream)
 end
 
 
-function fetch_flow_collection_start(stream::TokenStream, tokentype)
+function fetch_flow_collection_start(stream::TokenStream, ::Type{T}) where {T<:Token}
     # '[' and '{' may start a simple key.
     save_possible_simple_key(stream)
 
@@ -493,7 +496,7 @@ function fetch_flow_collection_start(stream::TokenStream, tokentype)
     start_mark = get_mark(stream)
     forwardchars!(stream)
     end_mark = get_mark(stream)
-    enqueue!(stream.token_queue, tokentype(Span(start_mark, end_mark)))
+    enqueue!(stream.token_queue, T(Span(start_mark, end_mark)))
 end
 
 
@@ -507,7 +510,7 @@ function fetch_flow_mapping_end(stream::TokenStream)
 end
 
 
-function fetch_flow_collection_end(stream::TokenStream, tokentype)
+function fetch_flow_collection_end(stream::TokenStream, ::Type{T}) where {T<:Token}
     # Reset possible simple key on the current level.
     remove_possible_simple_key(stream)
 
@@ -521,7 +524,7 @@ function fetch_flow_collection_end(stream::TokenStream, tokentype)
     start_mark = get_mark(stream)
     forwardchars!(stream)
     end_mark = get_mark(stream)
-    enqueue!(stream.token_queue, tokentype(Span(start_mark, end_mark)))
+    enqueue!(stream.token_queue, T(Span(start_mark, end_mark)))
 end
 
 
@@ -787,25 +790,26 @@ end
 
 # Scan past whitespace to the next token.
 function scan_to_next_token(stream::TokenStream)
-    found = false
-    while !found
+    while true
+        # whitespace
         while peek(stream.input) == ' '
             forwardchars!(stream)
         end
-
+        # comment
         if peek(stream.input) == '#'
             forwardchars!(stream)
             while !in(peek(stream.input), "\0\r\n\u0085\u2028\u2029")
                 forwardchars!(stream)
             end
         end
-
+        # line break
         if scan_line_break(stream) != ""
             if stream.flow_level == 0
                 stream.allow_simple_key = true
             end
+        # found a token
         else
-            found = true
+            break
         end
     end
 end
@@ -842,7 +846,7 @@ end
 function scan_directive_name(stream::TokenStream, start_mark::Mark)
     length = 0
     c = peek(stream.input)
-    while isletter(c) || isnumeric(c) || c == '-' || c == '_'
+    while is_ns_ascii_letter(c) || isdigit(c) || c == '-' || c == '_'
         length += 1
         c = peek(stream.input, length)
     end
@@ -889,19 +893,43 @@ function scan_yaml_directive_value(stream::TokenStream, start_mark::Mark)
 end
 
 
-function scan_yaml_directive_number(stream::TokenStream, start_mark::Mark)
-    if !isdigit(peek(stream.input))
-        throw(ScannerError("while scanning a directive", start_mark,
-                           "expected a digit, but found '$(peek(stream.input))'",
-                           get_mark(stream)))
+# scan the YAML directive's number from a stream
+function scan_yaml_directive_number(stream::TokenStream, start_mark::Mark)::Int
+    # -------------------------------------------------
+    # check that the first character is a decimal digit
+    # -------------------------------------------------
+    # the current position of the character in the stream
+    pos = 0
+    # the current character
+    c = peek(stream.input, pos)
+    # throw an error if the input is not decimal digits
+    isdigit(c) || throw(ScannerError(
+        "while scanning a directive", start_mark,
+        "expected a digit, but found '$c'", get_mark(stream),
+    ))
+    # -----------------------------------------------------------
+    # until the end of the decimal digits, increment the position
+    # -----------------------------------------------------------
+    while true
+        pos += 1
+        c = peek(stream.input, pos)
+        isdigit(c) || break
     end
-    length = 0
-    while isdigit(peek(stream.input, length))
-        length += 1
-    end
-    value = parse(Int, prefix(stream.input, length))
-    forwardchars!(stream, length)
-    value
+    # ------------------------------
+    # get the decimal digit as `Int`
+    # ------------------------------
+    # the decimal digit as a `String`
+    str = prefix(stream.input, pos)
+    # the decimal digit as an `Int`
+    n = parse(Int, str)
+    # ---------------------------------------------------
+    # advance the stream by the length that has been read
+    # ---------------------------------------------------
+    forwardchars!(stream, pos)
+    # -----------------
+    # return the number
+    # -----------------
+    n
 end
 
 
@@ -954,7 +982,7 @@ function scan_directive_ignored_line(stream::TokenStream, start_mark::Mark)
 end
 
 
-function scan_anchor(stream::TokenStream, tokentype)
+function scan_anchor(stream::TokenStream, ::Type{T}) where {T<:Token}
     start_mark = get_mark(stream)
     indicator = peek(stream.input)
     if indicator == '*'
@@ -965,7 +993,7 @@ function scan_anchor(stream::TokenStream, tokentype)
     forwardchars!(stream)
     length = 0
     c = peek(stream.input)
-    while isletter(c) || isnumeric(c) || c == '-' || c == '_'
+    while is_ns_ascii_letter(c) || isdigit(c) || c == '-' || c == '_'
         length += 1
         c = peek(stream.input, length)
     end
@@ -983,7 +1011,7 @@ function scan_anchor(stream::TokenStream, tokentype)
                            get_mark(stream)))
     end
     end_mark = get_mark(stream)
-    tokentype(Span(start_mark, end_mark), value)
+    T(Span(start_mark, end_mark), value)
 end
 
 
@@ -1487,7 +1515,7 @@ function scan_tag_handle(stream::TokenStream, name::String, start_mark::Mark)
     length = 1
     c = peek(stream.input, length)
     if c != ' '
-        while isletter(c) || isnumeric(c) || c == '-' || c == '_'
+        while is_ns_ascii_letter(c) || isdigit(c) || c == '-' || c == '_'
             length += 1
             c = peek(stream.input, length)
         end
@@ -1511,7 +1539,7 @@ function scan_tag_uri(stream::TokenStream, name::String, start_mark::Mark)
     chunks = Any[]
     length = 0
     c = peek(stream.input, length)
-    while isletter(c) || isnumeric(c) || in(c, "-;/?:@&=+\$,_.!~*\'()[]%")
+    while is_ns_ascii_letter(c) || isdigit(c) || in(c, "-;/?:@&=+\$,_.!~*\'()[]%")
         if c == '%'
             push!(chunks, prefix(stream.input, length))
             forwardchars!(stream, length)
