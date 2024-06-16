@@ -1,5 +1,5 @@
 
-struct ConstructorError
+struct ConstructorError <: Exception
     context::Union{String, Nothing}
     context_mark::Union{Mark, Nothing}
     problem::Union{String, Nothing}
@@ -245,7 +245,7 @@ function construct_yaml_int(constructor::Constructor, node::Node)
         # TODO
         #throw(ConstructorError(nothing, nothing,
             #"sexagesimal integers not yet implemented", node.start_mark))
-        warn("sexagesimal integers not yet implemented. Returning String.")
+        @warn "sexagesimal integers not yet implemented. Returning String."
         return value
     end
 
@@ -267,7 +267,7 @@ function construct_yaml_float(constructor::Constructor, node::Node)
         # TODO
         # throw(ConstructorError(nothing, nothing,
         #     "sexagesimal floats not yet implemented", node.start_mark))
-        warn("sexagesimal floats not yet implemented. Returning String.")
+        @warn "sexagesimal floats not yet implemented. Returning String."
         return value
     end
 
