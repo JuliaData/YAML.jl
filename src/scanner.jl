@@ -139,7 +139,7 @@ end
 
 
 # Advance the stream by k characters.
-function forwardchars!(stream::TokenStream, k::Integer)
+function forwardchars!(stream::TokenStream, k::Integer=1)
     for _ in 1:k
         c = peek(stream.input)
         forward!(stream.input)
@@ -154,8 +154,6 @@ function forwardchars!(stream::TokenStream, k::Integer)
     end
     stream.index += k
 end
-
-forwardchars!(stream::TokenStream) = forwardchars!(stream, 1)
 
 
 function need_more_tokens(stream::TokenStream)
