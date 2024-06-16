@@ -508,7 +508,7 @@ end
     @test YAML.tryparse_core_schema_float(".NAN") |> isnan
 end
 
-@testset "YAML.jl v0.4.0 schema" begin
+@testset "YAML.jl v0.4.10 schema" begin
 end
 
 end  # module
