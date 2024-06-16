@@ -1,11 +1,27 @@
 # Error for constructors
 
+<<<<<<< HEAD
 struct ConstructorError
     context      :: Union{String, Nothing}
     context_mark :: Union{Mark,   Nothing}
     problem      :: Union{String, Nothing}
     problem_mark :: Union{Mark,   Nothing}
     note         :: Union{String, Nothing}
+=======
+struct ConstructorError <: Exception
+    context::Union{String, Nothing}
+    context_mark::Union{Mark, Nothing}
+    problem::Union{String, Nothing}
+    problem_mark::Union{Mark, Nothing}
+    note::Union{String, Nothing}
+
+    function ConstructorError(context=nothing, context_mark=nothing,
+                              problem=nothing, problem_mark=nothing,
+                              note=nothing)
+        new(context, context_mark, problem, problem_mark, note)
+    end
+
+>>>>>>> master
 end
 
 # `context` at `context_mark`: `problem` at `problem_mark`
