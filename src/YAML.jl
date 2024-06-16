@@ -33,8 +33,12 @@ function _patch_constructors(more_constructors::_constructor, dicttype::_dicttyp
 end
 
 
-load(ts::TokenStream, constructor::Constructor) =
-    construct_document(constructor, compose(EventStream(ts)))
+function load(tokenstream::TokenStream, constructor::Constructor)
+    resolver = Resolver()
+    eventstream = EventStream(tokenstream)
+    node = compose(eventstream, resolver)
+    construct_document(constructor, node)
+end
 
 load(input::IO, constructor::Constructor) =
     load(TokenStream(input), constructor)
