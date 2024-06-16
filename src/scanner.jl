@@ -1488,7 +1488,7 @@ function scan_tag_handle(stream::TokenStream, name::String, start_mark::Mark)
     length = 1
     c = peek(stream.input, length)
     if c != ' '
-        while isletter(c) || isnumeric(c) || c == '-' || c == '_'
+        while is_ns_ascii_letter(c) || isnumeric(c) || c == '-' || c == '_'
             length += 1
             c = peek(stream.input, length)
         end
