@@ -58,7 +58,7 @@ const default_implicit_resolvers =
     ]
 
 
-mutable struct Resolver
+struct Resolver
     implicit_resolvers::Vector{Tuple{String,Regex}}
 
     function Resolver()

@@ -1,27 +1,4 @@
 
-include("queue.jl")
-include("buffered_input.jl")
-
-# Position within the document being parsed
-struct Mark
-    index::UInt64
-    line::UInt64
-    column::UInt64
-end
-
-
-function show(io::IO, mark::Mark)
-    @printf(io, "line %d, column %d", mark.line, mark.column)
-end
-
-
-# Where in the stream a particular token lies.
-struct Span
-    start_mark::Mark
-    end_mark::Mark
-end
-
-
 struct SimpleKey
     token_number::UInt64
     required::Bool
@@ -43,9 +20,6 @@ function show(io::IO, error::ScannerError)
     end
     print(io, error.problem, " at ", error.problem_mark)
 end
-
-
-include("tokens.jl")
 
 
 function detect_encoding(input::IO)::Encoding
@@ -143,7 +117,7 @@ mutable struct TokenStream
         tokstream = new(BufferedInput(decoded_stream),
                         encoding, false, Queue{Token}(),
                         1, 0, 1, 0, 0, -1,
-                        Vector{Int}(undef, 0), true, Dict())
+                        Int[], true, Dict())
         fetch_stream_start(tokstream)
         tokstream
     end
@@ -1423,7 +1397,7 @@ function scan_plain(stream::TokenStream)
         # It's not clear what we should do with ':' in the flow context.
         c = peek(stream.input)
         if stream.flow_level != 0 && c == ':' &&
-            !in(peek(stream.input, length + 1), "\0 \t\r\n\0u0085\u2028\u2029,[]{}")
+            !in(peek(stream.input, length + 1), "\0 \t\r\n\u0085\u2028\u2029,[]{}")
             forwardchars!(stream, length)
             throw(ScannerError("while scanning a plain scalar", start_mark,
                                "found unexpected ':'", get_mark(stream)))
@@ -1577,7 +1551,7 @@ function scan_uri_escapes(stream::TokenStream, name::String, start_mark::Mark)
                                    get_mark(stream)))
             end
         end
-        push!(bytes, char(parse_hex(prefix(stream.input, 2))))
+        push!(bytes, Char(parse(Int, prefix(stream.input, 2), base=16)))
         forwardchars!(stream, 2)
     end
 
