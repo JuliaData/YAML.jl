@@ -1,5 +1,7 @@
+# A resolution: a pair consisting of a tag to be resolved and a corresponding regular expression.
 const Resolution = Pair{String, Regex}
 
+# A resolver: a complete set of resolutions of a schema.
 struct Resolver
     default_scalar_tag::String
     default_sequence_tag::String
@@ -10,6 +12,10 @@ struct Resolver
     sequence_resolutions::Vector{Resolution}
     mapping_resolutions::Vector{Resolution}
 end
+
+# -----------------------------
+# essential resolver instances
+# -----------------------------
 
 # The resolver for the failsafe schema.
 const FAILSAFE_SCHEMA_RESOLVER = Resolver(
@@ -109,7 +115,16 @@ const YAML_JL_0_4_10_RESOLVER = Resolver(
     [],
 )
 
+# The default resolver.
+# Currently, point to YAML.jl 0.4.10 resolver for non-breaking.
 Resolver() = YAML_JL_0_4_10_RESOLVER
+
+"""
+    resolve(resolver::Resolver, N::Type{T}, value, implicit) where {T <: Node}
+
+Get the appropriate tag of the given `value` in the schema.
+"""
+function resolve end
 
 function resolve(resolver::Resolver, ::Type{ScalarNode}, value, implicit)
     if implicit[1]
