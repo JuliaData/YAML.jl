@@ -786,21 +786,23 @@ end
 # Scan past whitespace to the next token.
 function scan_to_next_token(stream::TokenStream)
     while true
+        # whitespace
         while peek(stream.input) == ' '
             forwardchars!(stream)
         end
-
+        # comment
         if peek(stream.input) == '#'
             forwardchars!(stream)
             while !in(peek(stream.input), "\0\r\n\u0085\u2028\u2029")
                 forwardchars!(stream)
             end
         end
-
+        # line break
         if scan_line_break(stream) != ""
             if stream.flow_level == 0
                 stream.allow_simple_key = true
             end
+        # found a token
         else
             break
         end
