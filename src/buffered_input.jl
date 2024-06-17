@@ -29,16 +29,14 @@ function buffer!(bi::BufferedInput, n::Integer)::Nothing
     nothing
 end
 
-# Peek the character in the i-th position relative to the current position.
-# (0-based)
-function peek(bi::BufferedInput, i::Integer=0)
-    i1 = i + 1
-    if bi.avail < i1
-        buffer!(bi, i1 - bi.avail)
-    end
-    bi.buffer[bi.offset + i1]
+# Peek the character in the `i`-th position relative to the current position.
+function peek1(bi::BufferedInput, i::Integer=1)::Char
+    bi.avail < i && buffer!(bi, i - bi.avail)
+    bi.buffer[bi.offset + i]
 end
 
+# peek function for 0-based indices
+peek(bi::BufferedInput, i::Integer=0) = peek1(bi, i + 1)
 
 # Return the string formed from the first n characters from the current position
 # of the stream.
