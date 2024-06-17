@@ -352,7 +352,7 @@ end
 # Checkers
 # --------
 
-const whitespace = "\0 \t\r\n\u0085\u2028\u2029"
+yaml_1_1_is_whitespace(c::Char) = c == '\0' || c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '\u85' || c == '\u2028' || c == '\u2029'
 
 
 function check_directive(stream::TokenStream)
@@ -362,31 +362,31 @@ end
 function check_document_start(stream::TokenStream)
     stream.column == 0 &&
         prefix(stream.input, 3) == "---" &&
-        in(peek(stream.input, 3), whitespace)
+        yaml_1_1_is_whitespace(peek(stream.input, 3))
 end
 
  function check_document_end(stream::TokenStream)
      stream.column == 0 &&
      prefix(stream.input, 3) == "..." &&
-    (in(peek(stream.input, 3), whitespace) || peek(stream.input, 3) === nothing)
+    (yaml_1_1_is_whitespace(peek(stream.input, 3)) || peek(stream.input, 3) === nothing)
  end
 
 function check_block_entry(stream::TokenStream)
-    in(peek(stream.input, 1), whitespace)
+    yaml_1_1_is_whitespace(peek(stream.input, 1))
 end
 
 function check_key(stream::TokenStream)
-    stream.flow_level > 0 || in(peek(stream.input, 1), whitespace)
+    stream.flow_level > 0 || yaml_1_1_is_whitespace(peek(stream.input, 1))
 end
 
 function check_value(stream::TokenStream)
     cnext = peek(stream.input, 1)
-    stream.flow_level > 0 || in(cnext, whitespace) || cnext === nothing
+    stream.flow_level > 0 || yaml_1_1_is_whitespace(cnext) || cnext === nothing
 end
 
 function check_plain(stream::TokenStream)
     !in(peek(stream.input), "\0 \t\r\n\u0085\u2028\u2029-?:,[]{}#&*!|>\'\"%@`\uFEFF") ||
-    (!in(peek(stream.input, 1), whitespace) &&
+    (!yaml_1_1_is_whitespace(peek(stream.input, 1)) &&
      (peek(stream.input) == '-' || (stream.flow_level == 0 &&
                               in(peek(stream.input), "?:"))))
 end
@@ -1411,10 +1411,10 @@ function scan_plain(stream::TokenStream)
         while true
             c = peek(stream.input, length)
             cnext = peek(stream.input, length + 1)
-            if in(c, whitespace) ||
+            if yaml_1_1_is_whitespace(c) ||
                 c === nothing ||
                 (stream.flow_level == 0 && c == ':' &&
-                    (cnext === nothing || in(cnext, whitespace))) ||
+                    (cnext === nothing || yaml_1_1_is_whitespace(cnext))) ||
                 (stream.flow_level != 0 && in(c, ",:?[]{}"))
                 break
             end
