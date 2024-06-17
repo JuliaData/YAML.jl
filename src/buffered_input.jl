@@ -70,6 +70,7 @@ function forward!(bi::BufferedInput, n::Integer=1)
             n -= 1
         end
     end
+    nothing
 end
 
 # Ugly hack to allow peeking of `StringDecoder`s
