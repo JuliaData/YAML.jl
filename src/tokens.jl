@@ -25,7 +25,7 @@ end
 
 # '\uFEFF'
 struct ByteOrderMarkToken <: Token
-	span::Span
+    span::Span
 end
 
 # The stream start

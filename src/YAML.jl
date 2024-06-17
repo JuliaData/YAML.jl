@@ -1,20 +1,20 @@
 """
     YAML
 
-A package to treat YAML.
+A package to read and write YAML.
 https://github.com/JuliaData/YAML.jl
 
 Reading:
 
 * `YAML.load` parses the first YAML document of a YAML file as a Julia object.
-* `YAML.load_all` parses the all YAML documents of a YAML file.
-* `YAML.load_file` is same with `YAML.load` except it reads from a file.
-* `YAML.load_all_file` is same with `YAML.load_all` except it reads from a file.
+* `YAML.load_all` parses all YAML documents of a YAML file.
+* `YAML.load_file` is the same as `YAML.load` except it reads from a file.
+* `YAML.load_all_file` is the same as `YAML.load_all` except it reads from a file.
 
 Writing:
 
 * `YAML.write` prints a Julia object as a YAML file.
-* `YAML.write_file` is same with `YAML.write` except it writes to a file.
+* `YAML.write_file` is the same as `YAML.write` except it writes to a file.
 * `YAML.yaml` converts a given Julia object to a YAML-formatted string.
 """
 module YAML
@@ -39,7 +39,7 @@ include("nodes.jl")
 include("resolver.jl")
 include("composer.jl")
 include("constructor.jl")
-include("writer.jl") # write Julia dictionaries to YAML files
+include("writer.jl")
 
 const _constructor = Union{Nothing, Dict}
 const _dicttype = Union{Type,Function}
@@ -59,15 +59,18 @@ function _patch_constructors(more_constructors::_constructor, dicttype::_dicttyp
     return more_constructors
 end
 
-
 """
     load(x::Union{AbstractString, IO})
 
 Parse the string or stream `x` as a YAML file, and return the first YAML document as a
 Julia object.
 """
-load(ts::TokenStream, constructor::Constructor) =
-    construct_document(constructor, compose(EventStream(ts)))
+function load(tokenstream::TokenStream, constructor::Constructor)
+    resolver = Resolver()
+    eventstream = EventStream(tokenstream)
+    node = compose(eventstream, resolver)
+    construct_document(constructor, node)
+end
 
 load(input::IO, constructor::Constructor) =
     load(TokenStream(input), constructor)
