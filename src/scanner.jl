@@ -367,7 +367,7 @@ check_document_start(stream::TokenStream) =
 
 check_document_end(stream::TokenStream) =
     stream.column == 0 &&
-    prefix(stream.input, 3) == "..." && let
+    prefix(stream.input, 3) == "..." && begin
         c = peek(stream.input, 3)
         yaml_1_1_is_whitespace(c) || c === nothing
     end
@@ -378,20 +378,20 @@ function check_block_entry(stream::TokenStream)
 end
 
 check_key(stream::TokenStream) =
-    stream.flow_level > 0 || let
+    stream.flow_level > 0 || begin
         cnext = peek(stream.input, 1)
         yaml_1_1_is_whitespace(cnext)
     end
 
 check_value(stream::TokenStream) =
-    stream.flow_level > 0 || let
+    stream.flow_level > 0 || begin
         cnext = peek(stream.input, 1)
         yaml_1_1_is_whitespace(cnext) || cnext === nothing
     end
 
 function check_plain(stream::TokenStream)
     c = peek(stream.input)
-    !(yaml_1_1_is_whitespace(c) || c in "-?:,[]{}#&*!|>\'\"%@`\uFEFF") || let
+    !(yaml_1_1_is_whitespace(c) || c in "-?:,[]{}#&*!|>\'\"%@`\uFEFF") || begin
         cnext = peek(stream.input, 1)
         !yaml_1_1_is_whitespace(cnext) && (c == '-' || stream.flow_level == 0 && (c == '?' || c == ':'))
     end
