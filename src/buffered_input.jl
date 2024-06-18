@@ -17,7 +17,7 @@ end
 
 # Read and buffer `n` more characters
 function buffer!(bi::BufferedInput, n::Integer)::Nothing
-    for i in bi.offset + bi.avail .+ (1:n)
+    for i in (bi.offset + bi.avail) .+ (1:n)
         c = eof(bi.input) ? '\0' : read(bi.input, Char)
         if i ≤ length(bi.buffer)
             bi.buffer[i] = c
