@@ -168,7 +168,7 @@ const testdir = dirname(@__FILE__)
     yaml_file_name = joinpath(testdir, "yaml/$test.yaml")
     julia_file_name = joinpath(testdir, "julia/$test.jl")
 
-    yaml_string = read(yaml_file_name, String)
+    yaml_string = chomp(read(yaml_file_name, String))
     expected = evalfile(julia_file_name)
 
     @testset "Load from File" begin
