@@ -455,4 +455,25 @@ end
     @test YAML.load("---") === nothing
 end
 
+# issue #132
+@testset "issue #132" begin
+    docs_expected = evalfile(joinpath(testdir, "julia/issue132.jl"))
+    open(joinpath(testdir, "yaml/issue132.lf.yaml"), "r") do io
+        docs = YAML.load_all(io)
+        doc, i = iterate(docs)
+        @test isequal(doc, docs_expected[1])
+        doc, i = iterate(docs, i)
+        @test isequal(doc, docs_expected[2])
+        @test iterate(docs, i) === nothing
+    end
+    # open(joinpath(testdir, "yaml/issue132.crlf.yaml"), "r") do io
+    #     docs = YAML.load_all(io)
+    #     doc, i = iterate(docs)
+    #     @test isequal(doc, docs_expected[1])
+    #     doc, i = iterate(docs, i)
+    #     @test isequal(doc, docs_expected[2])
+    #     @test iterate(docs, i) === nothing
+    # end
+end
+
 end  # module
