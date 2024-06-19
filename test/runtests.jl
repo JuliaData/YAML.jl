@@ -168,7 +168,7 @@ const testdir = dirname(@__FILE__)
     yaml_file_name = joinpath(testdir, "yaml/$test.yaml")
     julia_file_name = joinpath(testdir, "julia/$test.jl")
 
-    yaml_string = chomp(read(yaml_file_name, String))
+    yaml_string = read(yaml_file_name, String)
     expected = evalfile(julia_file_name)
 
     @testset "Load from File" begin
@@ -444,10 +444,39 @@ end
     @test_throws YAML.ScannerError YAML.load(""" '''a'' """)
 end
 
+# issue 129 - Comment only content
+@testset "issue129" begin
+    @test YAML.load("#") === nothing
+    @test isempty(YAML.load_all("#"))
+end
+
+# issue 132 - load_all fails on windows
+@testset "issue132" begin
+    input = """
+            ---
+            creator: LAMMPS
+            timestep: 0
+            ...
+            ---
+            creator: LAMMPS
+            timestep: 1
+            ...
+            """
+    expected = [Dict("creator" => "LAMMPS", "timestep" => 0),
+                Dict("creator" => "LAMMPS", "timestep" => 1)]
+    @test collect(YAML.load_all(input)) == expected
+end
+
 # issue #148 - warn unknown directives
 @testset "issue #148" begin
     @test (@test_logs (:warn, """unknown directive name: "FOO" at line 1, column 4. We ignore this.""") YAML.load("""%FOO  bar baz\n\n--- "foo\"""")) == "foo"
     @test (@test_logs (:warn, """unknown directive name: "FOO" at line 1, column 4. We ignore this.""") (:warn, """unknown directive name: "BAR" at line 2, column 4. We ignore this.""") YAML.load("""%FOO\n%BAR\n--- foo""")) == "foo"
+end
+
+# issue #143 - load empty file
+@testset "issue #143" begin
+    @test YAML.load("") === nothing
+    @test isempty(YAML.load_all(""))
 end
 
 # issue #144
