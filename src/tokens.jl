@@ -3,8 +3,8 @@ abstract type Token
     # span::Span
 end
 
-firstmark(token::Token) = first(token.span)
-lastmark(token::Token) = last(token.span)
+firstmark(token::Token) = token.span.start_mark
+lastmark(token::Token) = token.span.end_mark
 
 # The '%YAML' directive.
 struct DirectiveToken <: Token
