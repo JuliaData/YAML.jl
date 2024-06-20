@@ -102,10 +102,14 @@ end
 
 YAMLDocIterator(input::IO, more_constructors::_constructor=nothing, multi_constructors::Dict = Dict(); dicttype::_dicttype=Dict{Any, Any}, constructorType::Function = SafeConstructor) = YAMLDocIterator(input, constructorType(_patch_constructors(more_constructors, dicttype), multi_constructors))
 
-# Old iteration protocol:
-start(it::YAMLDocIterator) = nothing
+# It's unknown how many documents will be found. By doing this,
+# functions like `collect` do not try to query the length of the
+# iterator.
+Base.IteratorSize(::YAMLDocIterator) = Base.SizeUnknown()
 
-function next(it::YAMLDocIterator, state)
+# Iteration protocol.
+function iterate(it::YAMLDocIterator, _ = nothing)
+    it.next_doc === nothing && return nothing
     doc = it.next_doc
     if eof(it.input)
         it.next_doc = nothing
@@ -115,12 +119,6 @@ function next(it::YAMLDocIterator, state)
     end
     return doc, nothing
 end
-
-done(it::YAMLDocIterator, state) = it.next_doc === nothing
-
-# 0.7 iteration protocol:
-iterate(it::YAMLDocIterator) = next(it, start(it))
-iterate(it::YAMLDocIterator, s) = done(it, s) ? nothing : next(it, s)
 
 """
     load_all(x::Union{AbstractString, IO}) -> YAMLDocIterator
