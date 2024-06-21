@@ -41,6 +41,7 @@ end
 
 
 function compose_document(composer::Composer)
+    peek(composer.input) isa StreamEndEvent && return nothing
     @assert forward!(composer.input) isa DocumentStartEvent
     node = compose_node(composer)
     @assert forward!(composer.input) isa DocumentEndEvent
