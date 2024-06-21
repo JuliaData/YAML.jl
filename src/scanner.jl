@@ -190,7 +190,7 @@ const yaml_1_1_b_paragraph_separator = '\u2029'
 yaml_1_1_is_b_specific(c::Char) = c == yaml_1_1_b_line_separator || c == yaml_1_1_b_paragraph_separator
 # YAML 1.1 [29] b-generic ::= ( b-carriage-return b-line-feed) | b-carriage-return | b-line-feed | b-next-line
 # YAML 1.1 [33] b-ignored-any ::= b-generic | b-specific
-function yaml_1_1_forwardchars!(stream::TokenStream, n::Integer=1)
+function forwardchars!(::YAMLV1_1, stream::TokenStream, n::Integer=1)
     i = 1
     while i ≤ n
         c = peek(stream.input)
@@ -213,7 +213,7 @@ end
 
 # Advance the stream by `n` characters.
 # YAML 1.2 [28] b-break ::= ( b-carriage-return b-line-feed ) | b-carriage-return | b-line-feed
-function yaml_1_2_forwardchars!(stream::TokenStream, n::Integer=1)
+function forwardchars!(::YAMLV1_2, stream::TokenStream, n::Integer=1)
     i = 1
     while i ≤ n
         c = peek(stream.input)
@@ -526,7 +526,7 @@ function fetch_document_indicator(stream::TokenStream, ::Type{T}) where {T<:Toke
 
     # Add DOCUMENT-START or DOCUMENT-END.
     start_mark = get_mark(stream)
-    yaml_1_1_forwardchars!(stream, 3)
+    forwardchars!(YAMLV1_1(), stream, 3)
     end_mark = get_mark(stream)
     enqueue!(stream.token_queue, T(Span(start_mark, end_mark)))
 end
@@ -567,7 +567,7 @@ function fetch_flow_collection_start(stream::TokenStream, ::Type{T}) where {T<:T
 
     # Add FLOW-SEQUENCE-START or FLOW-MAPPING-START.
     start_mark = get_mark(stream)
-    yaml_1_1_forwardchars!(stream)
+    forwardchars!(YAMLV1_1(), stream)
     end_mark = get_mark(stream)
     enqueue!(stream.token_queue, T(Span(start_mark, end_mark)))
 end
@@ -595,7 +595,7 @@ function fetch_flow_collection_end(stream::TokenStream, ::Type{T}) where {T<:Tok
 
     # Add FLOW-SEQUENCE-END or FLOW-MAPPING-END.
     start_mark = get_mark(stream)
-    yaml_1_1_forwardchars!(stream)
+    forwardchars!(YAMLV1_1(), stream)
     end_mark = get_mark(stream)
     enqueue!(stream.token_queue, T(Span(start_mark, end_mark)))
 end
@@ -610,7 +610,7 @@ function fetch_flow_entry(stream::TokenStream)
 
     # Add FLOW-ENTRY.
     start_mark = get_mark(stream)
-    yaml_1_1_forwardchars!(stream)
+    forwardchars!(YAMLV1_1(), stream)
     end_mark = get_mark(stream)
     enqueue!(stream.token_queue, FlowEntryToken(Span(start_mark, end_mark)))
 end
@@ -646,7 +646,7 @@ function fetch_block_entry(stream::TokenStream)
 
     # Add BLOCK-ENTRY.
     start_mark = get_mark(stream)
-    yaml_1_1_forwardchars!(stream)
+    forwardchars!(YAMLV1_1(), stream)
     end_mark = get_mark(stream)
     enqueue!(stream.token_queue,
              BlockEntryToken(Span(start_mark, end_mark)))
@@ -678,7 +678,7 @@ function fetch_key(stream::TokenStream)
 
     # Add KEY.
     start_mark = get_mark(stream)
-    yaml_1_1_forwardchars!(stream)
+    forwardchars!(YAMLV1_1(), stream)
     end_mark = get_mark(stream)
     enqueue!(stream.token_queue, KeyToken(Span(start_mark, end_mark)))
 end
@@ -737,7 +737,7 @@ function fetch_value(stream::TokenStream)
 
     # Add VALUE.
     start_mark = get_mark(stream)
-    yaml_1_1_forwardchars!(stream)
+    forwardchars!(YAMLV1_1(), stream)
     end_mark = get_mark(stream)
     enqueue!(stream.token_queue, ValueToken(Span(start_mark, end_mark)))
 end
@@ -847,14 +847,14 @@ end
 function scan_line_break(stream::TokenStream)
     if in(peek(stream.input), "\r\n\u0085")
         if prefix(stream.input, 2) == "\r\n"
-            yaml_1_1_forwardchars!(stream, 2)
+            forwardchars!(YAMLV1_1(), stream, 2)
         else
-            yaml_1_1_forwardchars!(stream)
+            forwardchars!(YAMLV1_1(), stream)
         end
         return "\n"
     elseif in(peek(stream.input), "\u2028\u2029")
         ch = peek(stream.input)
-        yaml_1_1_forwardchars!(stream)
+        forwardchars!(YAMLV1_1(), stream)
         return ch
     end
     return ""
@@ -866,13 +866,13 @@ function scan_to_next_token(stream::TokenStream)
     while true
         # whitespace
         while peek(stream.input) == ' '
-            yaml_1_1_forwardchars!(stream)
+            forwardchars!(YAMLV1_1(), stream)
         end
         # comment
         if peek(stream.input) == '#'
-            yaml_1_1_forwardchars!(stream)
+            forwardchars!(YAMLV1_1(), stream)
             while !in(peek(stream.input), "\0\r\n\u0085\u2028\u2029")
-                yaml_1_1_forwardchars!(stream)
+                forwardchars!(YAMLV1_1(), stream)
             end
         end
         # line break
@@ -890,7 +890,7 @@ end
 
 function scan_directive(stream::TokenStream)
     start_mark = get_mark(stream)
-    yaml_1_1_forwardchars!(stream)
+    forwardchars!(YAMLV1_1(), stream)
     name = scan_directive_name(stream, start_mark)
 
     value = nothing
@@ -907,7 +907,7 @@ function scan_directive(stream::TokenStream)
         end_mark = get_mark(stream)
         @warn """unknown directive name: "$name" at $end_mark. We ignore this."""
         while !in(peek(stream.input), "\0\r\n\u0085\u2028\u2029")
-            yaml_1_1_forwardchars!(stream)
+            forwardchars!(YAMLV1_1(), stream)
         end
     end
 
@@ -931,7 +931,7 @@ function scan_directive_name(stream::TokenStream, start_mark::Mark)
     end
 
     value = prefix(stream.input, length)
-    yaml_1_1_forwardchars!(stream, length)
+    forwardchars!(YAMLV1_1(), stream, length)
 
     c = peek(stream.input)
     if !in(c, ":\0 \r\n\u0085\u2028\u2029")
@@ -946,7 +946,7 @@ end
 
 function scan_yaml_directive_value(stream::TokenStream, start_mark::Mark)
     while peek(stream.input) == ' ' || peek(stream.input) == ':'
-        yaml_1_1_forwardchars!(stream)
+        forwardchars!(YAMLV1_1(), stream)
     end
 
     major = scan_yaml_directive_number(stream, start_mark)
@@ -955,7 +955,7 @@ function scan_yaml_directive_value(stream::TokenStream, start_mark::Mark)
                            "expected '.' but found '$(peek(stream.input))'",
                            get_mark(stream)))
     end
-    yaml_1_1_forwardchars!(stream)
+    forwardchars!(YAMLV1_1(), stream)
     minor = scan_yaml_directive_number(stream, start_mark)
     if !in(peek(stream.input), "\0 \r\n\u0085\u2028\u2029")
         throw(ScannerError("while scanning a directive", start_mark,
@@ -998,7 +998,7 @@ function scan_yaml_directive_number(stream::TokenStream, start_mark::Mark)::Int
     # ---------------------------------------------------
     # advance the stream by the length that has been read
     # ---------------------------------------------------
-    yaml_1_1_forwardchars!(stream, pos)
+    forwardchars!(YAMLV1_1(), stream, pos)
     # -----------------
     # return the number
     # -----------------
@@ -1008,7 +1008,7 @@ end
 
 function scan_tag_directive_handle(stream::TokenStream, start_mark::Mark)
     while peek(stream.input) == ' '
-        yaml_1_1_forwardchars!(stream)
+        forwardchars!(YAMLV1_1(), stream)
     end
 
     value = scan_tag_handle(stream, "directive", start_mark)
@@ -1023,7 +1023,7 @@ end
 
 function scan_tag_directive_prefix(stream::TokenStream, start_mark::Mark)
     while peek(stream.input) == ' '
-        yaml_1_1_forwardchars!(stream)
+        forwardchars!(YAMLV1_1(), stream)
     end
 
     value = scan_tag_uri(stream, "directive", start_mark)
@@ -1038,12 +1038,12 @@ end
 
 function scan_directive_ignored_line(stream::TokenStream, start_mark::Mark)
     while peek(stream.input) == ' '
-        yaml_1_1_forwardchars!(stream)
+        forwardchars!(YAMLV1_1(), stream)
     end
     if peek(stream.input) == '#'
-        yaml_1_1_forwardchars!(stream)
+        forwardchars!(YAMLV1_1(), stream)
         while !in(peek(stream.input), "\0\r\n\u0085\u2028\u2029")
-            yaml_1_1_forwardchars!(stream)
+            forwardchars!(YAMLV1_1(), stream)
         end
     end
     if !in(peek(stream.input), "\0\r\n\u0085\u2028\u2029")
@@ -1063,7 +1063,7 @@ function scan_anchor(stream::TokenStream, ::Type{T}) where {T<:Token}
     else
         name = "anchor"
     end
-    yaml_1_1_forwardchars!(stream)
+    forwardchars!(YAMLV1_1(), stream)
     length = 0
     c = peek(stream.input)
     while is_ns_ascii_letter(c) || isdigit(c) || c == '-' || c == '_'
@@ -1077,7 +1077,7 @@ function scan_anchor(stream::TokenStream, ::Type{T}) where {T<:Token}
                            get_mark(stream)))
     end
     value = prefix(stream.input, length)
-    yaml_1_1_forwardchars!(stream, length)
+    forwardchars!(YAMLV1_1(), stream, length)
     if !in(peek(stream.input), "\0 \t\r\n\u0085\u2028\u2029?:,]}%@`")
         throw(ScannerError("while scanning an $(name)", start_mark,
                            "expected an alphanumeric character, but found '$(peek(stream.input))'",
@@ -1093,18 +1093,18 @@ function scan_tag(stream::TokenStream)
     c = peek(stream.input, 1)
     if c == '<'
         handle = nothing
-        yaml_1_1_forwardchars!(stream, 2)
+        forwardchars!(YAMLV1_1(), stream, 2)
         suffix = scan_tag_uri(stream, "tag", start_mark)
         if peek(stream.input) != '>'
             throw(ScannerError("while parsing a tag", start_mark,
                                "expected '>', but found '$(peek(stream.input))'",
                                get_mark(stream)))
         end
-        yaml_1_1_forwardchars!(stream)
+        forwardchars!(YAMLV1_1(), stream)
     elseif in(c, "\0 \t\r\n\u0085\u2028\u2029")
         handle = nothing
         suffix = '!'
-        yaml_1_1_forwardchars!(stream)
+        forwardchars!(YAMLV1_1(), stream)
     else
         length = 1
         use_handle = false
@@ -1120,7 +1120,7 @@ function scan_tag(stream::TokenStream)
             handle = scan_tag_handle(stream, "tag", start_mark)
         else
             handle = "!"
-            yaml_1_1_forwardchars!(stream)
+            forwardchars!(YAMLV1_1(), stream)
         end
         suffix = scan_tag_uri(stream, "tag", start_mark)
     end
@@ -1145,7 +1145,7 @@ function scan_block_scalar(stream::TokenStream, style::Char)
     start_mark = get_mark(stream)
 
     # Scan the header.
-    yaml_1_1_forwardchars!(stream)
+    forwardchars!(YAMLV1_1(), stream)
     chomping, increment = scan_block_scalar_indicators(stream, start_mark)
     scan_block_scalar_ignored_line(stream, start_mark)
 
@@ -1169,7 +1169,7 @@ function scan_block_scalar(stream::TokenStream, style::Char)
             length += 1
         end
         push!(chunks, prefix(stream.input, length))
-        yaml_1_1_forwardchars!(stream, length)
+        forwardchars!(YAMLV1_1(), stream, length)
         line_break = scan_line_break(stream)
         breaks, end_mark = scan_block_scalar_breaks(stream, indent)
         if stream.column == indent && peek(stream.input) != '\0'
@@ -1201,12 +1201,12 @@ end
 
 function scan_block_scalar_ignored_line(stream::TokenStream, start_mark::Mark)
     while peek(stream.input) == ' '
-        yaml_1_1_forwardchars!(stream)
+        forwardchars!(YAMLV1_1(), stream)
     end
 
     if peek(stream.input) == '#'
         while !in(peek(stream.input), "\0\r\n\u0085\u2028\u2029")
-            yaml_1_1_forwardchars!(stream)
+            forwardchars!(YAMLV1_1(), stream)
         end
     end
 
@@ -1226,7 +1226,7 @@ function scan_block_scalar_indicators(stream::TokenStream, start_mark::Mark)
     c = peek(stream.input)
     if c == '+' || c == '-'
         chomping = c == '+'
-        yaml_1_1_forwardchars!(stream)
+        forwardchars!(YAMLV1_1(), stream)
         c = peek(stream.input)
         if in(c, "0123456789")
             increment = parse(Int, string(c))
@@ -1243,12 +1243,12 @@ function scan_block_scalar_indicators(stream::TokenStream, start_mark::Mark)
                 "expected indentation indicator in the range 1-9, but found 0",
                 get_mark(stream)))
         end
-        yaml_1_1_forwardchars!(stream)
+        forwardchars!(YAMLV1_1(), stream)
 
         c = peek(stream.input)
         if c == '+' || c == '-'
             comping = c == '+'
-            yaml_1_1_forwardchars!(stream)
+            forwardchars!(YAMLV1_1(), stream)
         end
     end
 
@@ -1272,7 +1272,7 @@ function scan_block_scalar_indentation(stream::TokenStream)
             push!(chunks, scan_line_break(stream))
             end_mark = get_mark(stream)
         else
-            yaml_1_1_forwardchars!(stream)
+            forwardchars!(YAMLV1_1(), stream)
             if stream.column > max_indent
                 max_indent = stream.column
             end
@@ -1287,14 +1287,14 @@ function scan_block_scalar_breaks(stream::TokenStream, indent)
     chunks = Any[]
     end_mark = get_mark(stream)
     while stream.column < indent && peek(stream.input) == ' '
-        yaml_1_1_forwardchars!(stream)
+        forwardchars!(YAMLV1_1(), stream)
     end
 
     while is_b_char(YAMLV1_1(), peek(stream.input))
         push!(chunks, scan_line_break(stream))
         end_mark = get_mark(stream)
         while stream.column < indent && peek(stream.input) == ' '
-            yaml_1_1_forwardchars!(stream)
+            forwardchars!(YAMLV1_1(), stream)
         end
     end
 
@@ -1307,14 +1307,14 @@ function scan_flow_scalar(stream::TokenStream, style::Char)
     chunks = Any[]
     start_mark = get_mark(stream)
     q = peek(stream.input) # quote
-    yaml_1_1_forwardchars!(stream)
+    forwardchars!(YAMLV1_1(), stream)
 
     while peek(stream.input) != q || peek(stream.input, 1) == q
         append!(chunks, scan_flow_scalar_spaces(stream, double, start_mark))
         append!(chunks, scan_flow_scalar_non_spaces(stream, double, start_mark))
     end
 
-    yaml_1_1_forwardchars!(stream)
+    forwardchars!(YAMLV1_1(), stream)
     end_mark = get_mark(stream)
     ScalarToken(Span(start_mark, end_mark), string(chunks...), false, style)
 end
@@ -1358,13 +1358,13 @@ function scan_flow_scalar_non_spaces(stream::TokenStream, double::Bool,
         end
         if length > 0
             push!(chunks, prefix(stream.input, length))
-            yaml_1_1_forwardchars!(stream, length)
+            forwardchars!(YAMLV1_1(), stream, length)
         end
 
         c = peek(stream.input)
         if !double && c == '\'' && peek(stream.input, 1) == '\''
             push!(chunks, '\'')
-            yaml_1_1_forwardchars!(stream, 2)
+            forwardchars!(YAMLV1_1(), stream, 2)
         elseif (double && c == '\'') || (!double && in(c, "\"\\"))
             push!(chunks, c)
             forward!(stream.input)
@@ -1389,7 +1389,7 @@ function scan_flow_scalar_non_spaces(stream::TokenStream, double::Bool,
                     end
                 end
                 push!(chunks, Char(parse(Int, prefix(stream.input, length), base = 16)))
-                yaml_1_1_forwardchars!(stream, length)
+                forwardchars!(YAMLV1_1(), stream, length)
             elseif is_b_char(YAMLV1_1(), c)
                 scan_line_break(stream)
                 append!(chunks, scan_flow_scalar_breaks(stream, double, start_mark))
@@ -1414,7 +1414,7 @@ function scan_flow_scalar_spaces(stream::TokenStream, double::Bool,
         length += 1
     end
     whitespaces = prefix(stream.input, length)
-    yaml_1_1_forwardchars!(stream, length)
+    forwardchars!(YAMLV1_1(), stream, length)
 
     c = peek(stream.input)
     if c == '\0'
@@ -1501,7 +1501,7 @@ function scan_plain(stream::TokenStream)
         c = peek(stream.input)
         if stream.flow_level != 0 && c == ':' &&
             !in(peek(stream.input, length + 1), "\0 \t\r\n\u0085\u2028\u2029,[]{}")
-            yaml_1_1_forwardchars!(stream, length)
+            forwardchars!(YAMLV1_1(), stream, length)
             throw(ScannerError("while scanning a plain scalar", start_mark,
                                "found unexpected ':'", get_mark(stream)))
         end
@@ -1513,7 +1513,7 @@ function scan_plain(stream::TokenStream)
         stream.allow_simple_key = true
         append!(chunks, spaces)
         push!(chunks, prefix(stream.input, length))
-        yaml_1_1_forwardchars!(stream, length)
+        forwardchars!(YAMLV1_1(), stream, length)
         end_mark = get_mark(stream)
         spaces = scan_plain_spaces(stream, indent, start_mark)
         if isempty(spaces) || peek(stream.input) == '#' ||
@@ -1535,7 +1535,7 @@ function scan_plain_spaces(stream::TokenStream, indent::Integer,
     end
 
     whitespaces = prefix(stream.input, length)
-    yaml_1_1_forwardchars!(stream, length)
+    forwardchars!(YAMLV1_1(), stream, length)
     c = peek(stream.input)
     if is_b_char(YAMLV1_1(), c)
         line_break = scan_line_break(stream)
@@ -1552,7 +1552,7 @@ function scan_plain_spaces(stream::TokenStream, indent::Integer,
         breaks = Any[]
         while in(peek(stream.input), " \r\n\u0085\u2028\u2029")
             if peek(stream.input) == ' '
-                yaml_1_1_forwardchars!(stream)
+                forwardchars!(YAMLV1_1(), stream)
             else
                 push!(breaks, scan_line_break(stream))
                 if peek(stream.input) == '\uFEFF'
@@ -1594,7 +1594,7 @@ function scan_tag_handle(stream::TokenStream, name::String, start_mark::Mark)
         end
 
         if c != '!'
-            yaml_1_1_forwardchars!(stream, length)
+            forwardchars!(YAMLV1_1(), stream, length)
             throw(ScannerError("while scanning a $(name)", start_mark,
                                "expected '!', but found '$(c)'",
                                get_mark(stream)))
@@ -1603,7 +1603,7 @@ function scan_tag_handle(stream::TokenStream, name::String, start_mark::Mark)
     end
 
     value = prefix(stream.input, length)
-    yaml_1_1_forwardchars!(stream, length)
+    forwardchars!(YAMLV1_1(), stream, length)
     value
 end
 
@@ -1615,7 +1615,7 @@ function scan_tag_uri(stream::TokenStream, name::String, start_mark::Mark)
     while is_ns_ascii_letter(c) || isdigit(c) || in(c, "-;/?:@&=+\$,_.!~*\'()[]%")
         if c == '%'
             push!(chunks, prefix(stream.input, length))
-            yaml_1_1_forwardchars!(stream, length)
+            forwardchars!(YAMLV1_1(), stream, length)
             length = 0
             push!(chunks, scan_uri_escapes(stream, name, start_mark))
         else
@@ -1626,7 +1626,7 @@ function scan_tag_uri(stream::TokenStream, name::String, start_mark::Mark)
 
     if length > 0
         push!(chunks, prefix(stream.input, length))
-        yaml_1_1_forwardchars!(stream, length)
+        forwardchars!(YAMLV1_1(), stream, length)
         length = 0
     end
 
@@ -1655,7 +1655,7 @@ function scan_uri_escapes(stream::TokenStream, name::String, start_mark::Mark)
             end
         end
         push!(bytes, Char(parse(Int, prefix(stream.input, 2), base=16)))
-        yaml_1_1_forwardchars!(stream, 2)
+        forwardchars!(YAMLV1_1(), stream, 2)
     end
 
     string(bytes...)
