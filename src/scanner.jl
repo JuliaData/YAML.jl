@@ -7,7 +7,7 @@ const yaml_1_2_s_space = ' '
 const yaml_1_2_s_tab = '\t'
 # YAML 1.1 [36] s-white ::= #x9 /*TAB*/ | #x20 /*SP*/
 # YAML 1.2 [33] s-white ::= s-space | s-tab
-yaml_is_s_white(c::Char) = c == yaml_1_2_s_space || c == yaml_1_2_s_tab
+is_s_white(c::Char) = c == yaml_1_2_s_space || c == yaml_1_2_s_tab
 
 # YAML 1.1 [41] ns-ascii-letter ::= [#x41-#x5A] /*A-Z*/ | [#61-#x7A] /*a-z*/
 # YAML 1.2 [37] ns-ascii-letter ::= [x41-x5A] | [x61-x7A] # A-Z a-z
@@ -1098,7 +1098,7 @@ function scan_block_scalar(stream::TokenStream, style::Char)
     # Scan the inner part of the block scalar.
     while stream.column == indent && peek(stream.input) ≠ '\0'
         append!(chunks, breaks)
-        leading_non_space = !yaml_is_s_white(peek(stream.input))
+        leading_non_space = !is_s_white(peek(stream.input))
         length = 0
         while !in(peek(stream.input, length), "\0\r\n\u0085\u2028\u2029")
             length += 1
@@ -1109,7 +1109,7 @@ function scan_block_scalar(stream::TokenStream, style::Char)
         breaks, end_mark = scan_block_scalar_breaks(stream, indent)
         if stream.column == indent && peek(stream.input) != '\0'
             if folded && line_break == "\n" &&
-               leading_non_space && !yaml_is_s_white(peek(stream.input))
+               leading_non_space && !is_s_white(peek(stream.input))
                 if isempty(breaks)
                     push!(chunks, ' ')
                 end
@@ -1345,7 +1345,7 @@ function scan_flow_scalar_spaces(stream::TokenStream, double::Bool,
                                  start_mark::Mark)
     chunks = Any[]
     length = 0
-    while yaml_is_s_white(peek(stream.input, length))
+    while is_s_white(peek(stream.input, length))
         length += 1
     end
     whitespaces = prefix(stream.input, length)
@@ -1384,7 +1384,7 @@ function scan_flow_scalar_breaks(stream::TokenStream, double::Bool,
                                get_mark(stream)))
         end
 
-        while yaml_is_s_white(peek(stream.input))
+        while is_s_white(peek(stream.input))
             forward!(stream.input)
         end
 
