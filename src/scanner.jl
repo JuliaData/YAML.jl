@@ -1,5 +1,5 @@
 # YAML 1.1 [27] b-char ::= b-line-feed | b-carriage-return | b-next-line | b-line-separator | b-paragraph-separator
-yaml_1_1_is_b_char(c::Char) = c == '\n' || c == '\r' || c == '\u85' || c == '\u2028' || c == '\u2029'
+is_b_char(::YAMLV1_1, c::Char) = c == '\n' || c == '\r' || c == '\u85' || c == '\u2028' || c == '\u2029'
 
 # YAML 1.1 [41] ns-ascii-letter ::= [#x41-#x5A] /*A-Z*/ | [#61-#x7A] /*a-z*/
 # YAML 1.2 [37] ns-ascii-letter ::= [x41-x5A] | [x61-x7A] # A-Z a-z
@@ -1218,7 +1218,7 @@ function scan_block_scalar_breaks(stream::TokenStream, indent)
         forwardchars!(stream)
     end
 
-    while yaml_1_1_is_b_char(peekchar(stream))
+    while is_b_char(YAMLV1_1(), peekchar(stream))
         push!(chunks, scan_line_break(stream))
         end_mark = get_mark(stream)
         while stream.column < indent && peekchar(stream) == ' '
@@ -1318,7 +1318,7 @@ function scan_flow_scalar_non_spaces(stream::TokenStream, double::Bool,
                 end
                 push!(chunks, Char(parse(Int, prefix(stream.input, length), base = 16)))
                 forwardchars!(stream, length)
-            elseif yaml_1_1_is_b_char(c)
+            elseif is_b_char(YAMLV1_1(), c)
                 scan_line_break(stream)
                 append!(chunks, scan_flow_scalar_breaks(stream, double, start_mark))
             else
@@ -1348,7 +1348,7 @@ function scan_flow_scalar_spaces(stream::TokenStream, double::Bool,
     if c == '\0'
         throw(ScannerError("while scanning a quoted scalar", start_mark,
                            "found unexpected end of stream", get_mark(stream)))
-    elseif yaml_1_1_is_b_char(c)
+    elseif is_b_char(YAMLV1_1(), c)
         line_break = scan_line_break(stream)
         breaks = scan_flow_scalar_breaks(stream, double, start_mark)
         if line_break != '\n'
@@ -1381,7 +1381,7 @@ function scan_flow_scalar_breaks(stream::TokenStream, double::Bool,
             forward!(stream.input)
         end
 
-        if yaml_1_1_is_b_char(peekchar(stream))
+        if is_b_char(YAMLV1_1(), peekchar(stream))
             push!(chunks, scan_line_break(stream))
         else
             return chunks
@@ -1465,7 +1465,7 @@ function scan_plain_spaces(stream::TokenStream, indent::Integer,
     whitespaces = prefix(stream.input, length)
     forwardchars!(stream, length)
     c = peekchar(stream)
-    if yaml_1_1_is_b_char(c)
+    if is_b_char(YAMLV1_1(), c)
         line_break = scan_line_break(stream)
         stream.allow_simple_key = true
         if peekchar(stream) == '\uFEFF'
