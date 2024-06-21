@@ -165,22 +165,23 @@ end
 
 const testdir = dirname(@__FILE__)
 @testset for test in tests
-    yamlString = open(joinpath(testdir, string(test, ".data"))) do f
-        chomp(read(f, String))
-    end
-    expected = evalfile(joinpath(testdir, string(test, ".expected")))
+    yaml_file_name = joinpath(testdir, "yaml/$test.yaml")
+    julia_file_name = joinpath(testdir, "julia/$test.jl")
+
+    yaml_string = read(yaml_file_name, String)
+    expected = evalfile(julia_file_name)
 
     @testset "Load from File" begin
         @test begin
             data = YAML.load_file(
-                joinpath(testdir, string(test, ".data")),
+                yaml_file_name,
                 TestConstructor()
             )
             equivalent(data, expected)
         end
         @test begin
             dictData = YAML.load_file(
-                joinpath(testdir, string(test, ".data")),
+                yaml_file_name,
                 more_constructors, multi_constructors
             )
             equivalent(dictData, expected)
@@ -190,7 +191,7 @@ const testdir = dirname(@__FILE__)
     @testset "Load from String" begin
         @test begin
             data = YAML.load(
-                yamlString,
+                yaml_string,
                 TestConstructor()
             )
             equivalent(data, expected)
@@ -198,7 +199,7 @@ const testdir = dirname(@__FILE__)
 
         @test begin
             dictData = YAML.load(
-                yamlString,
+                yaml_string,
                 more_constructors, multi_constructors
             )
             equivalent(dictData, expected)
@@ -208,7 +209,7 @@ const testdir = dirname(@__FILE__)
     @testset "Load All from File" begin
         @test begin
             data = YAML.load_all_file(
-                joinpath(testdir, string(test, ".data")),
+                yaml_file_name,
                 TestConstructor()
             )
             equivalent(first(data), expected)
@@ -216,7 +217,7 @@ const testdir = dirname(@__FILE__)
 
         @test begin
             dictData = YAML.load_all_file(
-                joinpath(testdir, string(test, ".data")),
+                yaml_file_name,
                 more_constructors, multi_constructors
             )
             equivalent(first(dictData), expected)
@@ -226,7 +227,7 @@ const testdir = dirname(@__FILE__)
     @testset "Load All from String" begin
         @test begin
             data = YAML.load_all(
-                yamlString,
+                yaml_string,
                 TestConstructor()
             )
             equivalent(first(data), expected)
@@ -234,7 +235,7 @@ const testdir = dirname(@__FILE__)
 
         @test begin
             dictData = YAML.load_all(
-                yamlString,
+                yaml_string,
                 more_constructors, multi_constructors
             )
             equivalent(first(dictData), expected)
@@ -246,7 +247,7 @@ const testdir = dirname(@__FILE__)
         @testset "Writing" begin
             @test begin
                 data = YAML.load_file(
-                    joinpath(testdir, string(test, ".data")),
+                    yaml_file_name,
                     more_constructors
                 )
                 equivalent(write_and_load(data), expected)
@@ -443,10 +444,39 @@ end
     @test_throws YAML.ScannerError YAML.load(""" '''a'' """)
 end
 
+# issue 129 - Comment only content
+@testset "issue129" begin
+    @test YAML.load("#") === nothing
+    @test isempty(YAML.load_all("#"))
+end
+
+# issue 132 - load_all fails on windows
+@testset "issue132" begin
+    input = """
+            ---
+            creator: LAMMPS
+            timestep: 0
+            ...
+            ---
+            creator: LAMMPS
+            timestep: 1
+            ...
+            """
+    expected = [Dict("creator" => "LAMMPS", "timestep" => 0),
+                Dict("creator" => "LAMMPS", "timestep" => 1)]
+    @test collect(YAML.load_all(input)) == expected
+end
+
 # issue #148 - warn unknown directives
 @testset "issue #148" begin
     @test (@test_logs (:warn, """unknown directive name: "FOO" at line 1, column 4. We ignore this.""") YAML.load("""%FOO  bar baz\n\n--- "foo\"""")) == "foo"
     @test (@test_logs (:warn, """unknown directive name: "FOO" at line 1, column 4. We ignore this.""") (:warn, """unknown directive name: "BAR" at line 2, column 4. We ignore this.""") YAML.load("""%FOO\n%BAR\n--- foo""")) == "foo"
+end
+
+# issue #143 - load empty file
+@testset "issue #143" begin
+    @test YAML.load("") === nothing
+    @test isempty(YAML.load_all(""))
 end
 
 # issue #144
