@@ -1,5 +1,41 @@
+# YAML 1.1 [22] b-line-feed ::= #xA /*LF*/
+# YAML 1.2 [24] b-line-feed ::= x0A
+const b_line_feed = '\n'
+
+# YAML 1.1 [23] b-carriage-return ::= #xD /*CR*/
+# YAML 1.2 [25] b-carriage-return ::= x0D
+const b_carriage_return = '\r'
+
+# YAML 1.1 [24] b-next-line ::= #x85 /*NEL*/
+# YAML 1.2 don't have this.
+const yaml_1_1_b_next_line = '\u85'
+
+# YAML 1.1 [25] b-line-separator ::= #x2028 /*LS*/
+# YAML 1.2 don't have this.
+const yaml_1_1_b_line_separator = '\u2028'
+
+# YAML 1.1 [26] b-paragraph-separator ::= #x2029 /*PS*/
+# YAML 1.2 don't have this.
+const yaml_1_1_b_paragraph_separator = '\u2029'
+
 # YAML 1.1 [27] b-char ::= b-line-feed | b-carriage-return | b-next-line | b-line-separator | b-paragraph-separator
-is_b_char(::YAMLV1_1, c::Char) = c == '\n' || c == '\r' || c == '\u85' || c == '\u2028' || c == '\u2029'
+is_b_char(::YAMLV1_1, c::Char) =
+    c == b_line_feed ||
+    c == b_carriage_return ||
+    c == yaml_1_1_b_next_line ||
+    c == yaml_1_1_b_line_separator ||
+    c == yaml_1_1_b_paragraph_separator
+
+# YAML 1.2 [26] b-char ::= b-line-feed | b-carriage-return # x0A x0D
+is_b_char(::YAMLV1_2, c::Char) =
+    c == b_line_feed ||
+    c == b_carriage_return
+
+# YAML 1.1 [28] b-specific ::= b-line-separator | b-paragraph-separator
+# YAML 1.2 don't have this.
+is_b_specific(::YAMLV1_1, c::Char) =
+    c == yaml_1_1_b_line_separator ||
+    c == yaml_1_1_b_paragraph_separator
 
 # YAML 1.1 [41] ns-ascii-letter ::= [#x41-#x5A] /*A-Z*/ | [#61-#x7A] /*a-z*/
 # YAML 1.2 [37] ns-ascii-letter ::= [x41-x5A] | [x61-x7A] # A-Z a-z
@@ -168,42 +204,31 @@ function forwardchar_breakline!(stream::TokenStream)
     nothing
 end
 
-# YAML 1.1 [22] b-line-feed ::= #xA /*LF*/
-# YAML 1.2 [24] b-line-feed ::= x0A
-const b_line_feed = '\n'
-
-# YAML 1.1 [23] b-carriage-return ::= #xD /*CR*/
-# YAML 1.2 [25] b-carriage-return ::= x0D
-const b_carriage_return = '\r'
-
-# YAML 1.1 [24] b-next-line ::= #x85 /*NEL*/
-const yaml_1_1_b_next_line = '\u85'
-
-# YAML 1.1 [25] b-line-separator ::= #x2028 /*LS*/
-const yaml_1_1_b_line_separator = '\u2028'
-
-# YAML 1.1 [26] b-paragraph-separator ::= #x2029 /*PS*/
-const yaml_1_1_b_paragraph_separator = '\u2029'
-
+# forwardchars!(::YAMLVersion, ::TokenStream, ::Integer=1)
 # Advance the stream by `n` characters.
-# YAML 1.1 [28] b-specific ::= b-line-separator | b-paragraph-separator
-yaml_1_1_is_b_specific(c::Char) = c == yaml_1_1_b_line_separator || c == yaml_1_1_b_paragraph_separator
-# YAML 1.1 [29] b-generic ::= ( b-carriage-return b-line-feed) | b-carriage-return | b-line-feed | b-next-line
+
+# forwardchars!(::YAMLV1_1, ::TokenStream, ::Integer=1)
+# YAML 1.1 [29] b-generic ::= ( b-carriage-return b-line-feed ) | b-carriage-return | b-line-feed | b-next-line
 # YAML 1.1 [33] b-ignored-any ::= b-generic | b-specific
 function forwardchars!(::YAMLV1_1, stream::TokenStream, n::Integer=1)
     i = 1
     while i ≤ n
+        # check whether the stream head is `b-ignored-any`
         c = peek(stream.input)
+        # check whether the stream head is `b-carriage-return`
         if c == b_carriage_return
+            # `b-carriage-return` or `b-carriage-return b-line-feed`
             forwardchar_breakline!(stream)
             i += 1
             if peek(stream.input) == b_line_feed
                 forwardchar_skip!(stream)
                 i += 1
             end
-        elseif c == b_line_feed || c == yaml_1_1_b_next_line || yaml_1_1_is_b_specific(c)
+        # check whether the stream head is `b-ignored-any - b-carriage-return - ( b-carriage-return b-line-feed )`
+        elseif c == b_line_feed || c == yaml_1_1_b_next_line || is_b_specific(YAMLV1_1(), c)
             forwardchar_breakline!(stream)
             i += 1
+        # the stream head is not `b-ignored-any`
         else
             forwardchar_nobreak!(stream)
             i += 1
@@ -211,7 +236,7 @@ function forwardchars!(::YAMLV1_1, stream::TokenStream, n::Integer=1)
     end
 end
 
-# Advance the stream by `n` characters.
+# forwardchars!(::YAMLV1_2, ::TokenStream, ::Integer=1)
 # YAML 1.2 [28] b-break ::= ( b-carriage-return b-line-feed ) | b-carriage-return | b-line-feed
 function forwardchars!(::YAMLV1_2, stream::TokenStream, n::Integer=1)
     i = 1
