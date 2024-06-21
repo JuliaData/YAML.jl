@@ -1006,7 +1006,7 @@ function scan_anchor(stream::TokenStream, ::Type{T}) where {T<:Token}
     value = prefix(stream.input, length)
     forwardchars!(stream, length)
     c = peek(stream.input)
-    if !(yaml_1_1_is_whitespace(c) || in(c, "?:,]}%@`"))
+    if !(is_whitespace(YAMLV1_1(), c) || in(c, "?:,]}%@`"))
         throw(ScannerError("while scanning an $(name)", start_mark,
                            "expected an alphanumeric character, but found '$c'",
                            get_mark(stream)))
@@ -1029,7 +1029,7 @@ function scan_tag(stream::TokenStream)
                                get_mark(stream)))
         end
         forwardchars!(stream)
-    elseif yaml_1_1_is_whitespace(c)
+    elseif is_whitespace(YAMLV1_1(), c)
         handle = nothing
         suffix = '!'
         forwardchars!(stream)
@@ -1282,7 +1282,7 @@ function scan_flow_scalar_non_spaces(stream::TokenStream, double::Bool,
     while true
         length = 0
         c = peek(stream.input, length)
-        while !(in(c, "\'\"\\") || yaml_1_1_is_whitespace(c))
+        while !(in(c, "\'\"\\") || is_whitespace(YAMLV1_1(), c))
             length += 1
             c = peek(stream.input, length)
         end
@@ -1372,7 +1372,7 @@ function scan_flow_scalar_breaks(stream::TokenStream, double::Bool,
     chunks = Any[]
     while true
         pref = prefix(stream.input, 3)
-        if pref == "---" || pref == "..." && yaml_1_1_is_whitespace(peek(stream.input, 3))
+        if pref == "---" || pref == "..." && is_whitespace(YAMLV1_1(), peek(stream.input, 3))
             throw(ScannerError("while scanning a quoted scalar", start_mark,
                                "found unexpected document seperator",
                                get_mark(stream)))
@@ -1430,7 +1430,7 @@ function scan_plain(stream::TokenStream)
         c = peek(stream.input)
         if stream.flow_level != 0 && c == ':' && begin
                 cnext = peek(stream.input, length + 1)
-                !(yaml_1_1_is_whitespace(cnext) || in(cnext, ",[]{}"))
+                !(is_whitespace(YAMLV1_1(), cnext) || in(cnext, ",[]{}"))
             end
             forwardchars!(stream, length)
             throw(ScannerError("while scanning a plain scalar", start_mark,
@@ -1475,7 +1475,7 @@ function scan_plain_spaces(stream::TokenStream, indent::Integer,
             return Any[]
         end
         pref = prefix(stream.input, 3)
-        if pref == "---" || pref == "..." && yaml_1_1_is_whitespace(peek(stream.input, 3))
+        if pref == "---" || pref == "..." && is_whitespace(YAMLV1_1(), peek(stream.input, 3))
             return Any[]
         end
 
@@ -1489,7 +1489,7 @@ function scan_plain_spaces(stream::TokenStream, indent::Integer,
                     return Any[]
                 end
                 pref = prefix(stream.input, 3)
-                if pref == "---" || pref == "..." && yaml_1_1_is_whitespace(peek(stream.input, 3))
+                if pref == "---" || pref == "..." && is_whitespace(YAMLV1_1(), peek(stream.input, 3))
                     return Any[]
                 end
             end
