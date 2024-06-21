@@ -785,15 +785,7 @@ end
 function yaml_1_1_scan_line_break(stream::TokenStream)::String
     c = peek(stream.input)
     if c == '\u000d'
-        # TODO:
-        # This seems better for performance but gives errors and I don't know why.
-        # Perhaps, `prefx(stream.input, 2)` modifies `stream` and eventually escapes from an error.
-        # if peek(stream.input, 1) == '\u000a'
-        #     forwardchars!(stream, 2)
-        # else
-        #     forwardchars!(stream)
-        # end
-        if prefix(stream.input, 2) == "\u000d\u000a"
+        if peek(stream.input, 1) == '\u000a'
             forwardchars!(stream, 2)
         else
             forwardchars!(stream)
