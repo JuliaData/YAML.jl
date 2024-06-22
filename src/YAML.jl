@@ -27,6 +27,7 @@ using Dates
 using Printf
 using StringEncodings
 
+include("versions.jl")
 include("queue.jl")
 include("buffered_input.jl")
 include("tokens.jl")
