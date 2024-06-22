@@ -274,8 +274,7 @@ function need_more_tokens(stream::TokenStream)
 end
 
 
-function peek(stream::TokenStream)
-    version = YAMLV1_1()
+function peek(version::YAMLVersion, stream::TokenStream)
     while need_more_tokens(stream)
         fetch_more_tokens(version, stream)
     end
@@ -288,8 +287,7 @@ function peek(stream::TokenStream)
 end
 
 
-function forward!(stream::TokenStream)
-    version = YAMLV1_1()
+function forward!(version::YAMLVersion, stream::TokenStream)
     while need_more_tokens(stream)
         fetch_more_tokens(version, stream)
     end
