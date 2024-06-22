@@ -30,6 +30,8 @@ using StringEncodings
 include("versions.jl")
 include("queue.jl")
 include("buffered_input.jl")
+include("mark.jl")
+include("span.jl")
 include("tokens.jl")
 include("scanner.jl")
 include("events.jl")
