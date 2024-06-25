@@ -13,6 +13,8 @@ is_s_white(c::Char) = c == yaml_1_2_s_space || c == yaml_1_2_s_tab
 # YAML 1.2 [37] ns-ascii-letter ::= [x41-x5A] | [x61-x7A] # A-Z a-z
 is_ns_ascii_letter(c::Char) = 'A' ≤ c ≤ 'Z' || 'a' ≤ c ≤ 'z'
 
+is_whitespace(::YAMLV1_1, c::Char) = c == '\0' || c == ' ' || c == '\t' || is_b_char(YAMLV1_1(), c)
+
 struct SimpleKey
     token_number::UInt64
     required::Bool
@@ -363,8 +365,6 @@ end
 # Checkers
 # --------
 
-const whitespace = "\0 \t\r\n\u0085\u2028\u2029"
-
 
 function check_directive(stream::TokenStream)
     stream.column == 0
@@ -373,31 +373,31 @@ end
 function check_document_start(stream::TokenStream)
     stream.column == 0 &&
         prefix(stream.input, 3) == "---" &&
-        in(peek(stream.input, 3), whitespace)
+        is_whitespace(YAMLV1_1(), peek(stream.input, 3))
 end
 
  function check_document_end(stream::TokenStream)
      stream.column == 0 &&
      prefix(stream.input, 3) == "..." &&
-    (in(peek(stream.input, 3), whitespace) || peek(stream.input, 3) === nothing)
+    (is_whitespace(YAMLV1_1(), peek(stream.input, 3)) || peek(stream.input, 3) === nothing)
  end
 
 function check_block_entry(stream::TokenStream)
-    in(peek(stream.input, 1), whitespace)
+    is_whitespace(YAMLV1_1(), peek(stream.input, 1))
 end
 
 function check_key(stream::TokenStream)
-    stream.flow_level > 0 || in(peek(stream.input, 1), whitespace)
+    stream.flow_level > 0 || is_whitespace(YAMLV1_1(), peek(stream.input, 1))
 end
 
 function check_value(stream::TokenStream)
     cnext = peek(stream.input, 1)
-    stream.flow_level > 0 || in(cnext, whitespace) || cnext === nothing
+    stream.flow_level > 0 || is_whitespace(YAMLV1_1(), cnext) || cnext === nothing
 end
 
 function check_plain(stream::TokenStream)
     !in(peek(stream.input), "\0 \t\r\n\u0085\u2028\u2029-?:,[]{}#&*!|>\'\"%@`\uFEFF") ||
-    (!in(peek(stream.input, 1), whitespace) &&
+    (!is_whitespace(YAMLV1_1(), peek(stream.input, 1)) &&
      (peek(stream.input) == '-' || (stream.flow_level == 0 &&
                               in(peek(stream.input), "?:"))))
 end
@@ -1417,10 +1417,10 @@ function scan_plain(stream::TokenStream)
         while true
             c = peek(stream.input, length)
             cnext = peek(stream.input, length + 1)
-            if in(c, whitespace) ||
+            if is_whitespace(YAMLV1_1(), c) ||
                 c === nothing ||
                 (stream.flow_level == 0 && c == ':' &&
-                    (cnext === nothing || in(cnext, whitespace))) ||
+                    (cnext === nothing || is_whitespace(YAMLV1_1(), cnext))) ||
                 (stream.flow_level != 0 && in(c, ",:?[]{}"))
                 break
             end
