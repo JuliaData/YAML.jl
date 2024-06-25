@@ -9,6 +9,10 @@ const yaml_1_2_s_tab = '\t'
 # YAML 1.2 [33] s-white ::= s-space | s-tab
 is_s_white(c::Char) = c == yaml_1_2_s_space || c == yaml_1_2_s_tab
 
+# YAML 1.1 [40] ns-hex-digit ::= ns-dec-digit | [#x41-#x46] /*A-F*/ | [#x61-#x66] /*a-f*/
+# YAML 1.2 [36] ns-hex-digit ::= ns-dec-digit | [x41-x46] | [x61-x66] # 0-9 A-F a-f
+is_ns_hex_digit(c::Char) = isdigit(c) || 'A' ≤ c ≤ 'F' || 'a' ≤ c ≤ 'f'
+
 # YAML 1.1 [41] ns-ascii-letter ::= [#x41-#x5A] /*A-Z*/ | [#61-#x7A] /*a-z*/
 # YAML 1.2 [37] ns-ascii-letter ::= [x41-x5A] | [x61-x7A] # A-Z a-z
 is_ns_ascii_letter(c::Char) = 'A' ≤ c ≤ 'Z' || 'a' ≤ c ≤ 'z'
@@ -1570,23 +1574,20 @@ function scan_tag_uri(stream::TokenStream, name::String, start_mark::Mark)
 end
 
 
-function scan_uri_escapes(stream::TokenStream, name::String, start_mark::Mark)
-    bytes = Any[]
-    mark = get_mark(stream)
+function scan_uri_escapes(stream::TokenStream, name::String, start_mark::Mark)::String
+    bytes = Char[]
     while peek(stream.input) == '%'
         forward!(stream.input)
+        # check ns-hex-digit
         for k in 0:1
-            if !in(peek(stream.input, k), "0123456789ABCDEFabcdef")
-                throw(ScannerError("while scanning a $(name)", start_mark,
-                                   string("expected URI escape sequence of",
-                                          " 2 hexadecimal digits, but found",
-                                          " '$(peek(stream.input, k))'"),
-                                   get_mark(stream)))
-            end
+            c = peek(stream.input, k)
+            is_ns_hex_digit(c) || throw(ScannerError(
+                "while scanning a $name", start_mark,
+                "expected URI escape sequence of 2 hexadecimal digits, but found '$c'", get_mark(stream),
+            ))
         end
         push!(bytes, Char(parse(Int, prefix(stream.input, 2), base=16)))
         forwardchars!(stream, 2)
     end
-
-    string(bytes...)
+    String(bytes)
 end
