@@ -56,7 +56,7 @@ function construct_document(constructor::Constructor, node::Node)
     data
 end
 
-construct_document(::Constructor, ::Nothing) = nothing
+construct_document(::Constructor, ::MissingDocument) = missing_document
 
 function construct_object(constructor::Constructor, node::Node)
     if haskey(constructor.constructed_objects, node)

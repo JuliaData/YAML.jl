@@ -450,4 +450,19 @@ end
     # end
 end
 
+# issue #226 - loadall stops on a null document
+@testset "issue #226" begin
+    @test collect(YAML.load_all("null")) == [nothing]
+    input = """
+            ---
+            1
+            ---
+            null
+            ---
+            2
+            """
+    expected = [1, nothing, 2]
+    @test collect(YAML.load_all(input)) == expected
+end
+
 end  # module
