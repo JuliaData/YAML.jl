@@ -185,8 +185,8 @@ function need_more_tokens(stream::TokenStream)
     next_possible_simple_key(stream) == stream.tokens_taken
 end
 
-
-function peek(stream::TokenStream)
+# peek the first token from the token stream
+function peek(stream::TokenStream)::Union{Token, Nothing}
     while need_more_tokens(stream)
         fetch_more_tokens(stream)
     end
@@ -198,8 +198,8 @@ function peek(stream::TokenStream)
     end
 end
 
-
-function forward!(stream::TokenStream)
+# advance and return the first token from the token stream
+function forward!(stream::TokenStream)::Union{Token, Nothing}
     while need_more_tokens(stream)
         fetch_more_tokens(stream)
     end
