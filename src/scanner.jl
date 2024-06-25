@@ -774,31 +774,75 @@ end
 
 # If the stream is at a line break, advance past it.
 #
-# Returns:
-#   '\r\n'      :   '\n'
-#   '\r'        :   '\n'
-#   '\n'        :   '\n'
-#   '\x85'      :   '\n'
-#   '\u2028'    :   '\u2028'
-#   '\u2029     :   '\u2029'
-#   default     :   ''
+# YAML 1.1
 #
-function scan_line_break(stream::TokenStream)
-    if in(peek(stream.input), "\r\n\u0085")
-        if prefix(stream.input, 2) == "\r\n"
+# [22] b-line-feed           ::= #xA /*LF*/
+# [23] b-carriage-return     ::= #xD /*CR*/
+# [24] b-next-line           ::= #x85 /*NEL*/
+# [25] b-line-separator      ::= #x2028 /*LS*/
+# [26] b-paragraph-separator ::= #x2029 /*PS*/
+# [28] b-specific            ::= b-line-separator | b-paragraph-separator
+# [29] b-generic             ::= ( b-carriage-return b-line-feed) | b-carriage-return | b-line-feed | b-next-line
+# [30] b-as-line-feed        ::= b-generic
+# [31] b-normalized          ::= b-as-line-feed | b-specific
+#
+# U+000D U+000A → U+000A
+# U+000D        → U+000A
+# U+000A        → U+000A
+# U+0085        → U+000A
+# U+2028        → U+2028
+# U+2029        → U+2029
+# otherwise     → (empty)
+#
+function scan_line_break(::YAMLV1_1, stream::TokenStream)::String
+    c = peek(stream.input)
+    if c == '\u000d'
+        if peek(stream.input, 1) == '\u000a'
             forwardchars!(stream, 2)
         else
             forwardchars!(stream)
         end
-        return "\n"
-    elseif in(peek(stream.input), "\u2028\u2029")
-        ch = peek(stream.input)
+        "\u000a"
+    elseif c == '\u000a' || c == '\u0085'
         forwardchars!(stream)
-        return ch
+        "\u000a"
+    elseif c == '\u2028' || c == '\u2029'
+        forwardchars!(stream)
+        string(c)
+    else
+        ""
     end
-    return ""
 end
-
+#
+# YAML 1.2
+#
+# [24] b-line-feed       ::= x0A
+# [25] b-carriage-return ::= x0D
+# [26] b-char            ::= b-line-feed | b-carriage-return
+# [27] nb-char           ::= c-printable - b-char - c-byte-order-mark
+# [28] b-break           ::= ( b-carriage-return b-line-feed ) | b-carriage-return | b-line-feed
+#
+# U+000D U+000A → U+000A
+# U+000D        → U+000A
+# U+000A        → U+000A
+# otherwise     → (empty)
+#
+function scan_line_break(::YAMLV1_2, stream::TokenStream)::String
+    c = peek(stream.input)
+    if c == '\u000d'
+        if peek(stream.input, 1) == '\u000a'
+            forwardchars!(stream, 2)
+        else
+            forwardchars!(stream)
+        end
+        "\u000a"
+    elseif c == '\u000a'
+        forwardchars!(stream)
+        "\u000a"
+    else
+        ""
+    end
+end
 
 # Scan past whitespace to the next token.
 function scan_to_next_token(stream::TokenStream)
@@ -815,7 +859,7 @@ function scan_to_next_token(stream::TokenStream)
             end
         end
         # line break
-        if scan_line_break(stream) != ""
+        if scan_line_break(YAMLV1_1(), stream) != ""
             if stream.flow_level == 0
                 stream.allow_simple_key = true
             end
@@ -990,7 +1034,7 @@ function scan_directive_ignored_line(stream::TokenStream, start_mark::Mark)
                            "expected a comment or a line break, but found '$(peek(stream.input))'",
                            get_mark(stream)))
     end
-    scan_line_break(stream)
+    scan_line_break(YAMLV1_1(), stream)
 end
 
 
@@ -1109,7 +1153,7 @@ function scan_block_scalar(stream::TokenStream, style::Char)
         end
         push!(chunks, prefix(stream.input, length))
         forwardchars!(stream, length)
-        line_break = scan_line_break(stream)
+        line_break = scan_line_break(YAMLV1_1(), stream)
         breaks, end_mark = scan_block_scalar_breaks(stream, indent)
         if stream.column == indent && peek(stream.input) != '\0'
             if folded && line_break == "\n" &&
@@ -1155,7 +1199,7 @@ function scan_block_scalar_ignored_line(stream::TokenStream, start_mark::Mark)
                            get_mark(stream)))
     end
 
-    scan_line_break(stream)
+    scan_line_break(YAMLV1_1(), stream)
 end
 
 
@@ -1203,7 +1247,7 @@ function scan_block_scalar_indentation(stream::TokenStream)
     end_mark = get_mark(stream)
     while in(peek(stream.input), " \r\n\u0085\u2028\u2029")
         if peek(stream.input) != ' '
-            push!(chunks, scan_line_break(stream))
+            push!(chunks, scan_line_break(YAMLV1_1(), stream))
             end_mark = get_mark(stream)
         else
             forwardchars!(stream)
@@ -1225,7 +1269,7 @@ function scan_block_scalar_breaks(stream::TokenStream, indent)
     end
 
     while is_b_char(YAMLV1_1(), peek(stream.input))
-        push!(chunks, scan_line_break(stream))
+        push!(chunks, scan_line_break(YAMLV1_1(), stream))
         end_mark = get_mark(stream)
         while stream.column < indent && peek(stream.input) == ' '
             forwardchars!(stream)
@@ -1325,7 +1369,7 @@ function scan_flow_scalar_non_spaces(stream::TokenStream, double::Bool,
                 push!(chunks, Char(parse(Int, prefix(stream.input, length), base = 16)))
                 forwardchars!(stream, length)
             elseif is_b_char(YAMLV1_1(), c)
-                scan_line_break(stream)
+                scan_line_break(YAMLV1_1(), stream)
                 append!(chunks, scan_flow_scalar_breaks(stream, double, start_mark))
             else
                 throw(ScannerError("while scanning a double-quoted scalar",
@@ -1355,7 +1399,7 @@ function scan_flow_scalar_spaces(stream::TokenStream, double::Bool,
         throw(ScannerError("while scanning a quoted scalar", start_mark,
                            "found unexpected end of stream", get_mark(stream)))
     elseif is_b_char(YAMLV1_1(), c)
-        line_break = scan_line_break(stream)
+        line_break = scan_line_break(YAMLV1_1(), stream)
         breaks = scan_flow_scalar_breaks(stream, double, start_mark)
         if line_break != '\n'
             push!(chunks, line_break)
@@ -1388,7 +1432,7 @@ function scan_flow_scalar_breaks(stream::TokenStream, double::Bool,
         end
 
         if is_b_char(YAMLV1_1(), peek(stream.input))
-            push!(chunks, scan_line_break(stream))
+            push!(chunks, scan_line_break(YAMLV1_1(), stream))
         else
             return chunks
         end
@@ -1472,7 +1516,7 @@ function scan_plain_spaces(stream::TokenStream, indent::Integer,
     forwardchars!(stream, length)
     c = peek(stream.input)
     if is_b_char(YAMLV1_1(), c)
-        line_break = scan_line_break(stream)
+        line_break = scan_line_break(YAMLV1_1(), stream)
         stream.allow_simple_key = true
         if peek(stream.input) == '\uFEFF'
             return Any[]
@@ -1488,7 +1532,7 @@ function scan_plain_spaces(stream::TokenStream, indent::Integer,
             if peek(stream.input) == ' '
                 forwardchars!(stream)
             else
-                push!(breaks, scan_line_break(stream))
+                push!(breaks, scan_line_break(YAMLV1_1(), stream))
                 if peek(stream.input) == '\uFEFF'
                     return Any[]
                 end
