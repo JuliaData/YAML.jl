@@ -175,7 +175,7 @@ function flatten_mapping(node::MappingNode)
 end
 
 
-function construct_mapping(dicttype::Union{Type,Function}, constructor::Constructor, node::MappingNode)
+function construct_mapping(dicttype::Union{Type,Function}, constructor::Constructor, node::MappingNode; strict_unique_keys::Bool=false)
     flatten_mapping(node)
     mapping = dicttype()
     for (key_node, value_node) in node.value
@@ -191,6 +191,9 @@ function construct_mapping(dicttype::Union{Type,Function}, constructor::Construc
             end
         end
         try
+            if haskey(mapping, key)
+                strict_unique_keys ? error("Duplicate key `$(key)` detected in mapping.") : @error "Duplicate key detected in mapping" node key
+            end
             mapping[key] = value
         catch
             throw(ConstructorError(nothing, nothing,
