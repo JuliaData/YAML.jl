@@ -39,6 +39,7 @@ const tests = [
     "issue30",
     "issue36",
     "issue39",
+    "issue132",
     "cartesian",
     "ar1",
     "ar1_cartesian",
@@ -407,9 +408,11 @@ end
             timestep: 1
             ...
             """
+    input_crlf = replace(input, "\n" => "\r\n")
     expected = [Dict("creator" => "LAMMPS", "timestep" => 0),
                 Dict("creator" => "LAMMPS", "timestep" => 1)]
     @test collect(YAML.load_all(input)) == expected
+    @test collect(YAML.load_all(input_crlf)) == expected
 end
 
 # issue #148 - warn unknown directives
