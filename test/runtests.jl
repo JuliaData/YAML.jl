@@ -349,6 +349,11 @@ end
     dicttype=() -> 3.0 # wrong type
 )
 
+@test_throws YAML.ScannerError YAML.load("x: %")
+if VERSION >= v"1.8"
+    @test_throws "found character '%' that cannot start any token" YAML.load("x: %")
+end
+
 # issue 81
 dict_content = ["key1" => [Dict("subkey1" => "subvalue1", "subkey2" => "subvalue2"), Dict()], "key2" => "value2"]
 order_one = OrderedDict(dict_content...)

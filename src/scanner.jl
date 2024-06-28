@@ -270,8 +270,9 @@ function fetch_more_tokens(stream::TokenStream)
     elseif check_plain(stream)
         fetch_plain(stream)
     else
-        # TODO: Throw a meaningful exception.
-        throw(c)
+        throw(ScannerError(nothing, nothing,
+                           "while scanning for the next token, found character '$c' that cannot start any token",
+                           get_mark(stream)))
     end
 end
 
