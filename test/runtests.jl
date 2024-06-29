@@ -33,7 +33,7 @@ const tests = [
     "spec-02-23",
     "empty_scalar",
     "no_trailing_newline",
-    "windows_newlines",
+    "windows_newlines.crlf",
     "escape_sequences",
     "issue15",
     "issue30",
@@ -45,7 +45,7 @@ const tests = [
     "merge-01",
     "version-colon",
     "multi-constructor",
-    "utf-8-bom",
+    "utf-8-bom.crlf",
     "utf-32-be",
     "empty_tag",
     "empty_list_elem",
@@ -60,61 +60,6 @@ const test_write_ignored = [
     "ar1_cartesian",
     "multi-constructor"
 ]
-
-
-function equivalent(xs::AbstractDict, ys::AbstractDict)
-    if Set(collect(keys(xs))) != Set(collect(keys(ys)))
-        @info "Not equivalent" Set(collect(keys(xs))) Set(collect(keys(ys)))
-        return false
-    end
-
-    for k in keys(xs)
-        if !equivalent(xs[k], ys[k])
-            @info "Not equivalent" xs[k] ys[k]
-            return false
-        end
-    end
-
-    true
-end
-
-
-function equivalent(xs::AbstractArray, ys::AbstractArray)
-    if length(xs) != length(ys)
-        @info "Not equivalent" length(xs) length(ys)
-        return false
-    end
-
-    for (x, y) in zip(xs, ys)
-        if !equivalent(x, y)
-            @info "Not equivalent" x y
-            return false
-        end
-    end
-
-    true
-end
-
-
-function equivalent(x::Float64, y::Float64)
-    isnan(x) && isnan(y) ? true : x == y
-end
-
-
-function equivalent(x::AbstractString, y::AbstractString)
-    while endswith(x, "\n")
-        x = x[1:end-1] # trailing newline characters are ambiguous
-    end
-    while endswith(y, "\n")
-        y = y[1:end-1]
-    end
-    x == y
-end
-
-function equivalent(x, y)
-    x == y
-end
-
 
 # test custom tags
 function construct_type_map(t::Symbol, constructor::YAML.Constructor,
@@ -177,14 +122,14 @@ const testdir = dirname(@__FILE__)
                 yaml_file_name,
                 TestConstructor()
             )
-            equivalent(data, expected)
+            isequal(data, expected)
         end
         @test begin
             dictData = YAML.load_file(
                 yaml_file_name,
                 more_constructors, multi_constructors
             )
-            equivalent(dictData, expected)
+            isequal(dictData, expected)
         end
     end
 
@@ -194,7 +139,7 @@ const testdir = dirname(@__FILE__)
                 yaml_string,
                 TestConstructor()
             )
-            equivalent(data, expected)
+            isequal(data, expected)
         end
 
         @test begin
@@ -202,7 +147,7 @@ const testdir = dirname(@__FILE__)
                 yaml_string,
                 more_constructors, multi_constructors
             )
-            equivalent(dictData, expected)
+            isequal(dictData, expected)
         end
     end
 
@@ -212,7 +157,7 @@ const testdir = dirname(@__FILE__)
                 yaml_file_name,
                 TestConstructor()
             )
-            equivalent(first(data), expected)
+            isequal(first(data), expected)
         end
 
         @test begin
@@ -220,7 +165,7 @@ const testdir = dirname(@__FILE__)
                 yaml_file_name,
                 more_constructors, multi_constructors
             )
-            equivalent(first(dictData), expected)
+            isequal(first(dictData), expected)
         end
     end
 
@@ -230,7 +175,7 @@ const testdir = dirname(@__FILE__)
                 yaml_string,
                 TestConstructor()
             )
-            equivalent(first(data), expected)
+            isequal(first(data), expected)
         end
 
         @test begin
@@ -238,7 +183,7 @@ const testdir = dirname(@__FILE__)
                 yaml_string,
                 more_constructors, multi_constructors
             )
-            equivalent(first(dictData), expected)
+            isequal(first(dictData), expected)
         end
     end
 
@@ -250,7 +195,7 @@ const testdir = dirname(@__FILE__)
                     yaml_file_name,
                     more_constructors
                 )
-                equivalent(write_and_load(data), expected)
+                isequal(write_and_load(data), expected)
             end
         end
     else
@@ -283,11 +228,11 @@ test: 2
 test: 3
 """)
     (val, state) = iterate(iterable)
-    @test equivalent(val, Dict("test" => 1))
+    @test isequal(val, Dict("test" => 1))
     (val, state) = iterate(iterable, state)
-    @test equivalent(val, Dict("test" => 2))
+    @test isequal(val, Dict("test" => 2))
     (val, state) = iterate(iterable, state)
-    @test equivalent(val, Dict("test" => 3))
+    @test isequal(val, Dict("test" => 3))
     @test iterate(iterable, state) === nothing
 end
 
@@ -372,7 +317,7 @@ end
 
     expected = Dict{Any,Any}("Test" => Dict{Any,Any}("test2"=>["test1", "test2"],"test1"=>"data"))
 
-    @test equivalent(YAML.load(yamlString, MySafeConstructor()), expected)
+    @test isequal(YAML.load(yamlString, MySafeConstructor()), expected)
     @test_throws YAML.ConstructorError YAML.load(
         yamlString,
         MyReallySafeConstructor()
@@ -404,6 +349,11 @@ end
     more_constructors;
     dicttype=() -> 3.0 # wrong type
 )
+
+@test_throws YAML.ScannerError YAML.load("x: %")
+if VERSION >= v"1.8"
+    @test_throws "found character '%' that cannot start any token" YAML.load("x: %")
+end
 
 # issue 81
 dict_content = ["key1" => [Dict("subkey1" => "subvalue1", "subkey2" => "subvalue2"), Dict()], "key2" => "value2"]
@@ -483,6 +433,42 @@ end
 # issue #144
 @testset "issue #144" begin
     @test YAML.load("---") === nothing
+end
+
+# issue #132
+@testset "issue #132" begin
+    docs_expected = evalfile(joinpath(testdir, "julia/issue132.jl"))
+    open(joinpath(testdir, "yaml/issue132.lf.yaml"), "r") do io
+        docs = YAML.load_all(io)
+        doc, i = iterate(docs)
+        @test isequal(doc, docs_expected[1])
+        doc, i = iterate(docs, i)
+        @test isequal(doc, docs_expected[2])
+        @test iterate(docs, i) === nothing
+    end
+    # open(joinpath(testdir, "yaml/issue132.crlf.yaml"), "r") do io
+    #     docs = YAML.load_all(io)
+    #     doc, i = iterate(docs)
+    #     @test isequal(doc, docs_expected[1])
+    #     doc, i = iterate(docs, i)
+    #     @test isequal(doc, docs_expected[2])
+    #     @test iterate(docs, i) === nothing
+    # end
+end
+
+# issue #226 - loadall stops on a null document
+@testset "issue #226" begin
+    @test collect(YAML.load_all("null")) == [nothing]
+    input = """
+            ---
+            1
+            ---
+            null
+            ---
+            2
+            """
+    expected = [1, nothing, 2]
+    @test collect(YAML.load_all(input)) == expected
 end
 
 @testset "failsafe schema" begin

@@ -76,7 +76,7 @@ function construct_document(constructor::Constructor, node::Node)
     data
 end
 
-construct_document(::Constructor, ::Nothing) = nothing
+construct_document(::Constructor, ::MissingDocument) = missing_document
 
 # construct_object
 
