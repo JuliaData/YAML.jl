@@ -42,11 +42,8 @@ end
 
 # Return the string formed from the first n characters from the current position
 # of the stream.
-function prefix(bi::BufferedInput, n::Integer=1)
-    n1 = n + 1
-    if bi.avail < n1
-        buffer!(bi, n1 - bi.avail)
-    end
+function prefix(bi::BufferedInput, n::Integer=1)::String
+    bi.avail < n && buffer!(bi, n - bi.avail)
     String(bi.buffer[bi.offset .+ (1:n)])
 end
 
@@ -67,6 +64,7 @@ function forward!(bi::BufferedInput, n::Integer=1)
             n -= 1
         end
     end
+    nothing
 end
 
 # Ugly hack to allow peeking of `StringDecoder`s
