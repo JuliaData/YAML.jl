@@ -27,6 +27,11 @@ using Dates
 using Printf
 using StringEncodings
 
+# Singleton object used to indicate that a stream contains no document
+# content, i.e. whitespace and comments only.
+struct MissingDocument end
+const missing_document = MissingDocument()
+
 include("versions.jl")
 include("queue.jl")
 include("buffered_input.jl")
@@ -74,13 +79,18 @@ function load(tokenstream::TokenStream, constructor::Constructor)
 end
 
 load(input::IO, constructor::Constructor) =
-    load(TokenStream(input), constructor)
+    missing_to_nothing(load(TokenStream(input), constructor))
 
 load(ts::TokenStream, more_constructors::_constructor = nothing, multi_constructors::Dict = Dict(); dicttype::_dicttype = Dict{Any, Any}, constructorType::Function = SafeConstructor) =
     load(ts, constructorType(_patch_constructors(more_constructors, dicttype), multi_constructors))
 
 load(input::IO, more_constructors::_constructor = nothing, multi_constructors::Dict = Dict(); kwargs...) =
-    load(TokenStream(input), more_constructors, multi_constructors ; kwargs...)
+    missing_to_nothing(load(TokenStream(input), more_constructors, multi_constructors ; kwargs...))
+
+# When doing `load` or `load_file` of something that doesn't start any
+# document, return `nothing`.
+missing_to_nothing(::MissingDocument) = nothing
+missing_to_nothing(x) = x
 
 """
     YAMLDocIterator
@@ -96,7 +106,7 @@ mutable struct YAMLDocIterator
 
     function YAMLDocIterator(input::IO, constructor::Constructor)
         it = new(input, TokenStream(input), constructor, nothing)
-        it.next_doc = eof(it.input) ? nothing : load(it.ts, it.constructor)
+        it.next_doc = eof(it.input) ? missing_document : load(it.ts, it.constructor)
         return it
     end
 end
@@ -110,10 +120,10 @@ Base.IteratorSize(::YAMLDocIterator) = Base.SizeUnknown()
 
 # Iteration protocol.
 function iterate(it::YAMLDocIterator, _ = nothing)
-    it.next_doc === nothing && return nothing
+    it.next_doc === missing_document && return nothing
     doc = it.next_doc
     if eof(it.input)
-        it.next_doc = nothing
+        it.next_doc = missing_document
     else
         reset!(it.ts)
         it.next_doc = load(it.ts, it.constructor)
