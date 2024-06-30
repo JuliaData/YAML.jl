@@ -260,6 +260,7 @@ function forwardchars!(::YAMLV1_2, stream::TokenStream, n::Integer=1)
             forwardchar_breakline!(stream)
             i += 1
             if peek(stream.input) == b_line_feed
+                forwardchar_skip!(stream)
                 i += 1
             end
         elseif c == b_line_feed
