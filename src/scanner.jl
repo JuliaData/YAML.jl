@@ -1062,9 +1062,10 @@ function scan_anchor(stream::TokenStream, ::Type{T}) where {T<:Token}
     end
     value = prefix(stream.input, length)
     forwardchars!(stream, length)
-    if !in(peek(stream.input), "\0 \t\r\n\u0085\u2028\u2029?:,]}%@`")
+    c = peek(stream.input)
+    if !(is_whitespace(YAMLV1_1(), c) || in(c, "?:,]}%@`"))
         throw(ScannerError("while scanning an $(name)", start_mark,
-                           "expected an alphanumeric character, but found '$(peek(stream.input))'",
+                           "expected an alphanumeric character, but found '$c'",
                            get_mark(stream)))
     end
     end_mark = get_mark(stream)
@@ -1085,7 +1086,7 @@ function scan_tag(stream::TokenStream)
                                get_mark(stream)))
         end
         forwardchars!(stream)
-    elseif in(c, "\0 \t\r\n\u0085\u2028\u2029")
+    elseif is_whitespace(YAMLV1_1(), c)
         handle = nothing
         suffix = '!'
         forwardchars!(stream)
@@ -1332,8 +1333,10 @@ function scan_flow_scalar_non_spaces(stream::TokenStream, double::Bool,
     chunks = Any[]
     while true
         length = 0
-        while !in(peek(stream.input, length), "\'\"\\\0 \t\r\n\u0085\u2028\u2029")
+        c = peek(stream.input, length)
+        while !(in(c, "\'\"\\") || is_whitespace(YAMLV1_1(), c))
             length += 1
+            c = peek(stream.input, length)
         end
         if length > 0
             push!(chunks, prefix(stream.input, length))
@@ -1421,8 +1424,7 @@ function scan_flow_scalar_breaks(stream::TokenStream, double::Bool,
     chunks = Any[]
     while true
         pref = prefix(stream.input, 3)
-        if pref == "---" || pref == "..." &&
-           in(peek(stream.input, 3), "\0 \t\r\n\u0085\u2028\u2029")
+        if pref == "---" || pref == "..." && is_whitespace(YAMLV1_1(), peek(stream.input, 3))
             throw(ScannerError("while scanning a quoted scalar", start_mark,
                                "found unexpected document seperator",
                                get_mark(stream)))
@@ -1478,8 +1480,10 @@ function scan_plain(stream::TokenStream)
 
         # It's not clear what we should do with ':' in the flow context.
         c = peek(stream.input)
-        if stream.flow_level != 0 && c == ':' &&
-            !in(peek(stream.input, length + 1), "\0 \t\r\n\u0085\u2028\u2029,[]{}")
+        if stream.flow_level != 0 && c == ':' && begin
+                cnext = peek(stream.input, length + 1)
+                !(is_whitespace(YAMLV1_1(), cnext) || in(cnext, ",[]{}"))
+            end
             forwardchars!(stream, length)
             throw(ScannerError("while scanning a plain scalar", start_mark,
                                "found unexpected ':'", get_mark(stream)))
@@ -1523,8 +1527,7 @@ function scan_plain_spaces(stream::TokenStream, indent::Integer,
             return Any[]
         end
         pref = prefix(stream.input, 3)
-        if pref == "---" || pref == "..." &&
-            in(peek(stream.input, 3), "\0 \t\r\n\u0085\u2028\u2029")
+        if pref == "---" || pref == "..." && is_whitespace(YAMLV1_1(), peek(stream.input, 3))
             return Any[]
         end
 
@@ -1538,8 +1541,7 @@ function scan_plain_spaces(stream::TokenStream, indent::Integer,
                     return Any[]
                 end
                 pref = prefix(stream.input, 3)
-                if pref == "---" || pref == "..." &&
-                    in(peek(stream.input, 3), "\0 \t\r\n\u0085\u2028\u2029")
+                if pref == "---" || pref == "..." && is_whitespace(YAMLV1_1(), peek(stream.input, 3))
                     return Any[]
                 end
             end
