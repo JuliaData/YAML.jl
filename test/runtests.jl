@@ -4,7 +4,7 @@ module YAMLTests
 
 import YAML
 import Base.Filesystem
-using StringEncodings: encode, @enc_str
+using StringEncodings: encode, decode, @enc_str
 using Test
 
 const tests = [
@@ -108,98 +108,119 @@ function write_and_load(data::Any)
     end
 end
 
+# Reverse end of line conventions to get testing of both LF and CRLF
+# line endings regardless of platform. If there are already mixed line
+# endings, it is not so important what this transformation does.
+function reverse_eol(s)
+    encoding = YAML.detect_encoding(IOBuffer(s))
+    s = decode(s, encoding)
+    if occursin("\r\n", s)
+        s = replace(s, "\r\n" => "\n")
+    else
+        s = replace(s, "\n" => "\r\n")
+    end
+    encode(s, encoding)
+end
+
 const testdir = dirname(@__FILE__)
-@testset for test in tests
-    yaml_file_name = joinpath(testdir, "yaml/$test.yaml")
-    julia_file_name = joinpath(testdir, "julia/$test.jl")
+mktempdir() do tmpdir
+    tmp_file_name = joinpath(tmpdir, "reversed_eol.yaml")
+    @testset for test in tests, eol in (:native, :foreign)
+        yaml_file_name = joinpath(testdir, "yaml/$test.yaml")
+        julia_file_name = joinpath(testdir, "julia/$test.jl")
 
-    yaml_string = read(yaml_file_name, String)
-    expected = evalfile(julia_file_name)
-
-    @testset "Load from File" begin
-        @test begin
-            data = YAML.load_file(
-                yaml_file_name,
-                TestConstructor()
-            )
-            isequal(data, expected)
-        end
-        @test begin
-            dictData = YAML.load_file(
-                yaml_file_name,
-                more_constructors, multi_constructors
-            )
-            isequal(dictData, expected)
-        end
-    end
-
-    @testset "Load from String" begin
-        @test begin
-            data = YAML.load(
-                yaml_string,
-                TestConstructor()
-            )
-            isequal(data, expected)
+        if eol == :foreign
+            write(tmp_file_name, reverse_eol(read(yaml_file_name)))
+            yaml_file_name = tmp_file_name
         end
 
-        @test begin
-            dictData = YAML.load(
-                yaml_string,
-                more_constructors, multi_constructors
-            )
-            isequal(dictData, expected)
-        end
-    end
+        yaml_string = read(yaml_file_name, String)
+        expected = evalfile(julia_file_name)
 
-    @testset "Load All from File" begin
-        @test begin
-            data = YAML.load_all_file(
-                yaml_file_name,
-                TestConstructor()
-            )
-            isequal(first(data), expected)
-        end
-
-        @test begin
-            dictData = YAML.load_all_file(
-                yaml_file_name,
-                more_constructors, multi_constructors
-            )
-            isequal(first(dictData), expected)
-        end
-    end
-
-    @testset "Load All from String" begin
-        @test begin
-            data = YAML.load_all(
-                yaml_string,
-                TestConstructor()
-            )
-            isequal(first(data), expected)
-        end
-
-        @test begin
-            dictData = YAML.load_all(
-                yaml_string,
-                more_constructors, multi_constructors
-            )
-            isequal(first(dictData), expected)
-        end
-    end
-
-
-    if !in(test, test_write_ignored)
-        @testset "Writing" begin
+        @testset "Load from File" begin
             @test begin
                 data = YAML.load_file(
                     yaml_file_name,
-                    more_constructors
+                    TestConstructor()
                 )
-                isequal(write_and_load(data), expected)
+                isequal(data, expected)
+            end
+            @test begin
+                dictData = YAML.load_file(
+                    yaml_file_name,
+                    more_constructors, multi_constructors
+                )
+                isequal(dictData, expected)
             end
         end
-    else
-        println("WARNING: I do not test the writing of $test")
+
+        @testset "Load from String" begin
+            @test begin
+                data = YAML.load(
+                    yaml_string,
+                    TestConstructor()
+                )
+                isequal(data, expected)
+            end
+
+            @test begin
+                dictData = YAML.load(
+                    yaml_string,
+                    more_constructors, multi_constructors
+                )
+                isequal(dictData, expected)
+            end
+        end
+
+        @testset "Load All from File" begin
+            @test begin
+                data = YAML.load_all_file(
+                    yaml_file_name,
+                    TestConstructor()
+                )
+                isequal(first(data), expected)
+            end
+
+            @test begin
+                dictData = YAML.load_all_file(
+                    yaml_file_name,
+                    more_constructors, multi_constructors
+                )
+                isequal(first(dictData), expected)
+            end
+        end
+
+        @testset "Load All from String" begin
+            @test begin
+                data = YAML.load_all(
+                    yaml_string,
+                    TestConstructor()
+                )
+                isequal(first(data), expected)
+            end
+
+            @test begin
+                dictData = YAML.load_all(
+                    yaml_string,
+                    more_constructors, multi_constructors
+                )
+                isequal(first(dictData), expected)
+            end
+        end
+
+        if !in(test, test_write_ignored)
+            @testset "Writing" begin
+                @test begin
+                    data = YAML.load_file(
+                        yaml_file_name,
+                        more_constructors
+                    )
+                    isequal(write_and_load(data), expected)
+                end
+            end
+        else
+            println("WARNING: I do not test the writing of $test")
+        end
     end
 end
 
