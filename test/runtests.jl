@@ -309,20 +309,21 @@ end
 @testset "Custom Constructor" begin
 
     function MySafeConstructor()
-        yaml_constructors = copy(YAML.default_yaml_constructors)
+        yaml_constructors = copy(YAML.yaml_jl_0_4_10_schema_constructors)
         delete!(yaml_constructors, nothing)
         YAML.Constructor(yaml_constructors)
     end
 
 
     function MyReallySafeConstructor()
-        yaml_constructors = copy(YAML.default_yaml_constructors)
+        yaml_constructors = copy(YAML.yaml_jl_0_4_10_schema_constructors)
         delete!(yaml_constructors, nothing)
         ret = YAML.Constructor(yaml_constructors)
         YAML.add_multi_constructor!(ret, nothing) do constructor::YAML.Constructor, tag, node
-            throw(YAML.ConstructorError(nothing, nothing,
-                "could not determine a constructor for the tag '$(tag)'",
-                node.start_mark))
+            throw(YAML.ConstructorError(
+                "could not determine a constructor for the tag '$(tag)' in the YAML.jl v0.4.10 schema",
+                node.start_mark,
+            ))
         end
         ret
     end
@@ -489,6 +490,62 @@ end
             """
     expected = [1, nothing, 2]
     @test collect(YAML.load_all(input)) == expected
+end
+
+@testset "failsafe schema" begin
+end
+
+@testset "JSON schema" begin
+    @test YAML.tryparse_json_schema_null("A null") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_null("null") === nothing
+    @test YAML.tryparse_json_schema_null("Null") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_bool("true") == true
+    @test YAML.tryparse_json_schema_bool("True") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_bool("false") == false
+    @test YAML.tryparse_json_schema_bool("FALSE") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_int("0") == 0
+    @test YAML.tryparse_json_schema_int("7") == 7
+    @test YAML.tryparse_json_schema_int("58") == 58
+    @test YAML.tryparse_json_schema_int("-19") == -19
+    @test YAML.tryparse_json_schema_int("0o7") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_int("0x3A") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_float("0.") == 0.0
+    @test YAML.tryparse_json_schema_float("-0.0") == -0.0
+    @test YAML.tryparse_json_schema_float(".5") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_float("12e03") == 12000
+    @test YAML.tryparse_json_schema_float("+12e03") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_float("-2E+05") == -200000
+    @test YAML.tryparse_json_schema_float(".inf") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_float("-.Inf") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_float("+.INF") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_float(".NAN") isa YAML.JSONSchemaParseError
+    @test YAML.tryparse_json_schema_float("+12.3") isa YAML.JSONSchemaParseError
+
+end
+
+@testset "Core schema" begin
+    @test YAML.tryparse_core_schema_null("A null") isa YAML.CoreSchemaParseError
+    @test YAML.tryparse_core_schema_null("null") === nothing
+    @test YAML.tryparse_core_schema_bool("true") == true
+    @test YAML.tryparse_core_schema_bool("True") == true
+    @test YAML.tryparse_core_schema_bool("false") == false
+    @test YAML.tryparse_core_schema_bool("FALSE") == false
+    @test YAML.tryparse_core_schema_int("0") == 0
+    @test YAML.tryparse_core_schema_int("7") == 7
+    @test YAML.tryparse_core_schema_int("58") == 58
+    @test YAML.tryparse_core_schema_int("-19") == -19
+    @test YAML.tryparse_core_schema_float("0.") == 0.0
+    @test YAML.tryparse_core_schema_float("-0.0") == -0.0
+    @test YAML.tryparse_core_schema_float(".5") == 0.5
+    @test YAML.tryparse_core_schema_float("+12e03") == 12000
+    @test YAML.tryparse_core_schema_float("-2E+05") == -200000
+    @test YAML.tryparse_core_schema_float(".inf") == Inf
+    @test YAML.tryparse_core_schema_float("-.Inf") == -Inf
+    @test YAML.tryparse_core_schema_float("+.INF") == Inf
+    @test YAML.tryparse_core_schema_float(".NAN") |> isnan
+end
+
+@testset "YAML.jl v0.4.10 schema" begin
 end
 
 end  # module
