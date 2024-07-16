@@ -491,4 +491,14 @@ end
     @test collect(YAML.load_all(input)) == expected
 end
 
+# issue #236 - special string keys that require enclosure in quotes
+@testset "issue #236" begin
+    for char in [
+        "{", "}", "[", "]", "&", "*", "#", "?", "|", "-", "<", ">",
+        "=", "!", "%", "@", ":", "`", ",", "'", "\"",
+    ]
+        @test YAML.load(YAML.yaml(Dict(string(char) => 0.0))) == Dict(char => 0.0)
+    end
+end
+
 end  # module
