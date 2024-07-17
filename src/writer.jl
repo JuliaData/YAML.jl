@@ -77,10 +77,10 @@ function _print(io::IO, pair::Pair, level::Int=0, ignore_level::Bool=false)
         occursin('#', pair[1]) ||
             any(
                 c -> startswith(pair[1], c),
-                [
+                (
                     '{', '}', '[', ']', '&', '*', '#', '?', '|', '-', '<', '>', '=',
                     '!', '%', '@', ':', '`', ',', '"', '\'',
-                ],
+                ),
             )
         )
         string("\"", escape_string(pair[1]), "\"") # special keys that require quoting
