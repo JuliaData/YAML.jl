@@ -74,15 +74,8 @@ function _print(io::IO, pair::Pair, level::Int=0, ignore_level::Bool=false)
     key = if pair[1] === nothing
         "null" # this is what the YAML parser interprets as 'nothing'
     elseif pair[1] isa AbstractString && (
-        occursin('#', pair[1]) ||
-            any(
-                c -> startswith(pair[1], c),
-                (
-                    '{', '}', '[', ']', '&', '*', '#', '?', '|', '-', '<', '>', '=',
-                    '!', '%', '@', ':', '`', ',', '"', '\'',
-                ),
-            )
-        )
+        occursin('#', pair[1]) || first(pair[1]) in "{}[]&*?|-<>=!%@:`,\"'"
+    )
         string("\"", escape_string(pair[1]), "\"") # special keys that require quoting
     else
         string(pair[1]) # any useful case

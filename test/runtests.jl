@@ -493,11 +493,16 @@ end
 
 # issue #236 - special string keys that require enclosure in quotes
 @testset "issue #236" begin
-    for char in [
-        "{", "}", "[", "]", "&", "*", "#", "?", "|", "-", "<", ">",
-        "=", "!", "%", "@", ":", "`", ",", "'", "\"",
-    ]
-        @test YAML.load(YAML.yaml(Dict(string(char) => 0.0))) == Dict(char => 0.0)
+    for char in "{}[]&*?#|-<>=!%@:`,\"'"
+        test_case_1 = Dict(string(char) => 0.0)
+        test_case_2 = Dict(string(char, "abcd") => 0.0)
+        test_case_3 = Dict(string("abcd", char) => 0.0)
+        test_case_4 = Dict(string("abcd", char, "efgh") => 0.0)
+
+        @test YAML.load(YAML.yaml(test_case_1)) == test_case_1
+        @test YAML.load(YAML.yaml(test_case_2)) == test_case_2
+        @test YAML.load(YAML.yaml(test_case_3)) == test_case_3
+        @test YAML.load(YAML.yaml(test_case_4)) == test_case_4
     end
 end
 
