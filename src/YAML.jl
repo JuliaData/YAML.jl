@@ -131,6 +131,9 @@ function iterate(it::YAMLDocIterator, _ = nothing)
     return doc, nothing
 end
 
+Base.IteratorSize(::Type{YAMLDocIterator}) = Base.SizeUnknown()
+Base.IteratorEltype(::Type{YAMLDocIterator}) = Base.EltypeUnknown()
+
 """
     load_all(x::Union{AbstractString, IO}) -> YAMLDocIterator
 
@@ -161,8 +164,8 @@ load_file(filename::AbstractString, args...; kwargs...) =
 Parse the YAML file `filename`, and return corresponding YAML documents.
 """
 load_all_file(filename::AbstractString, args...; kwargs...) =
-    open(filename, "r") do input
-        load_all(input, args...; kwargs...)
+    open(filename, "r") do f
+        io = IOBuffer(read(f))
+        load_all(io, args...; kwargs...)
     end
-
 end  # module
