@@ -164,5 +164,8 @@ load_file(filename::AbstractString, args...; kwargs...) =
 Parse the YAML file `filename`, and return corresponding YAML documents.
 """
 load_all_file(filename::AbstractString, args...; kwargs...) =
-    load_all(open(filename, "r"), args...; kwargs...)
+    open(filename, "r") do f
+        io = IOBuffer(read(f))
+        load_all(io, args...; kwargs...)
+    end
 end  # module
