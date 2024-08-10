@@ -113,10 +113,6 @@ end
 
 YAMLDocIterator(input::IO, more_constructors::_constructor=nothing, multi_constructors::Dict = Dict(); dicttype::_dicttype=Dict{Any, Any}, constructorType::Function = SafeConstructor) = YAMLDocIterator(input, constructorType(_patch_constructors(more_constructors, dicttype), multi_constructors))
 
-# It's unknown how many documents will be found. By doing this,
-# functions like `collect` do not try to query the length of the
-# iterator.
-Base.IteratorSize(::YAMLDocIterator) = Base.SizeUnknown()
 
 # Iteration protocol.
 function iterate(it::YAMLDocIterator, _ = nothing)
@@ -131,7 +127,12 @@ function iterate(it::YAMLDocIterator, _ = nothing)
     return doc, nothing
 end
 
+# It's unknown how many documents will be found. By doing this,
+# functions like `collect` do not try to query the length of the
+# iterator.
 Base.IteratorSize(::Type{YAMLDocIterator}) = Base.SizeUnknown()
+# Documents can be trees of elements or just single values, so don't promise
+# any particular type.
 Base.IteratorEltype(::Type{YAMLDocIterator}) = Base.EltypeUnknown()
 
 """
