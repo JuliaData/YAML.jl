@@ -1,5 +1,22 @@
-__precompile__(true)
+"""
+    YAML
 
+A package to read and write YAML.
+https://github.com/JuliaData/YAML.jl
+
+Reading:
+
+* `YAML.load` parses the first YAML document of a YAML file as a Julia object.
+* `YAML.load_all` parses all YAML documents of a YAML file.
+* `YAML.load_file` is the same as `YAML.load` except it reads from a file.
+* `YAML.load_all_file` is the same as `YAML.load_all` except it reads from a file.
+
+Writing:
+
+* `YAML.write` prints a Julia object as a YAML file.
+* `YAML.write_file` is the same as `YAML.write` except it writes to a file.
+* `YAML.yaml` converts a given Julia object to a YAML-formatted string.
+"""
 module YAML
 
 import Base: isempty, length, show, peek
@@ -10,18 +27,32 @@ using Dates
 using Printf
 using StringEncodings
 
+# Singleton object used to indicate that a stream contains no document
+# content, i.e. whitespace and comments only.
+struct MissingDocument end
+const missing_document = MissingDocument()
+
+include("versions.jl")
+include("queue.jl")
+include("buffered_input.jl")
+include("mark.jl")
+include("span.jl")
+include("tokens.jl")
 include("scanner.jl")
+include("events.jl")
 include("parser.jl")
+include("nodes.jl")
+include("resolver.jl")
 include("composer.jl")
 include("constructor.jl")
-include("writer.jl") # write Julia dictionaries to YAML files
+include("writer.jl")
 
 const _constructor = Union{Nothing, Dict}
 const _dicttype = Union{Type,Function}
 
 # add a dicttype-aware version of construct_mapping to the constructors
 function _patch_constructors(more_constructors::_constructor, dicttype::_dicttype)
-    if more_constructors == nothing
+    if more_constructors === nothing
         more_constructors = Dict{String,Function}()
     else
         more_constructors = copy(more_constructors) # do not change the outside world
@@ -34,19 +65,39 @@ function _patch_constructors(more_constructors::_constructor, dicttype::_dicttyp
     return more_constructors
 end
 
+"""
+    load(x::Union{AbstractString, IO})
 
-load(ts::TokenStream, constructor::Constructor) =
-    construct_document(constructor, compose(EventStream(ts)))
+Parse the string or stream `x` as a YAML file, and return the first YAML document as a
+Julia object.
+"""
+function load(tokenstream::TokenStream, constructor::Constructor)
+    resolver = Resolver()
+    eventstream = EventStream(tokenstream)
+    node = compose(eventstream, resolver)
+    construct_document(constructor, node)
+end
 
 load(input::IO, constructor::Constructor) =
-    load(TokenStream(input), constructor)
+    missing_to_nothing(load(TokenStream(input), constructor))
 
 load(ts::TokenStream, more_constructors::_constructor = nothing, multi_constructors::Dict = Dict(); dicttype::_dicttype = Dict{Any, Any}, constructorType::Function = SafeConstructor) =
     load(ts, constructorType(_patch_constructors(more_constructors, dicttype), multi_constructors))
 
 load(input::IO, more_constructors::_constructor = nothing, multi_constructors::Dict = Dict(); kwargs...) =
-    load(TokenStream(input), more_constructors, multi_constructors ; kwargs...)
+    missing_to_nothing(load(TokenStream(input), more_constructors, multi_constructors ; kwargs...))
 
+# When doing `load` or `load_file` of something that doesn't start any
+# document, return `nothing`.
+missing_to_nothing(::MissingDocument) = nothing
+missing_to_nothing(x) = x
+
+"""
+    YAMLDocIterator
+
+An iterator type to represent multiple YAML documents. You can retrieve each YAML document
+as a Julia object by iterating.
+"""
 mutable struct YAMLDocIterator
     input::IO
     ts::TokenStream
@@ -55,20 +106,24 @@ mutable struct YAMLDocIterator
 
     function YAMLDocIterator(input::IO, constructor::Constructor)
         it = new(input, TokenStream(input), constructor, nothing)
-        it.next_doc = eof(it.input) ? nothing : load(it.ts, it.constructor)
+        it.next_doc = eof(it.input) ? missing_document : load(it.ts, it.constructor)
         return it
     end
 end
 
 YAMLDocIterator(input::IO, more_constructors::_constructor=nothing, multi_constructors::Dict = Dict(); dicttype::_dicttype=Dict{Any, Any}, constructorType::Function = SafeConstructor) = YAMLDocIterator(input, constructorType(_patch_constructors(more_constructors, dicttype), multi_constructors))
 
-# Old iteration protocol:
-start(it::YAMLDocIterator) = nothing
+# It's unknown how many documents will be found. By doing this,
+# functions like `collect` do not try to query the length of the
+# iterator.
+Base.IteratorSize(::YAMLDocIterator) = Base.SizeUnknown()
 
-function next(it::YAMLDocIterator, state)
+# Iteration protocol.
+function iterate(it::YAMLDocIterator, _ = nothing)
+    it.next_doc === missing_document && return nothing
     doc = it.next_doc
     if eof(it.input)
-        it.next_doc = nothing
+        it.next_doc = missing_document
     else
         reset!(it.ts)
         it.next_doc = load(it.ts, it.constructor)
@@ -76,12 +131,11 @@ function next(it::YAMLDocIterator, state)
     return doc, nothing
 end
 
-done(it::YAMLDocIterator, state) = it.next_doc === nothing
+"""
+    load_all(x::Union{AbstractString, IO}) -> YAMLDocIterator
 
-# 0.7 iteration protocol:
-iterate(it::YAMLDocIterator) = next(it, start(it))
-iterate(it::YAMLDocIterator, s) = done(it, s) ? nothing : next(it, s)
-
+Parse the string or stream `x` as a YAML file, and return corresponding YAML documents.
+"""
 load_all(input::IO, args...; kwargs...) =
     YAMLDocIterator(input, args...; kwargs...)
 
@@ -91,11 +145,21 @@ load(input::AbstractString, args...; kwargs...) =
 load_all(input::AbstractString, args...; kwargs...) =
     load_all(IOBuffer(input), args...; kwargs...)
 
+"""
+    load_file(filename::AbstractString)
+
+Parse the YAML file `filename`, and return the first YAML document as a Julia object.
+"""
 load_file(filename::AbstractString, args...; kwargs...) =
     open(filename, "r") do input
         load(input, args...; kwargs...)
     end
 
+"""
+    load_all_file(filename::AbstractString) -> YAMLDocIterator
+
+Parse the YAML file `filename`, and return corresponding YAML documents.
+"""
 load_all_file(filename::AbstractString, args...; kwargs...) =
     open(filename, "r") do input
         load_all(input, args...; kwargs...)

@@ -4,7 +4,7 @@ module YAMLTests
 
 import YAML
 import Base.Filesystem
-using StringEncodings: encode, @enc_str
+using StringEncodings: encode, decode, @enc_str
 using Test
 
 const tests = [
@@ -39,6 +39,7 @@ const tests = [
     "issue30",
     "issue36",
     "issue39",
+    "issue132",
     "cartesian",
     "ar1",
     "ar1_cartesian",
@@ -60,61 +61,6 @@ const test_write_ignored = [
     "ar1_cartesian",
     "multi-constructor"
 ]
-
-
-function equivalent(xs::AbstractDict, ys::AbstractDict)
-    if Set(collect(keys(xs))) != Set(collect(keys(ys)))
-        @info "Not equivalent" Set(collect(keys(xs))) Set(collect(keys(ys)))
-        return false
-    end
-
-    for k in keys(xs)
-        if !equivalent(xs[k], ys[k])
-            @info "Not equivalent" xs[k] ys[k]
-            return false
-        end
-    end
-
-    true
-end
-
-
-function equivalent(xs::AbstractArray, ys::AbstractArray)
-    if length(xs) != length(ys)
-        @info "Not equivalent" length(xs) length(ys)
-        return false
-    end
-
-    for (x, y) in zip(xs, ys)
-        if !equivalent(x, y)
-            @info "Not equivalent" x y
-            return false
-        end
-    end
-
-    true
-end
-
-
-function equivalent(x::Float64, y::Float64)
-    isnan(x) && isnan(y) ? true : x == y
-end
-
-
-function equivalent(x::AbstractString, y::AbstractString)
-    while endswith(x, "\n")
-        x = x[1:end-1] # trailing newline characters are ambiguous
-    end
-    while endswith(y, "\n")
-        y = y[1:end-1]
-    end
-    x == y
-end
-
-function equivalent(x, y)
-    x == y
-end
-
 
 # test custom tags
 function construct_type_map(t::Symbol, constructor::YAML.Constructor,
@@ -163,97 +109,119 @@ function write_and_load(data::Any)
     end
 end
 
+# Reverse end of line conventions to get testing of both LF and CRLF
+# line endings regardless of platform. If there are already mixed line
+# endings, it is not so important what this transformation does.
+function reverse_eol(s)
+    encoding = YAML.detect_encoding(IOBuffer(s))
+    s = decode(s, encoding)
+    if occursin("\r\n", s)
+        s = replace(s, "\r\n" => "\n")
+    else
+        s = replace(s, "\n" => "\r\n")
+    end
+    encode(s, encoding)
+end
+
 const testdir = dirname(@__FILE__)
-@testset for test in tests
-    yamlString = open(joinpath(testdir, string(test, ".data"))) do f
-        chomp(read(f, String))
-    end
-    expected = evalfile(joinpath(testdir, string(test, ".expected")))
+mktempdir() do tmpdir
+    tmp_file_name = joinpath(tmpdir, "reversed_eol.yaml")
+    @testset for test in tests, eol in (:native, :foreign)
+        yaml_file_name = joinpath(testdir, "yaml/$test.yaml")
+        julia_file_name = joinpath(testdir, "julia/$test.jl")
 
-    @testset "Load from File" begin
-        @test begin
-            data = YAML.load_file(
-                joinpath(testdir, string(test, ".data")),
-                TestConstructor()
-            )
-            equivalent(data, expected)
-        end
-        @test begin
-            dictData = YAML.load_file(
-                joinpath(testdir, string(test, ".data")),
-                more_constructors, multi_constructors
-            )
-            equivalent(dictData, expected)
-        end
-    end
-
-    @testset "Load from String" begin
-        @test begin
-            data = YAML.load(
-                yamlString,
-                TestConstructor()
-            )
-            equivalent(data, expected)
+        if eol == :foreign
+            write(tmp_file_name, reverse_eol(read(yaml_file_name)))
+            yaml_file_name = tmp_file_name
         end
 
-        @test begin
-            dictData = YAML.load(
-                yamlString,
-                more_constructors, multi_constructors
-            )
-            equivalent(dictData, expected)
-        end
-    end
+        yaml_string = read(yaml_file_name, String)
+        expected = evalfile(julia_file_name)
 
-    @testset "Load All from File" begin
-        @test begin
-            data = YAML.load_all_file(
-                joinpath(testdir, string(test, ".data")),
-                TestConstructor()
-            )
-            equivalent(first(data), expected)
-        end
-
-        @test begin
-            dictData = YAML.load_all_file(
-                joinpath(testdir, string(test, ".data")),
-                more_constructors, multi_constructors
-            )
-            equivalent(first(dictData), expected)
-        end
-    end
-
-    @testset "Load All from String" begin
-        @test begin
-            data = YAML.load_all(
-                yamlString,
-                TestConstructor()
-            )
-            equivalent(first(data), expected)
-        end
-
-        @test begin
-            dictData = YAML.load_all(
-                yamlString,
-                more_constructors, multi_constructors
-            )
-            equivalent(first(dictData), expected)
-        end
-    end
-
-
-    if !in(test, test_write_ignored)
-        @testset "Writing" begin
+        @testset "Load from File" begin
             @test begin
                 data = YAML.load_file(
-                    joinpath(testdir, string(test, ".data")),
-                    more_constructors
+                    yaml_file_name,
+                    TestConstructor()
                 )
-                equivalent(write_and_load(data), expected)
+                isequal(data, expected)
+            end
+            @test begin
+                dictData = YAML.load_file(
+                    yaml_file_name,
+                    more_constructors, multi_constructors
+                )
+                isequal(dictData, expected)
             end
         end
-    else
-        println("WARNING: I do not test the writing of $test")
+
+        @testset "Load from String" begin
+            @test begin
+                data = YAML.load(
+                    yaml_string,
+                    TestConstructor()
+                )
+                isequal(data, expected)
+            end
+
+            @test begin
+                dictData = YAML.load(
+                    yaml_string,
+                    more_constructors, multi_constructors
+                )
+                isequal(dictData, expected)
+            end
+        end
+
+        @testset "Load All from File" begin
+            @test begin
+                data = YAML.load_all_file(
+                    yaml_file_name,
+                    TestConstructor()
+                )
+                isequal(first(data), expected)
+            end
+
+            @test begin
+                dictData = YAML.load_all_file(
+                    yaml_file_name,
+                    more_constructors, multi_constructors
+                )
+                isequal(first(dictData), expected)
+            end
+        end
+
+        @testset "Load All from String" begin
+            @test begin
+                data = YAML.load_all(
+                    yaml_string,
+                    TestConstructor()
+                )
+                isequal(first(data), expected)
+            end
+
+            @test begin
+                dictData = YAML.load_all(
+                    yaml_string,
+                    more_constructors, multi_constructors
+                )
+                isequal(first(dictData), expected)
+            end
+        end
+
+        if !in(test, test_write_ignored)
+            @testset "Writing" begin
+                @test begin
+                    data = YAML.load_file(
+                        yaml_file_name,
+                        more_constructors
+                    )
+                    isequal(write_and_load(data), expected)
+                end
+            end
+        else
+            println("WARNING: I do not test the writing of $test")
+        end
     end
 end
 
@@ -282,11 +250,11 @@ test: 2
 test: 3
 """)
     (val, state) = iterate(iterable)
-    @test equivalent(val, Dict("test" => 1))
+    @test isequal(val, Dict("test" => 1))
     (val, state) = iterate(iterable, state)
-    @test equivalent(val, Dict("test" => 2))
+    @test isequal(val, Dict("test" => 2))
     (val, state) = iterate(iterable, state)
-    @test equivalent(val, Dict("test" => 3))
+    @test isequal(val, Dict("test" => 3))
     @test iterate(iterable, state) === nothing
 end
 
@@ -370,7 +338,7 @@ end
 
     expected = Dict{Any,Any}("Test" => Dict{Any,Any}("test2"=>["test1", "test2"],"test1"=>"data"))
 
-    @test equivalent(YAML.load(yamlString, MySafeConstructor()), expected)
+    @test isequal(YAML.load(yamlString, MySafeConstructor()), expected)
     @test_throws YAML.ConstructorError YAML.load(
         yamlString,
         MyReallySafeConstructor()
@@ -402,6 +370,11 @@ end
     more_constructors;
     dicttype=() -> 3.0 # wrong type
 )
+
+@test_throws YAML.ScannerError YAML.load("x: %")
+if VERSION >= v"1.8"
+    @test_throws "found character '%' that cannot start any token" YAML.load("x: %")
+end
 
 # issue 81
 dict_content = ["key1" => [Dict("subkey1" => "subvalue1", "subkey2" => "subvalue2"), Dict()], "key2" => "value2"]
@@ -441,6 +414,78 @@ end
     @test_throws YAML.ScannerError YAML.load(""" ''''' """)
     @test_throws YAML.ParserError YAML.load(""" ''a'' """)
     @test_throws YAML.ScannerError YAML.load(""" '''a'' """)
+end
+
+# issue 129 - Comment only content
+@testset "issue129" begin
+    @test YAML.load("#") === nothing
+    @test isempty(YAML.load_all("#"))
+end
+
+# issue 132 - load_all fails on windows
+@testset "issue132" begin
+    input = """
+            ---
+            creator: LAMMPS
+            timestep: 0
+            ...
+            ---
+            creator: LAMMPS
+            timestep: 1
+            ...
+            """
+    input_crlf = replace(input, "\n" => "\r\n")
+    expected = [Dict("creator" => "LAMMPS", "timestep" => 0),
+                Dict("creator" => "LAMMPS", "timestep" => 1)]
+    @test collect(YAML.load_all(input)) == expected
+    @test collect(YAML.load_all(input_crlf)) == expected
+end
+
+# issue #148 - warn unknown directives
+@testset "issue #148" begin
+    @test (@test_logs (:warn, """unknown directive name: "FOO" at line 1, column 4. We ignore this.""") YAML.load("""%FOO  bar baz\n\n--- "foo\"""")) == "foo"
+    @test (@test_logs (:warn, """unknown directive name: "FOO" at line 1, column 4. We ignore this.""") (:warn, """unknown directive name: "BAR" at line 2, column 4. We ignore this.""") YAML.load("""%FOO\n%BAR\n--- foo""")) == "foo"
+end
+
+# issue #143 - load empty file
+@testset "issue #143" begin
+    @test YAML.load("") === nothing
+    @test isempty(YAML.load_all(""))
+end
+
+# issue #144
+@testset "issue #144" begin
+    @test YAML.load("---") === nothing
+end
+
+# issue #226 - loadall stops on a null document
+@testset "issue #226" begin
+    @test collect(YAML.load_all("null")) == [nothing]
+    input = """
+            ---
+            1
+            ---
+            null
+            ---
+            2
+            """
+    expected = [1, nothing, 2]
+    @test collect(YAML.load_all(input)) == expected
+end
+
+# issue #236 - special string keys that require enclosure in quotes
+@testset "issue #236" begin
+    for char in "{}[]&*?#|-<>=!%@:`,\"'"
+        test_case_1 = Dict(string(char) => 0.0)
+        test_case_2 = Dict(string(char, "abcd") => 0.0)
+        test_case_3 = Dict(string("abcd", char) => 0.0)
+        test_case_4 = Dict(string("abcd", char, "efgh") => 0.0)
+
+        @test YAML.load(YAML.yaml(test_case_1)) == test_case_1
+        @test YAML.load(YAML.yaml(test_case_2)) == test_case_2
+        @test YAML.load(YAML.yaml(test_case_3)) == test_case_3
+        @test YAML.load(YAML.yaml(test_case_4)) == test_case_4
+    end
 end
 
 end  # module

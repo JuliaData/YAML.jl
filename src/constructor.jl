@@ -1,5 +1,5 @@
 
-struct ConstructorError
+struct ConstructorError <: Exception
     context::Union{String, Nothing}
     context_mark::Union{Mark, Nothing}
     problem::Union{String, Nothing}
@@ -15,7 +15,7 @@ struct ConstructorError
 end
 
 function show(io::IO, error::ConstructorError)
-    if error.context != nothing
+    if error.context !== nothing
         print(io, error.context, " at ", error.context_mark, ": ")
     end
     print(io, error.problem, " at ", error.problem_mark)
@@ -56,6 +56,7 @@ function construct_document(constructor::Constructor, node::Node)
     data
 end
 
+construct_document(::Constructor, ::MissingDocument) = missing_document
 
 function construct_object(constructor::Constructor, node::Node)
     if haskey(constructor.constructed_objects, node)
@@ -147,7 +148,7 @@ function flatten_mapping(node::MappingNode)
             elseif value_node isa SequenceNode
                 submerge = []
                 for subnode in value_node.value
-                    if typeof(subnode) != MappingNode
+                    if !(subnode isa MappingNode)
                         throw(ConstructorError("while constructing a mapping",
                                                node.start_mark,
                                                "expected a mapping node, but found $(typeof(subnode))",
@@ -248,7 +249,7 @@ function construct_yaml_int(constructor::Constructor, node::Node)
         # TODO
         #throw(ConstructorError(nothing, nothing,
             #"sexagesimal integers not yet implemented", node.start_mark))
-        warn("sexagesimal integers not yet implemented. Returning String.")
+        @warn "sexagesimal integers not yet implemented. Returning String."
         return value
     end
 
@@ -270,7 +271,7 @@ function construct_yaml_float(constructor::Constructor, node::Node)
         # TODO
         # throw(ConstructorError(nothing, nothing,
         #     "sexagesimal floats not yet implemented", node.start_mark))
-        warn("sexagesimal floats not yet implemented. Returning String.")
+        @warn "sexagesimal floats not yet implemented. Returning String."
         return value
     end
 

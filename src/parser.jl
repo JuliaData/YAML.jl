@@ -1,10 +1,8 @@
 
-include("events.jl")
-
 const DEFAULT_TAGS = Dict{String,String}("!" => "!", "!!" => "tag:yaml.org,2002:")
 
 
-struct ParserError
+struct ParserError <: Exception
     context::Union{String, Nothing}
     context_mark::Union{Mark, Nothing}
     problem::Union{String, Nothing}
@@ -19,7 +17,7 @@ struct ParserError
 end
 
 function show(io::IO, error::ParserError)
-    if error.context != nothing
+    if error.context !== nothing
         print(io, error.context, " at ", error.context_mark, ": ")
     end
     print(io, error.problem, " at ", error.problem_mark)
@@ -83,26 +81,26 @@ end
 function process_directives(stream::EventStream)
     stream.yaml_version = nothing
     stream.tag_handles = Dict{String, String}()
-    while typeof(peek(stream.input)) == DirectiveToken
+    while peek(stream.input) isa DirectiveToken
         token = forward!(stream.input)
         if token.name == "YAML"
             if stream.yaml_version !== nothing
                 throw(ParserError(nothing, nothing,
                                   "found duplicate YAML directive",
-                                  token.start_mark))
+                                  firstmark(token)))
             end
             major, minor = token.value
             if major != 1
                 throw(ParserError(nothing, nothing,
                     "found incompatible YAML document (version 1.* is required)",
-                    token.start_mark))
+                    firstmark(token)))
             end
             stream.yaml_version = token.value
         elseif token.name == "TAG"
             handle, prefix = token.value
             if haskey(stream.tag_handles, handle)
                 throw(ParserError(nothing, nothing,
-                    "duplicate tag handle $(handle)", token.start_mark))
+                    "duplicate tag handle $(handle)", firstmark(token)))
             end
             stream.tag_handles[handle] = prefix
         end
@@ -128,7 +126,7 @@ end
 
 function parse_stream_start(stream::EventStream)
     token = forward!(stream.input) :: StreamStartToken
-    event = StreamStartEvent(token.span.start_mark, token.span.end_mark,
+    event = StreamStartEvent(firstmark(token), lastmark(token),
                              token.encoding)
     stream.state = parse_implicit_document_start
     event
@@ -137,14 +135,14 @@ end
 
 function parse_implicit_document_start(stream::EventStream)
     token = peek(stream.input)
-	# Parse a byte order mark
-	if typeof(token) == ByteOrderMarkToken
-		forward!(stream.input)
-		token = peek(stream.input)
-	end
-    if !in(typeof(token), [DirectiveToken, DocumentStartToken, StreamEndToken])
+    # Parse a byte order mark
+    if token isa ByteOrderMarkToken
+        forward!(stream.input)
+        token = peek(stream.input)
+    end
+    if !(token isa Union{DirectiveToken, DocumentStartToken, StreamEndToken})
         stream.tag_handles = DEFAULT_TAGS
-        event = DocumentStartEvent(token.span.start_mark, token.span.start_mark,
+        event = DocumentStartEvent(firstmark(token), firstmark(token),
                                    false)
 
         push!(stream.states, parse_document_end)
@@ -159,27 +157,27 @@ end
 
 function parse_document_start(stream::EventStream)
     # Parse any extra document end indicators.
-    while typeof(peek(stream.input)) == DocumentEndToken
+    while peek(stream.input) isa DocumentEndToken
         stream.input = Iterators.rest(stream.input)
     end
 
-	token = peek(stream.input)
-	# Parse a byte order mark if it exists
-	if typeof(token) == ByteOrderMarkToken
-		forward!(stream.input)
-		token = peek(stream.input)
-	end
+    token = peek(stream.input)
+    # Parse a byte order mark if it exists
+    if token isa ByteOrderMarkToken
+        forward!(stream.input)
+        token = peek(stream.input)
+    end
 
     # Parse explicit document.
-    if typeof(token) != StreamEndToken
-        start_mark = token.span.start_mark
+    if !(token isa StreamEndToken)
+        start_mark = firstmark(token)
         version, tags = process_directives(stream)
-        if typeof(peek(stream.input)) != DocumentStartToken
+        if !(peek(stream.input) isa DocumentStartToken)
             throw(ParserError(nothing, nothing,
                 "expected '<document start>' but found $(typeof(token))"))
         end
         token = forward!(stream.input)
-        event = DocumentStartEvent(start_mark, token.span.end_mark,
+        event = DocumentStartEvent(start_mark, lastmark(token),
                                    true, version, tags)
         push!(stream.states, parse_document_end)
         stream.state = parse_document_content
@@ -187,7 +185,7 @@ function parse_document_start(stream::EventStream)
     else
         # Parse the end of the stream
         token = forward!(stream.input)
-        event = StreamEndEvent(token.span.start_mark, token.span.end_mark)
+        event = StreamEndEvent(firstmark(token), lastmark(token))
         @assert isempty(stream.states)
         @assert isempty(stream.marks)
         stream.state = nothing
@@ -198,14 +196,14 @@ end
 
 function parse_document_end(stream::EventStream)
     token = peek(stream.input)
-    start_mark = end_mark = token.span.start_mark
+    start_mark = end_mark = firstmark(token)
     explicit = false
-    if typeof(token) == DocumentEndToken
+    if token isa DocumentEndToken
         forward!(stream.input)
-        end_mark = token.span.end_mark
+        end_mark = lastmark(token)
         explicit = true
-        stream.end_of_stream = StreamEndEvent(token.span.start_mark,
-                                              token.span.end_mark)
+        stream.end_of_stream = StreamEndEvent(firstmark(token),
+                                              lastmark(token))
     end
     event = DocumentEndEvent(start_mark, end_mark, explicit)
     stream.state = parse_document_start
@@ -214,8 +212,8 @@ end
 
 
 function parse_document_content(stream::EventStream)
-    if in(peek(stream.input), [DirectiveToken, DocumentStartToken, DocumentEndToken,StreamEndToken])
-        event = process_empty_scalar(stream, peek(stream.input).span.start_mark)
+    if peek(stream.input) isa Union{DirectiveToken, DocumentStartToken, DocumentEndToken, StreamEndToken}
+        event = process_empty_scalar(stream, firstmark(peek(stream.input)))
         stream.state = pop!(stream.states)
         event
     else
@@ -242,15 +240,15 @@ end
 function _parse_node(token::AliasToken, stream::EventStream, block, indentless_sequence)
     forward!(stream.input)
     stream.state = pop!(stream.states)
-    return AliasEvent(token.span.start_mark, token.span.end_mark, token.value)
+    return AliasEvent(firstmark(token), lastmark(token), token.value)
 end
 
 function __parse_node(token::ScalarToken, stream::EventStream, block, start_mark, end_mark, anchor, tag, implicit)
     forward!(stream.input)
-    end_mark = token.span.end_mark
-    if (token.plain && tag == nothing) || tag == "!"
+    end_mark = lastmark(token)
+    if (token.plain && tag === nothing) || tag == "!"
         implicit = true, false
-    elseif tag == nothing
+    elseif tag === nothing
         implicit = false, true
     else
         implicit = false, false
@@ -261,14 +259,14 @@ function __parse_node(token::ScalarToken, stream::EventStream, block, start_mark
 end
 
 function __parse_node(token::FlowSequenceStartToken, stream::EventStream, block, start_mark, end_mark, anchor, tag, implicit)
-    end_mark = token.span.end_mark
+    end_mark = lastmark(token)
     stream.state = parse_flow_sequence_first_entry
     SequenceStartEvent(start_mark, end_mark, anchor, tag,
                                implicit, true)
 end
 
 function __parse_node(token::FlowMappingStartToken, stream::EventStream, block, start_mark, end_mark, anchor, tag, implicit)
-    end_mark = token.span.end_mark
+    end_mark = lastmark(token)
     stream.state = parse_flow_mapping_first_key
     MappingStartEvent(start_mark, end_mark, anchor, tag,
                               implicit, true)
@@ -276,7 +274,7 @@ end
 
 function __parse_node(token::BlockSequenceStartToken, stream::EventStream, block, start_mark, end_mark, anchor, tag, implicit)
     block || return nothing
-    end_mark = token.span.start_mark
+    end_mark = firstmark(token)
     stream.state = parse_block_sequence_first_entry
     SequenceStartEvent(start_mark, end_mark, anchor, tag,
                                implicit, false)
@@ -284,7 +282,7 @@ end
 
 function __parse_node(token::BlockMappingStartToken, stream::EventStream, block, start_mark, end_mark, anchor, tag, implicit)
     block || return nothing
-    end_mark = token.span.start_mark
+    end_mark = firstmark(token)
     stream.state = parse_block_mapping_first_key
     MappingStartEvent(start_mark, end_mark, anchor, tag,
                               implicit, false)
@@ -299,7 +297,7 @@ function __parse_node(token, stream::EventStream, block, start_mark, end_mark, a
         node = block ? "block" : "flow"
         throw(ParserError("while parsing a $(node) node", start_mark,
                 "expected the node content, but found $(typeof(token))",
-                token.span.start_mark))
+                firstmark(token)))
     end
 end
 
@@ -307,27 +305,27 @@ function _parse_node(token, stream::EventStream, block, indentless_sequence)
     anchor = nothing
     tag = nothing
     start_mark = end_mark = tag_mark = nothing
-    if typeof(token) == AnchorToken
+    if token isa AnchorToken
         forward!(stream.input)
-        start_mark = token.span.start_mark
-        end_mark = token.span.end_mark
+        start_mark = firstmark(token)
+        end_mark = lastmark(token)
         anchor = token.value
         token = peek(stream.input)
-        if typeof(token) == TagToken
+        if token isa TagToken
             forward!(stream.input)
-            tag_mark = token.span.start_mark
-            end_mark = token.span.end_mark
+            tag_mark = firstmark(token)
+            end_mark = lastmark(token)
             tag = token.value
         end
-    elseif typeof(token) == TagToken
+    elseif token isa TagToken
         forward!(stream.input)
-        start_mark = token.span.start_mark
-        end_mark = token.span.end_mark
+        start_mark = firstmark(token)
+        end_mark = lastmark(token)
         tag = token.value
         token = peek(stream.input)
-        if typeof(token) == AnchorToken
+        if token isa AnchorToken
             forward!(stream.input)
-            end_mark = token.end_mark
+            end_mark = lastmark(token)
             anchor = token.value
         end
     end
@@ -347,14 +345,14 @@ function _parse_node(token, stream::EventStream, block, indentless_sequence)
     end
 
     token = peek(stream.input)
-    if start_mark == nothing
-        start_mark = end_mark = token.span.start_mark
+    if start_mark === nothing
+        start_mark = end_mark = firstmark(token)
     end
 
     event = nothing
     implicit = tag === nothing || tag == "!"
-    if indentless_sequence && typeof(token) == BlockEntryToken
-        end_mark = token.span.end_mark
+    if indentless_sequence && token isa BlockEntryToken
+        end_mark = lastmark(token)
         stream.state = parse_indentless_sequence_entry
         event = SequenceStartEvent(start_mark, end_mark, anchor, tag, implicit,
                                    false)
@@ -372,109 +370,109 @@ end
 
 function parse_block_sequence_first_entry(stream::EventStream)
     token = forward!(stream.input)
-    push!(stream.marks, token.span.start_mark)
+    push!(stream.marks, firstmark(token))
     parse_block_sequence_entry(stream)
 end
 
 
 function parse_block_sequence_entry(stream::EventStream)
     token = peek(stream.input)
-    if typeof(token) == BlockEntryToken
+    if token isa BlockEntryToken
         forward!(stream.input)
-        if !in(typeof(peek(stream.input)), [BlockEntryToken, BlockEndToken])
+        if !(peek(stream.input) isa Union{BlockEntryToken, BlockEndToken})
             push!(stream.states, parse_block_sequence_entry)
             return parse_block_node(stream)
         else
             stream.state = parse_block_sequence_entry
-            return process_empty_scalar(stream, token.span.end_mark)
+            return process_empty_scalar(stream, lastmark(token))
         end
     end
 
-    if typeof(token) != BlockEndToken
+    if !(token isa BlockEndToken)
         throw(ParserError("while parsing a block collection", stream.marks[end],
                           "expected <block end>, but found $(typeof(token))",
-                          token.span.start_mark))
+                          firstmark(token)))
     end
 
     forward!(stream.input)
     pop!(stream.marks)
     stream.state = pop!(stream.states)
-    SequenceEndEvent(token.span.start_mark, token.span.end_mark)
+    SequenceEndEvent(firstmark(token), lastmark(token))
 end
 
 
 function parse_indentless_sequence_entry(stream::EventStream)
     token = peek(stream.input)
-    if typeof(token) == BlockEntryToken
+    if token isa BlockEntryToken
         forward!(stream.input)
-        if !in(typeof(peek(stream.input)), [BlockEntryToken, KeyToken, ValueToken, BlockEndToken])
+        if !(peek(stream.input) isa Union{BlockEntryToken, KeyToken, ValueToken, BlockEndToken})
             push!(stream.states, parse_indentless_sequence_entry)
             return parse_block_node(stream)
         else
             stream.state = parse_indentless_sequence_entry
-            return process_empty_scalar(stream, token.span.end_mark)
+            return process_empty_scalar(stream, lastmark(token))
         end
     end
 
     stream.state = pop!(stream.states)
-    SequenceEndEvent(token.span.start_mark, token.span.end_mark)
+    SequenceEndEvent(firstmark(token), lastmark(token))
 end
 
 
 function parse_block_mapping_first_key(stream::EventStream)
     token = forward!(stream.input)
-    push!(stream.marks, token.span.start_mark)
+    push!(stream.marks, firstmark(token))
     parse_block_mapping_key(stream)
 end
 
 
 function parse_block_mapping_key(stream::EventStream)
     token = peek(stream.input)
-    if typeof(token) == KeyToken
+    if token isa KeyToken
         forward!(stream.input)
-        if !in(typeof(peek(stream.input)), [KeyToken, ValueToken, BlockEndToken])
+        if !(peek(stream.input) isa Union{KeyToken, ValueToken, BlockEndToken})
             push!(stream.states, parse_block_mapping_value)
             return parse_block_node_or_indentless_sequence(stream)
         else
             stream.state = parse_block_mapping_value
-            return process_empty_scalar(stream, token.span.end_mark)
+            return process_empty_scalar(stream, lastmark(token))
         end
     end
 
-    if typeof(token) != BlockEndToken
+    if !(token isa BlockEndToken)
         throw(ParserError("while parsing a block mapping", stream.marks[end],
                           "expected <block end>, but found $(typeof(token))",
-                          token.span.start_mark))
+                          firstmark(token)))
     end
 
     forward!(stream.input)
     pop!(stream.marks)
     stream.state = pop!(stream.states)
-    MappingEndEvent(token.span.start_mark, token.span.end_mark)
+    MappingEndEvent(firstmark(token), lastmark(token))
 end
 
 
 function parse_block_mapping_value(stream::EventStream)
     token = peek(stream.input)
-    if typeof(token) == ValueToken
+    if token isa ValueToken
         forward!(stream.input)
-        if !in(typeof(peek(stream.input)), [KeyToken, ValueToken, BlockEndToken])
+        if !(peek(stream.input) isa Union{KeyToken, ValueToken, BlockEndToken})
             push!(stream.states, parse_block_mapping_key)
             parse_block_node_or_indentless_sequence(stream)
         else
             stream.state = parse_block_mapping_key
-            process_empty_scalar(stream, token.span.end_mark)
+            process_empty_scalar(stream, lastmark(token))
         end
     else
         stream.state = parse_block_mapping_key
-        process_empty_scalar(stream, token.span.start_mark)
+        process_empty_scalar(stream, firstmark(token))
     end
 end
 
 
 function parse_flow_sequence_first_entry(stream::EventStream)
     token = forward!(stream.input)
-    push!(stream.marks, token.span.start_mark)
+    push!(stream.marks, firstmark(token))
     parse_flow_sequence_entry(stream, true)
 end
 
@@ -482,25 +480,25 @@ function _parse_flow_sequence_entry(token::FlowSequenceEndToken, stream::EventSt
     forward!(stream.input)
     pop!(stream.marks)
     stream.state = pop!(stream.states)
-    SequenceEndEvent(token.span.start_mark, token.span.end_mark)
+    SequenceEndEvent(firstmark(token), lastmark(token))
 end
 
 function _parse_flow_sequence_entry(token::Any, stream::EventStream, first_entry=false)
     if !first_entry
-        if typeof(token) == FlowEntryToken
+        if token isa FlowEntryToken
             forward!(stream.input)
         else
             throw(ParserError("while parsing a flow sequence",
                               stream.marks[end],
                               "expected ',' or ']', but got $(typeof(token))",
-                              token.span.start_mark))
+                              firstmark(token)))
         end
     end
 
     token = peek(stream.input)
     if isa(token, KeyToken)
         stream.state = parse_flow_sequence_entry_mapping_key
-        MappingStartEvent(token.span.start_mark, token.span.end_mark,
+        MappingStartEvent(firstmark(token), lastmark(token),
                           nothing, nothing, true, true)
     elseif isa(token, FlowSequenceEndToken)
         nothing
@@ -517,30 +515,30 @@ end
 
 function parse_flow_sequence_entry_mapping_key(stream::EventStream)
     token = forward!(stream.input)
-    if !in(typeof(token), [ValueToken, FlowEntryToken, FlowSequenceEndToken])
+    if !(token isa Union{ValueToken, FlowEntryToken, FlowSequenceEndToken})
         push!(stream.states, parse_flow_sequence_entry_mapping_value)
         parse_flow_node(stream)
     else
         stream.state = parse_flow_sequence_entry_mapping_value
-        process_empty_scalar(stream, token.span.end_mark)
+        process_empty_scalar(stream, lastmark(token))
     end
 end
 
 
 function parse_flow_sequence_entry_mapping_value(stream::EventStream)
     token = peek(stream.input)
-    if typeof(token) == ValueToken
+    if token isa ValueToken
         forward!(stream.input)
-        if !in(typeof(peek(stream.input)), [FlowEntryToken, FlowSequenceEndToken])
+        if !(peek(stream.input) isa Union{FlowEntryToken, FlowSequenceEndToken})
             push!(stream.states, parse_flow_sequence_entry_mapping_end)
             parse_flow_node(stream)
         else
             stream.state = parse_flow_sequence_entry_mapping_end
-            process_empty_scalar(stream, token.span.end_mark)
+            process_empty_scalar(stream, lastmark(token))
         end
     else
         stream.state = parse_flow_sequence_entry_mapping_end
-        process_empty_scalar(stream, token.span.start_mark)
+        process_empty_scalar(stream, firstmark(token))
     end
 end
 
@@ -548,42 +546,42 @@ end
 function parse_flow_sequence_entry_mapping_end(stream::EventStream)
     stream.state = parse_flow_sequence_entry
     token = peek(stream.input)
-    MappingEndEvent(token.span.start_mark, token.span.end_mark)
+    MappingEndEvent(firstmark(token), lastmark(token))
 end
 
 
 function parse_flow_mapping_first_key(stream::EventStream)
     token = forward!(stream.input)
-    push!(stream.marks, token.span.start_mark)
+    push!(stream.marks, firstmark(token))
     parse_flow_mapping_key(stream, true)
 end
 
 
 function parse_flow_mapping_key(stream::EventStream, first_entry=false)
     token = peek(stream.input)
-    if typeof(token) != FlowMappingEndToken
+    if !(token isa FlowMappingEndToken)
         if !first_entry
-            if typeof(token) == FlowEntryToken
+            if token isa FlowEntryToken
                 forward!(stream.input)
             else
                 throw(ParserError("while parsing a flow mapping",
                                   stream.marks[end],
                                   "expected ',' or '}', but got $(typeof(token))",
-                                  token.span.start_mark))
+                                  firstmark(token)))
             end
         end
 
         token = peek(stream.input)
-        if typeof(token) == KeyToken
+        if token isa KeyToken
             forward!(stream.input)
-            if !in(typeof(peek(stream.input)), [ValueToken, FlowEntryToken, FlowMappingEndToken])
+            if !(peek(stream.input) isa Union{ValueToken, FlowEntryToken, FlowMappingEndToken})
                 push!(stream.states, parse_flow_mapping_value)
                 return parse_flow_node(stream)
             else
                 stream.state = parse_flow_mapping_value
-                return process_empty_scalar(stream, token.span.end_mark)
+                return process_empty_scalar(stream, lastmark(token))
             end
-        elseif typeof(token) != FlowMappingEndToken
+        elseif !(token isa FlowMappingEndToken)
             push!(stream.states, parse_flow_mapping_empty_value)
             return parse_flow_node(stream)
         end
@@ -592,31 +590,31 @@ function parse_flow_mapping_key(stream::EventStream, first_entry=false)
     forward!(stream.input)
     pop!(stream.marks)
     stream.state = pop!(stream.states)
-    MappingEndEvent(token.span.start_mark, token.span.end_mark)
+    MappingEndEvent(firstmark(token), lastmark(token))
 end
 
 
 function parse_flow_mapping_value(stream::EventStream)
     token = peek(stream.input)
-    if typeof(token) == ValueToken
+    if token isa ValueToken
         forward!(stream.input)
-        if !in(typeof(peek(stream.input)), [FlowEntryToken, FlowMappingEndToken])
+        if !(peek(stream.input) isa Union{FlowEntryToken, FlowMappingEndToken})
             push!(stream.states, parse_flow_mapping_key)
             parse_flow_node(stream)
         else
             stream.state = parse_flow_mapping_key
-            process_empty_scalar(stream, token.span.end_mark)
+            process_empty_scalar(stream, lastmark(token))
         end
     else
         stream.state = parse_flow_mapping_key
-        process_empty_scalar(stream, token.span.start_mark)
+        process_empty_scalar(stream, firstmark(token))
     end
 end
 
 
 function parse_flow_mapping_empty_value(stream::EventStream)
     stream.state = parse_flow_mapping_key
-    process_empty_scalar(stream, peek(stream.input).span.start_mark)
+    process_empty_scalar(stream, firstmark(peek(stream.input)))
 end
 
 

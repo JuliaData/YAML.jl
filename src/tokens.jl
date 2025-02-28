@@ -1,8 +1,10 @@
-
 # YAML Tokens.
-# Each token must include at minimum member "span::Span".
-abstract type Token end
+abstract type Token
+    # span::Span
+end
 
+firstmark(token::Token) = token.span.start_mark
+lastmark(token::Token) = token.span.end_mark
 
 # The '%YAML' directive.
 struct DirectiveToken <: Token
@@ -23,7 +25,7 @@ end
 
 # '\uFEFF'
 struct ByteOrderMarkToken <: Token
-	span::Span
+    span::Span
 end
 
 # The stream start

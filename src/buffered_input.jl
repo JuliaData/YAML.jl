@@ -11,43 +11,40 @@ mutable struct BufferedInput
     avail::UInt64
 
     function BufferedInput(input::IO)
-        return new(input, Vector{Char}(undef, 0), 0, 0)
+        return new(input, Char[], 0, 0)
     end
 end
 
-
-# Read and buffer n more characters
-function __fill(bi::BufferedInput, bi_input::IO, n::Integer)
-    for i in 1:n
-        c = eof(bi_input) ? '\0' : read(bi_input, Char)
-        if bi.offset + bi.avail + 1 <= length(bi.buffer)
-            bi.buffer[bi.offset + bi.avail + 1] = c
+# Read and buffer `n` more characters
+function buffer!(bi::BufferedInput, n::Integer)::Nothing
+    for i in (bi.offset + bi.avail) .+ (1:n)
+        c = eof(bi.input) ? '\0' : read(bi.input, Char)
+        if i ≤ length(bi.buffer)
+            bi.buffer[i] = c
         else
             push!(bi.buffer, c)
         end
-        bi.avail += 1
     end
+    bi.avail += n
+    nothing
 end
-
-_fill(bi::BufferedInput, n::Integer) = __fill(bi, bi.input, n)
 
 # Peek the character in the i-th position relative to the current position.
 # (0-based)
 function peek(bi::BufferedInput, i::Integer=0)
-    if bi.avail < i + 1
-        _fill(bi, i + 1 - bi.avail)
+    i1 = i + 1
+    if bi.avail < i1
+        buffer!(bi, i1 - bi.avail)
     end
-    return bi.buffer[bi.offset + i + 1]
+    bi.buffer[bi.offset + i1]
 end
 
 
 # Return the string formed from the first n characters from the current position
 # of the stream.
-function prefix(bi::BufferedInput, n::Integer=1)
-    if bi.avail < n + 1
-        _fill(bi, n + 1 - bi.avail)
-    end
-    return string(bi.buffer[(bi.offset + 1):(bi.offset + n)]...)
+function prefix(bi::BufferedInput, n::Integer=1)::String
+    bi.avail < n && buffer!(bi, n - bi.avail)
+    String(bi.buffer[bi.offset .+ (1:n)])
 end
 
 
@@ -67,6 +64,7 @@ function forward!(bi::BufferedInput, n::Integer=1)
             n -= 1
         end
     end
+    nothing
 end
 
 # Ugly hack to allow peeking of `StringDecoder`s
