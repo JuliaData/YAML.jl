@@ -135,6 +135,7 @@ function construct_sequence(constructor::Constructor, node::Node)
 end
 
 
+# Returns true if a merge tag was used and false otherwise.
 function flatten_mapping(node::MappingNode)
     merge = []
     index = 1
@@ -171,12 +172,22 @@ function flatten_mapping(node::MappingNode)
 
     if !isempty(merge)
         node.value = vcat(merge, node.value)
+        return true
     end
+
+    return false
 end
 
 
 function construct_mapping(dicttype::Union{Type,Function}, constructor::Constructor, node::MappingNode; strict_unique_keys::Bool=false)
-    flatten_mapping(node)
+    # If the mapping was constructed with a merge tag, skip the later
+    # test for duplicates, since it is a key part of the merging
+    # functionality that selected values can be changed.
+    #
+    # (Ideally uniqueness would still be tested for the keys outside
+    # of the merge tags, but that would require more intricate changes
+    # to the code.)
+    merged_mapping = flatten_mapping(node)
     mapping = dicttype()
     for (key_node, value_node) in node.value
         key = construct_object(constructor, key_node)
@@ -191,7 +202,7 @@ function construct_mapping(dicttype::Union{Type,Function}, constructor::Construc
             end
         end
         try
-            if haskey(mapping, key)
+            if !merged_mapping && haskey(mapping, key)
                 strict_unique_keys ? error("Duplicate key `$(key)` detected in mapping.") : @error "Duplicate key detected in mapping" node key
             end
             mapping[key] = value
