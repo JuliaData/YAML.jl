@@ -50,6 +50,7 @@ const tests = [
     "utf-32-be",
     "empty_tag",
     "empty_list_elem",
+    "empty_key",
 ]
 
 # ignore some test cases in write_and_load testing
