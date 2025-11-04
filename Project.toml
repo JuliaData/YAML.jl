@@ -1,6 +1,6 @@
 name = "YAML"
 uuid = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
-version = "0.4.14"
+version = "0.4.15"
 
 
 [deps]
