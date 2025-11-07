@@ -52,6 +52,7 @@ const tests = [
     "empty_list_elem",
     "empty_key",
     "nested_empty_array",
+    "keys_need_quoting",
 ]
 
 # ignore some test cases in write_and_load testing
