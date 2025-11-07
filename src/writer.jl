@@ -58,7 +58,7 @@ function _print(io::IO, arr::AbstractVector, level::Int=0, ignore_level::Bool=fa
         println(io, "[]")
     else
         for elem in arr
-            if elem isa AbstractVector # vectors of vectors must be handled differently
+            if elem isa AbstractVector && !isempty(elem) # nonempty vectors of vectors must be handled differently
                 print(io, _indent("-\n", level))
                 _print(io, elem, level + 1)
             else

@@ -51,6 +51,7 @@ const tests = [
     "empty_tag",
     "empty_list_elem",
     "empty_key",
+    "nested_empty_array",
 ]
 
 # ignore some test cases in write_and_load testing
