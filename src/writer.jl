@@ -58,7 +58,7 @@ function _print(io::IO, arr::AbstractVector, level::Int=0, ignore_level::Bool=fa
         println(io, "[]")
     else
         for elem in arr
-            if elem isa AbstractVector # vectors of vectors must be handled differently
+            if elem isa AbstractVector && !isempty(elem) # nonempty vectors of vectors must be handled differently
                 print(io, _indent("-\n", level))
                 _print(io, elem, level + 1)
             else
@@ -73,12 +73,10 @@ end
 function _print(io::IO, pair::Pair, level::Int=0, ignore_level::Bool=false)
     key = if pair[1] === nothing
         "null" # this is what the YAML parser interprets as 'nothing'
-    elseif pair[1] isa AbstractString && (
-        isempty(pair[1]) || occursin('#', pair[1]) || first(pair[1]) in "{}[]&*?|-<>=!%@:`,\"'"
-    )
+    elseif pair[1] isa AbstractString && string_key_needs_quoting(pair[1])
         string("\"", escape_string(pair[1]), "\"") # special keys that require quoting
     else
-        string(pair[1]) # any useful case
+        string(pair[1]) # any "normal" case
     end
 
     print(io, _indent(key * ":", level, ignore_level)) # print the key
@@ -88,6 +86,29 @@ function _print(io::IO, pair::Pair, level::Int=0, ignore_level::Bool=false)
         print(io, " ") # a whitespace character is needed before a single value
     end
     _print(io, pair[2], level + 1) # print the value
+end
+
+# This needs to cover lots of cases such as
+# * The empty string.
+# * Contains a comment character.
+# * Looks like a sequence or mapping.
+# * Looks like a Boolean.
+# * Looks like a floating point number, including ".inf" and ".nan".
+# * Looks like an integer, including hexadecimal numbers and similar.
+# * Looks like a timestamp.
+# * Starts with a variety of characters used in YAML syntax.
+#
+# These rules try to be conservative but may very well still miss some
+# corner cases.
+function string_key_needs_quoting(s::AbstractString)
+    isempty(s) && return true
+    occursin('#', s) && return true
+    occursin(':', s) && return true
+    occursin(' ', s) && return true
+    first(s) in "{}[]&*?|-+.<>=!%@:`,\"'" && return true
+    isdigit(first(s)) && return true
+    s in ("true", "True", "TRUE", "false", "False", "FALSE") && return true
+    return false
 end
 
 # _print a single string
