@@ -491,4 +491,15 @@ end
     end
 end
 
+@testset "issue #250" begin
+    e = try
+        YAML.load("x:\r\n  - z\r\n  y:\r\n")
+    catch e
+        e
+    end
+
+    @test e isa YAML.ParserError
+    @test e.problem_mark.line == 3
+end
+
 end  # module
