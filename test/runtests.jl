@@ -502,4 +502,15 @@ end
     @test e.problem_mark.line == 3
 end
 
+# int resolver: a leading-zero scalar that isn't valid octal must stay a string,
+# not fall into construct_yaml_int's base-8 parse and throw
+@testset "int resolver leading zero" begin
+    @test YAML.load("00969011030760010060001") == "00969011030760010060001"
+    @test YAML.load("0096901103076001006") == "0096901103076001006"
+    @test YAML.load("014") == 12          # bare-leading-zero octal still parses
+    @test YAML.load("0") == 0
+    @test YAML.load("10") == 10
+    @test YAML.load("089") == "089"       # leading zero, non-octal digit
+end
+
 end  # module
