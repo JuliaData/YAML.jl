@@ -15,14 +15,18 @@ const default_implicit_resolvers =
          ("tag:yaml.org,2002:bool",
           r"^(?:true|True|TRUE|false|False|FALSE)$"x),
 
+         # decimal excludes extra leading zeros so it can't shadow octal (construct_yaml_int
+         # treats any leading-zero int scalar as base 8, so an ambiguous match crashes there)
          ("tag:yaml.org,2002:int",
           r"^(?:[-+]?0b[0-1_]+
-            |[-+]? [0-9]+
-            |0o [0-7]+
+            |[-+]? (?:0|[1-9][0-9]*)
+            |0 [0-7]+
             |0x [0-9a-fA-F]+)$"x),
 
+         # same leading-zero exclusion as above: a bare digit run with no dot still
+         # matches this branch (exponent-only floats), so it must agree with the int regex
          ("tag:yaml.org,2002:float",
-          r"^(?:[-+]? ( \. [0-9]+ | [0-9]+ ( \. [0-9]* )? ) ( [eE] [-+]? [0-9]+ )?
+          r"^(?:[-+]? ( \. [0-9]+ | (?:0|[1-9][0-9]*) ( \. [0-9]* )? ) ( [eE] [-+]? [0-9]+ )?
             |[-+]? (?: \.inf | \.Inf | \.INF )
             |\.nan | \.NaN | \.NAN)$"x),
 
