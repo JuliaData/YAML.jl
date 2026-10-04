@@ -93,6 +93,8 @@ end
 # * Contains a comment character.
 # * Looks like a sequence or mapping.
 # * Looks like a Boolean.
+# * Looks like null.
+# * Contains whitespace or a non-printable character.
 # * Looks like a floating point number, including ".inf" and ".nan".
 # * Looks like an integer, including hexadecimal numbers and similar.
 # * Looks like a timestamp.
@@ -104,10 +106,10 @@ function string_key_needs_quoting(s::AbstractString)
     isempty(s) && return true
     occursin('#', s) && return true
     occursin(':', s) && return true
-    occursin(' ', s) && return true
+    any(c -> isspace(c) || !isprint(c), s) && return true
     first(s) in "{}[]&*?|-+.<>=!%@:`,\"'" && return true
     isdigit(first(s)) && return true
-    s in ("true", "True", "TRUE", "false", "False", "FALSE") && return true
+    s in ("true", "True", "TRUE", "false", "False", "FALSE", "null", "Null", "NULL", "~") && return true
     return false
 end
 
