@@ -265,7 +265,7 @@ test: 3
 end
 
 @testset "multi_doc_file" begin
-    fname = tempname() # cleanup=true, file will be deleted on process exit
+    fname = tempname()
     open(fname, "w") do f
         write(f, multidoc_contents)
     end
@@ -279,10 +279,11 @@ end
     (val, state) = iterate(iterable, state)
     @test isequal(val, 42)
     @test iterate(iterable, state) === nothing
+    rm(fname)
 end
 
 @testset "multi_doc_iteration_protocol" begin
-    fname = tempname() # cleanup=true, file will be deleted on process exit
+    fname = tempname()
     open(fname, "w") do f
         write(f, multidoc_contents)
     end
@@ -290,6 +291,7 @@ end
     @test Base.IteratorSize(YAML.YAMLDocIterator) == Base.SizeUnknown()
     @test Base.IteratorEltype(YAML.YAMLDocIterator) == Base.EltypeUnknown()
     @test length(collect(iterable)) == 4
+    rm(fname)
 end
 
 # test that an OrderedDict is written in the correct order

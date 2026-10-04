@@ -163,6 +163,8 @@ load_file(filename::AbstractString, args...; kwargs...) =
     load_all_file(filename::AbstractString) -> YAMLDocIterator
 
 Parse the YAML file `filename`, and return corresponding YAML documents.
+The file contents are buffered in memory so the iterator remains usable after
+this function closes the file.
 """
 load_all_file(filename::AbstractString, args...; kwargs...) =
     open(filename, "r") do f
