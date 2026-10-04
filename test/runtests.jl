@@ -50,6 +50,9 @@ const tests = [
     "utf-32-be",
     "empty_tag",
     "empty_list_elem",
+    "empty_key",
+    "nested_empty_array",
+    "keys_need_quoting",
 ]
 
 # ignore some test cases in write_and_load testing
@@ -522,6 +525,17 @@ end
         @test YAML.load(YAML.yaml(test_case_3)) == test_case_3
         @test YAML.load(YAML.yaml(test_case_4)) == test_case_4
     end
+end
+
+@testset "issue #250" begin
+    e = try
+        YAML.load("x:\r\n  - z\r\n  y:\r\n")
+    catch e
+        e
+    end
+
+    @test e isa YAML.ParserError
+    @test e.problem_mark.line == 3
 end
 
 end  # module
