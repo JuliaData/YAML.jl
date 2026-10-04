@@ -538,4 +538,12 @@ end
     @test e.problem_mark.line == 3
 end
 
+@testset "empty input and null documents" begin
+    @test YAML.missing_to_nothing(YAML.MissingDocument()) === nothing
+    @test YAML.missing_to_nothing("present") === "present"
+    @test YAML.load("") === nothing
+    @test isempty(collect(YAML.load_all("")))
+    @test isequal(collect(YAML.load_all("null\n---\nnull\n")), [nothing, nothing])
+end
+
 end  # module
