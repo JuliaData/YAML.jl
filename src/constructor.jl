@@ -264,7 +264,9 @@ function construct_yaml_int(constructor::Constructor, node::Node)
         return value
     end
 
-    if length(value) > 2 && value[1] == '0' && (value[2] == 'x' || value[2] == 'X')
+    if startswith(value, "0b") || startswith(value, "+0b") || startswith(value, "-0b")
+        return parse(Int, value)
+    elseif length(value) > 2 && value[1] == '0' && (value[2] == 'x' || value[2] == 'X')
         return parse(Int, value[3:end], base = 16)
     elseif length(value) > 1 && value[1] == '0'
         return parse(Int, value, base = 8)
