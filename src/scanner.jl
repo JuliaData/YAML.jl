@@ -1292,7 +1292,8 @@ function scan_flow_scalar(stream::TokenStream, style::Char)
     q = peek(stream.input) # quote
     forwardchars!(stream)
 
-    while peek(stream.input) != q || peek(stream.input, 1) == q
+    # Only single-quoted scalars escape a quote by doubling it.
+    while peek(stream.input) != q || (!double && peek(stream.input, 1) == q)
         append!(chunks, scan_flow_scalar_spaces(stream, double, start_mark))
         append!(chunks, scan_flow_scalar_non_spaces(stream, double, start_mark))
     end
