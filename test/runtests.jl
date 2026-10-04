@@ -546,6 +546,24 @@ end
     @test isequal(collect(YAML.load_all("null\n---\nnull\n")), [nothing, nothing])
 end
 
+@testset "quoted scalar termination" begin
+    for input in ("a: \"b\"\"", "a: \"\"\"", "\"b\"\"", "\"\"\"", "[\"b\"\"]")
+        @test_throws YAML.ScannerError YAML.load(input)
+    end
+    for (input, expected) in (
+        ("a: \"b\"", Dict("a" => "b")),
+        ("a: \"\"", Dict("a" => "")),
+        ("a: ''", Dict("a" => "")),
+        ("a: 'it''s'", Dict("a" => "it's")),
+        ("a: ''''", Dict("a" => "'")),
+        ("a: \"a\\\"b\"", Dict("a" => "a\"b")),
+        ("a: 'a\"\"b'", Dict("a" => "a\"\"b")),
+        ("[\"b\", \"\"]", ["b", ""]),
+    )
+        @test YAML.load(input) == expected
+    end
+end
+
 @testset "Unicode escapes and literal backslashes" begin
     texts = [
         "Attosecond-resolution Hong\u00adOu-mandel interferometry",
