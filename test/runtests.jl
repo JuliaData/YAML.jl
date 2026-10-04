@@ -588,6 +588,22 @@ end
     end
 end
 
+@testset "string keys retain their meaning" begin
+    for key in ("null", "Null", "NULL", "~", "key\npart", "key\rpart", "key\tpart",
+                "key\0part", "key\u0085part", "key\u2028part", "key\u00adO",
+                "normal", "yes", "0")
+        expected = Dict{Any,Any}(key => 1, nothing => 2)
+        @test YAML.load(YAML.yaml(expected)) == expected
+        nested = Dict("nested" => [expected])
+        @test YAML.load(YAML.yaml(nested)) == nested
+        mktemp() do path, io
+            close(io)
+            YAML.write_file(path, expected)
+            @test YAML.load_file(path) == expected
+        end
+    end
+end
+
 @testset "flow scalar line folding" begin
     for linebreak in ("\n", "\r\n", "\r", "\u0085"), delimiter in ("'", "\"", "")
         for (count, expected) in ((1, "first second"), (2, "first\nsecond"), (3, "first\n\nsecond"))
