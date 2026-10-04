@@ -74,7 +74,7 @@ function _print(io::IO, pair::Pair, level::Int=0, ignore_level::Bool=false)
     key = if pair[1] === nothing
         "null" # this is what the YAML parser interprets as 'nothing'
     elseif pair[1] isa AbstractString && string_key_needs_quoting(pair[1])
-        string("\"", escape_string(pair[1]), "\"") # special keys that require quoting
+        string("\"", escape_yaml_string(pair[1]), "\"") # special keys that require quoting
     else
         string(pair[1]) # any "normal" case
     end
@@ -111,6 +111,15 @@ function string_key_needs_quoting(s::AbstractString)
     return false
 end
 
+function escape_yaml_string(str::AbstractString)
+    # YAML requires four/eight hex digits. Consume escaped backslashes so
+    # literal Unicode escape text is left unchanged.
+    replace(escape_string(str),
+        r"\\(?:\\|u[0-9a-fA-F]{2,4}|U[0-9a-fA-F]{4,8})" =>
+        escaped -> escaped[2] == '\\' ? escaped :
+            escaped[1:2] * lpad(escaped[3:end], escaped[2] == 'u' ? 4 : 8, '0'))
+end
+
 # _print a single string
 function _print(io::IO, str::AbstractString, level::Int=0, ignore_level::Bool=false)
     if occursin('\n', strip(str)) || occursin('"', str)
@@ -128,7 +137,7 @@ function _print(io::IO, str::AbstractString, level::Int=0, ignore_level::Bool=fa
         end
     else
         # quote and escape
-        println(io, replace(repr(MIME("text/plain"), str), raw"\$" => raw"$"))
+        println(io, '"', escape_yaml_string(str), '"')
     end
 end
 

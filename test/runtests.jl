@@ -564,4 +564,28 @@ end
     end
 end
 
+@testset "Unicode escapes and literal backslashes" begin
+    texts = [
+        "Attosecond-resolution Hong\u00adOu-mandel interferometry",
+        "format \u061cG",
+        "non-BMP \U0001d173G",
+        "language tag \U000e0001G",
+        "hex follows \u00ada\U0001d173f",
+        raw"literal \uad \U1d173 and \\uad",
+        raw"dollar $ and backslash \$",
+    ]
+    for text in texts
+        @test YAML.load(YAML.yaml(text)) == text
+        @test YAML.load(YAML.yaml([text])) == [text]
+        @test YAML.load(YAML.yaml(Dict("value" => text))) == Dict("value" => text)
+        key = "key " * text
+        @test YAML.load(YAML.yaml(Dict(key => 1))) == Dict(key => 1)
+        mktemp() do path, io
+            close(io)
+            YAML.write_file(path, Dict("value" => text))
+            @test YAML.load_file(path) == Dict("value" => text)
+        end
+    end
+end
+
 end  # module
