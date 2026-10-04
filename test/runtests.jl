@@ -604,4 +604,24 @@ end
     end
 end
 
+@testset "control characters in quoted and multiline strings" begin
+    controls = ('\0', '\x01', '\a', '\b', '\v', '\f', '\r', '\e', '\x7f', '\u0080', '\u0085', '\u009f', '\u2028', '\u2029')
+    for control in controls, text in ("quote \" " * control * " after", "first\nsecond " * control * " after")
+        output = YAML.yaml(text)
+        @test !occursin(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x84\x86-\x9f]", output)
+        @test YAML.load(output) == text
+        @test YAML.load(YAML.yaml([text])) == [text]
+        @test YAML.load(YAML.yaml(Dict("value" => text))) == Dict("value" => text)
+        mktemp() do path, io
+            close(io)
+            YAML.write_file(path, text)
+            @test YAML.load_file(path) == text
+        end
+    end
+    for text in ("first\nsecond", "quote \" with\ta tab")
+        @test startswith(YAML.yaml(text), "|-\n")
+        @test YAML.load(YAML.yaml(text)) == text
+    end
+end
+
 end  # module
