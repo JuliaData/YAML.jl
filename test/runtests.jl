@@ -643,4 +643,26 @@ end
     end
 end
 
+@testset "binary integer construction" begin
+    for (input, expected) in (("0b0", 0), ("0b1", 1), ("0b1010", 10),
+                              ("0b10_01", 9), ("+0b10_01", 9), ("-0b10_01", -9)),
+        tag in ("", "!!int ")
+        yaml_input = tag * input
+        @test YAML.load(yaml_input) === expected
+        @test YAML.load("value: " * yaml_input) == Dict("value" => expected)
+        mktemp() do path, io
+            write(io, yaml_input)
+            close(io)
+            @test YAML.load_file(path) === expected
+        end
+    end
+    @test_throws ArgumentError YAML.load("!!int 0b102")
+    @test_throws ArgumentError YAML.load("!!int 0b")
+    @test YAML.load("0b102") == "0b102"
+    @test YAML.load("0b") == "0b"
+    @test YAML.load("0b" * bitstring(typemax(Int))) === typemax(Int)
+    @test YAML.load("-0b1" * repeat("0", 8 * sizeof(Int) - 1)) === typemin(Int)
+    @test_throws OverflowError YAML.load("0b1" * repeat("0", 8 * sizeof(Int) - 1))
+end
+
 end  # module
