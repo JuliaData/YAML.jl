@@ -1,4 +1,4 @@
 Dict{Any,Any}(
-    "plain" => "This unquoted scalar\nspans many lines.",
-    "quoted" => "So does this\nquoted scalar.\n"
+    "plain" => "This unquoted scalar spans many lines.",
+    "quoted" => "So does this quoted scalar.\n"
 )

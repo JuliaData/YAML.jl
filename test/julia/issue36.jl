@@ -1,3 +1,1 @@
-Dict{Any,Any}("columns" => Any[Dict{Any, Any}("foo" => """bar
-
-    """)])
+Dict{Any,Any}("columns" => Any[Dict{Any, Any}("foo" => "bar\n")])

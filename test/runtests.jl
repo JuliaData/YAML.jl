@@ -588,4 +588,23 @@ end
     end
 end
 
+@testset "flow scalar line folding" begin
+    for linebreak in ("\n", "\r\n", "\r", "\u0085"), delimiter in ("'", "\"", "")
+        for (count, expected) in ((1, "first second"), (2, "first\nsecond"), (3, "first\n\nsecond"))
+            input = "value: " * delimiter * "first  " * repeat(linebreak, count) * "    second" * delimiter * "\n"
+            @test YAML.load(input) == Dict("value" => expected)
+        end
+    end
+    for linebreak in ("\u2028", "\u2029"), delimiter in ("'", "\"", "")
+        input = "value: " * delimiter * "first" * linebreak * "    second" * delimiter * "\n"
+        @test YAML.load(input) == Dict("value" => "first" * linebreak * "second")
+    end
+    for linebreak in ("\n", "\r\n", "\r", "\u0085")
+        @test YAML.load("value: \"first\\" * linebreak * "    second\"\n") == Dict("value" => "firstsecond")
+        @test YAML.load("value: 'it''s" * linebreak * "    fine'\n") == Dict("value" => "it's fine")
+    end
+    @test YAML.load("value: ' first  '\n") == Dict("value" => " first  ")
+    @test YAML.load("value: \" first  \"\n") == Dict("value" => " first  ")
+end
+
 end  # module
