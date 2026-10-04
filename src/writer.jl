@@ -124,7 +124,9 @@ end
 
 # _print a single string
 function _print(io::IO, str::AbstractString, level::Int=0, ignore_level::Bool=false)
-    if occursin('\n', strip(str)) || occursin('"', str)
+    # Use literal blocks only when non-printable characters are LF or TAB.
+    if (occursin('\n', strip(str)) || occursin('"', str)) &&
+       all(c -> isprint(c) || c == '\n' || c == '\t', str)
         if endswith(str, "\n\n")   # multiple trailing newlines: keep
             println(io, "|+")
             str = str[1:end-1]     # otherwise, we have one too many
