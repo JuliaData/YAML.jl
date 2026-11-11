@@ -665,4 +665,12 @@ end
     @test_throws OverflowError YAML.load("0b1" * repeat("0", 8 * sizeof(Int) - 1))
 end
 
+@testset "octal integer construction" begin
+    for (input, expected) in (("0o0", 0), ("0o14", 12), ("0o777", 511)), tag in ("", "!!int ")
+        @test YAML.load(tag * input) === expected
+        @test YAML.load("value: " * tag * input) == Dict("value" => expected)
+    end
+    @test YAML.load("0o8") == "0o8"
+end
+
 end  # module
