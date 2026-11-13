@@ -673,4 +673,13 @@ end
     @test YAML.load("0o8") == "0o8"
 end
 
+@testset "leading-zero integer construction" begin
+    for (input, expected) in (("012", 10), ("07", 7), ("08", 8), ("019", 19), ("-08", -8)),
+            tag in ("", "!!int ")
+        @test YAML.load(tag * input) === expected
+        @test YAML.load("value: " * tag * input) == Dict("value" => expected)
+    end
+    @test YAML.load("!!int 0_8") === 8
+end
+
 end  # module
