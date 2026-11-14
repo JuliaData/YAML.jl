@@ -15,14 +15,21 @@ const default_implicit_resolvers =
          ("tag:yaml.org,2002:bool",
           r"^(?:true|True|TRUE|false|False|FALSE)$"x),
 
+         # construct_yaml_int parses unsigned leading-zero scalars as base 8 and signed ones as
+         # base 10, so only unsigned leading-zero runs need restricting to octal digits (#41, #247)
          ("tag:yaml.org,2002:int",
           r"^(?:[-+]?0b[0-1_]+
-            |[-+]? [0-9]+
+            |[-+] [0-9]+
             |0o [0-7]+
+            |0 [0-7]*
+            |[1-9] [0-9]*
             |0x [0-9a-fA-F]+)$"x),
 
+         # a float needs a dot or exponent, so bare digit runs rejected by the int regex
+         # (e.g. "089") stay strings instead of becoming floats
          ("tag:yaml.org,2002:float",
-          r"^(?:[-+]? ( \. [0-9]+ | [0-9]+ ( \. [0-9]* )? ) ( [eE] [-+]? [0-9]+ )?
+          r"^(?:[-+]? (?: \. [0-9]+ | [0-9]+ \. [0-9]* ) (?: [eE] [-+]? [0-9]+ )?
+            |[-+]? [0-9]+ [eE] [-+]? [0-9]+
             |[-+]? (?: \.inf | \.Inf | \.INF )
             |\.nan | \.NaN | \.NAN)$"x),
 
