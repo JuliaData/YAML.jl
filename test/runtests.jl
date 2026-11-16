@@ -682,4 +682,14 @@ end
     @test YAML.load("!!int 0_8") === 8
 end
 
+@testset "underscore digit separators" begin
+    for (input, expected) in (("1_000", 1000), ("-1_000", -1000), ("+1_000", 1000), ("0_8", 8),
+                              ("1_000.5", 1000.5), ("-1_000.25", -1000.25), ("1_000e2", 100000.0),
+                              (".5_0", 0.5))
+        @test YAML.load(input) === expected
+        @test YAML.load("value: " * input) == Dict("value" => expected)
+    end
+    @test YAML.load("_1000") == "_1000"
+end
+
 end  # module
