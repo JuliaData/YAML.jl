@@ -15,14 +15,16 @@ const default_implicit_resolvers =
          ("tag:yaml.org,2002:bool",
           r"^(?:true|True|TRUE|false|False|FALSE)$"x),
 
+         # In decimal integers and floats, underscores may separate digits after the
+         # first, as in YAML 1.1.
          ("tag:yaml.org,2002:int",
           r"^(?:[-+]?0b[0-1_]+
-            |[-+]? [0-9]+
+            |[-+]? [0-9][0-9_]*
             |0o [0-7]+
             |0x [0-9a-fA-F]+)$"x),
 
          ("tag:yaml.org,2002:float",
-          r"^(?:[-+]? ( \. [0-9]+ | [0-9]+ ( \. [0-9]* )? ) ( [eE] [-+]? [0-9]+ )?
+          r"^(?:[-+]? ( \. [0-9][0-9_]* | [0-9][0-9_]* ( \. [0-9_]* )? ) ( [eE] [-+]? [0-9]+ )?
             |[-+]? (?: \.inf | \.Inf | \.INF )
             |\.nan | \.NaN | \.NAN)$"x),
 
