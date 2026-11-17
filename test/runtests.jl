@@ -693,4 +693,31 @@ end
     @test_throws OverflowError YAML.load("0b1" * repeat("0", 8 * sizeof(Int) - 1))
 end
 
+@testset "octal integer construction" begin
+    for (input, expected) in (("0o0", 0), ("0o14", 12), ("0o777", 511)), tag in ("", "!!int ")
+        @test YAML.load(tag * input) === expected
+        @test YAML.load("value: " * tag * input) == Dict("value" => expected)
+    end
+    @test YAML.load("0o8") == "0o8"
+end
+
+@testset "leading-zero integer construction" begin
+    for (input, expected) in (("012", 10), ("07", 7), ("08", 8), ("019", 19), ("-08", -8)),
+            tag in ("", "!!int ")
+        @test YAML.load(tag * input) === expected
+        @test YAML.load("value: " * tag * input) == Dict("value" => expected)
+    end
+    @test YAML.load("!!int 0_8") === 8
+end
+
+@testset "underscore digit separators" begin
+    for (input, expected) in (("1_000", 1000), ("-1_000", -1000), ("+1_000", 1000), ("0_8", 8),
+                              ("1_000.5", 1000.5), ("-1_000.25", -1000.25), ("1_000e2", 100000.0),
+                              (".5_0", 0.5))
+        @test YAML.load(input) === expected
+        @test YAML.load("value: " * input) == Dict("value" => expected)
+    end
+    @test YAML.load("_1000") == "_1000"
+end
+
 end  # module

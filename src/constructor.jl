@@ -268,8 +268,12 @@ function construct_yaml_int(constructor::Constructor, node::Node)
         return parse(Int, value)
     elseif length(value) > 2 && value[1] == '0' && (value[2] == 'x' || value[2] == 'X')
         return parse(Int, value[3:end], base = 16)
+    elseif startswith(value, "0o")
+        return parse(Int, value[3:end], base = 8)
     elseif length(value) > 1 && value[1] == '0'
-        return parse(Int, value, base = 8)
+        # A leading zero marks a YAML 1.1 octal integer. With an 8 or 9 it is
+        # decimal, as YAML 1.2 reads every leading-zero integer.
+        return something(tryparse(Int, value, base = 8), parse(Int, value, base = 10))
     else
         return parse(Int, value, base = 10)
     end
