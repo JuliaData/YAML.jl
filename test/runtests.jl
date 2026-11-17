@@ -564,6 +564,8 @@ end
     ints = Dict{String,Function}("tag:yaml.org,2002:int" => (c, n) -> parse(BigInt, YAML.construct_scalar(c, n)))
     @test YAML.load("0o14", ints) == 12
     @test YAML.load("0o777777777777777777777777", ints) == parse(BigInt, "0o777777777777777777777777")
+    # Roman ASDF ID that PyYAML writes unquoted; it threw OverflowError when read as decimal (#252)
+    @test YAML.load("observation_id: 0105403008001001001031010001") == Dict("observation_id" => "0105403008001001001031010001")
 end
 
 @testset "empty input and null documents" begin
@@ -704,6 +706,8 @@ end
 @testset "leading-zero integer construction" begin
     for (input, expected) in (("012", 10), ("07", 7), ("08", 8), ("019", 19), ("-08", -8)),
             tag in ("", "!!int ")
+        # untagged, a non-octal leading-zero scalar stays a string, as in YAML 1.1 (#252)
+        expected = tag == "" && input in ("08", "019") ? input : expected
         @test YAML.load(tag * input) === expected
         @test YAML.load("value: " * tag * input) == Dict("value" => expected)
     end
@@ -711,7 +715,7 @@ end
 end
 
 @testset "underscore digit separators" begin
-    for (input, expected) in (("1_000", 1000), ("-1_000", -1000), ("+1_000", 1000), ("0_8", 8),
+    for (input, expected) in (("1_000", 1000), ("-1_000", -1000), ("+1_000", 1000), ("0_8", "0_8"),
                               ("1_000.5", 1000.5), ("-1_000.25", -1000.25), ("1_000e2", 100000.0),
                               (".5_0", 0.5))
         @test YAML.load(input) === expected
