@@ -669,6 +669,16 @@ end
     end
 end
 
+@testset "tuples, sets, missing, and rationals load back as YAML values" begin
+    for (x, expected) in (((1, "a: b"), [1, "a: b"]), ((), []), (((1, 2), [3]), [[1, 2], [3]]),
+                          (Set(["x"]), ["x"]), (missing, nothing), (1//4, 0.25), (-1//3, -1/3), (1//0, Inf))
+        @test isequal(YAML.load(YAML.yaml(x)), expected)
+        @test isequal(YAML.load(YAML.yaml(Dict("k" => x))), Dict("k" => expected))
+        @test isequal(YAML.load(YAML.yaml([x])), [expected])
+    end
+    @test YAML.load(YAML.yaml(Dict(missing => 1))) == Dict(nothing => 1)
+end
+
 @testset "flow scalar line folding" begin
     for linebreak in ("\n", "\r\n", "\r", "\u0085"), delimiter in ("'", "\"", "")
         for (count, expected) in ((1, "first second"), (2, "first\nsecond"), (3, "first\n\nsecond"))
