@@ -1346,16 +1346,16 @@ function scan_flow_scalar_non_spaces(stream::TokenStream, double::Bool,
             forwardchars!(stream, 2)
         elseif (double && c == '\'') || (!double && in(c, "\"\\"))
             push!(chunks, c)
-            forward!(stream.input)
+            forwardchars!(stream)
         elseif double && c == '\\'
-            forward!(stream.input)
+            forwardchars!(stream)
             c = peek(stream.input)
             if haskey(ESCAPE_REPLACEMENTS, c)
                 push!(chunks, ESCAPE_REPLACEMENTS[c])
-                forward!(stream.input)
+                forwardchars!(stream)
             elseif haskey(ESCAPE_CODES, c)
                 length = ESCAPE_CODES[c]
-                forward!(stream.input)
+                forwardchars!(stream)
                 for k in 0:(length-1)
                     c = peek(stream.input, k)
                     if !in(peek(stream.input, k), "0123456789ABCDEFabcdef")
@@ -1429,7 +1429,7 @@ function scan_flow_scalar_breaks(stream::TokenStream, double::Bool,
         end
 
         while is_s_white(peek(stream.input))
-            forward!(stream.input)
+            forwardchars!(stream)
         end
 
         if is_b_char(YAMLV1_1(), peek(stream.input))
@@ -1624,7 +1624,7 @@ function scan_uri_escapes(stream::TokenStream, name::String, start_mark::Mark)::
     mark = get_mark(stream)
     bytes = UInt8[]
     while peek(stream.input) == '%'
-        forward!(stream.input)
+        forwardchars!(stream)
         # check ns-hex-digit
         for k in 0:1
             c = peek(stream.input, k)

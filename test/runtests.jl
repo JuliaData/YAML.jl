@@ -698,6 +698,19 @@ end
     @test YAML.load("k: |\r  x\r  y\r") == Dict("k" => "x\ny\n")
 end
 
+@testset "escapes and quotes count toward key length and marks" begin
+    # each character of an escape counts toward the 1024-character implicit key limit
+    @test YAML.load("\"$("\\t"^511)\": 1\n") == Dict("\t"^511 => 1)
+    @test_throws YAML.ScannerError YAML.load("\"$("\\t"^511)x\": 1\n")
+    for (input, column) in (("\"a\\\"b\": [1, 2", 8), ("'a\\\"b': [1, 2", 8), ("\"\\x41\": [1, 2", 8),
+                            ("[\"a\n   b\", [1", 7))
+        e = try YAML.load(input) catch e; e end
+        @test e isa YAML.ParserError && e.context_mark.column == column
+    end
+    e = try YAML.load("!<tag:x/%C3%A9/%FF> x") catch e; e end
+    @test e isa YAML.ScannerError && e.problem_mark.column == 15
+end
+
 @testset "control characters in quoted and multiline strings" begin
     controls = ('\0', '\x01', '\a', '\b', '\v', '\f', '\r', '\e', '\x7f', '\u0080', '\u0085', '\u009f', '\u2028', '\u2029')
     for control in controls, text in ("quote \" " * control * " after", "first\nsecond " * control * " after")
