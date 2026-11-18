@@ -538,6 +538,13 @@ end
     @test (@test_logs (:warn, """unknown directive name: "FOO" at line 1, column 4. We ignore this.""") (:warn, """unknown directive name: "BAR" at line 2, column 4. We ignore this.""") YAML.load("""%FOO\n%BAR\n--- foo""")) == "foo"
 end
 
+@testset "YAML directive version numbers" begin
+    for version in ("99999999999999999999.1", "1.99999999999999999999", "1.1234567890")
+        @test_throws YAML.ScannerError YAML.load("%YAML $version\n--- x")
+    end
+    @test YAML.load("%YAML 1.123456789\n--- x") == "x"
+end
+
 # issue #143 - load empty file
 @testset "issue #143" begin
     @test YAML.load("") === nothing
