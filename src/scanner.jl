@@ -184,11 +184,26 @@ function need_more_tokens(stream::TokenStream)
     next_possible_simple_key(stream) == stream.tokens_taken
 end
 
+# Fetch tokens until the first one is settled. The input is decoded as the scanner reads it, so
+# bytes that are not valid in the input's encoding raise a ScannerError at the position the
+# scanner has reached. The decoder reads ahead, so the bytes can lie past that position.
+function fetch_needed_tokens(stream::TokenStream)
+    try
+        while need_more_tokens(stream)
+            fetch_more_tokens(stream)
+        end
+    catch e
+        e isa Union{StringEncodings.InvalidSequenceError, StringEncodings.IncompleteSequenceError} || rethrow()
+        throw(ScannerError(nothing, nothing,
+                           "found bytes that are not valid $(stream.encoding)",
+                           get_mark(stream)))
+    end
+    return nothing
+end
+
 # peek the first token from the token stream
 function peek(stream::TokenStream)::Union{Token, Nothing}
-    while need_more_tokens(stream)
-        fetch_more_tokens(stream)
-    end
+    fetch_needed_tokens(stream)
 
     if !isempty(stream.token_queue)
         peek(stream.token_queue)
@@ -199,9 +214,7 @@ end
 
 # advance and return the first token from the token stream
 function forward!(stream::TokenStream)::Union{Token, Nothing}
-    while need_more_tokens(stream)
-        fetch_more_tokens(stream)
-    end
+    fetch_needed_tokens(stream)
 
     if !isempty(stream.token_queue)
         stream.tokens_taken += 1
