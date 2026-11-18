@@ -474,6 +474,14 @@ end
     @test YAML.load(YAML.yaml(big"1e400")) == Inf
 end
 
+@testset "explicit float tags reject non-decimal text" begin
+    # only a decimal that rounds to zero or infinity takes the arbitrary-precision path
+    for input in ("!!float 0b101", "!!float 0b1e400", "!!float 1@5", "!!float 1@400", "!!float 0x1p2000")
+        @test_throws ArgumentError YAML.load(input)
+    end
+    @test YAML.load("!!float 1e400") == Inf
+end
+
 # issue 114 - gracefully handle extra commas in flow collections
 @testset "issue114" begin
     @test YAML.load("[3,4,]") == [3,4]
