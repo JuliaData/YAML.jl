@@ -179,7 +179,13 @@ function flatten_mapping(node::MappingNode)
 end
 
 
-function construct_mapping(dicttype::Union{Type,Function}, constructor::Constructor, node::MappingNode; strict_unique_keys::Bool=false)
+function construct_mapping(dicttype::Union{Type,Function}, constructor::Constructor, node::Node; strict_unique_keys::Bool=false)
+    if !(node isa MappingNode)
+        throw(ConstructorError(nothing, nothing,
+                               "expected a mapping node, but found $(typeof(node))",
+                               node.start_mark))
+    end
+
     # If the mapping was constructed with a merge tag, skip the later
     # test for duplicates, since it is a key part of the merging
     # functionality that selected values can be changed.
@@ -246,14 +252,28 @@ const bool_values = Dict(
     "off"   => false )
 
 
-function construct_yaml_bool(constructor::Constructor, node::Node)
+# Convert a scalar node's text with `parse_text`. Text that it rejects, such as `!!int abc`,
+# does not fit the node's tag, so it raises a ConstructorError at the node.
+function construct_parsed_scalar(parse_text::Function, constructor::Constructor, node::Node)
     value = construct_scalar(constructor, node)
-    bool_values[lowercase(value)]
+    try
+        return parse_text(value)
+    catch e
+        e isa InterruptException && rethrow()
+        throw(ConstructorError(nothing, nothing,
+            "could not convert $(repr(value)) to $(node.tag)", node.start_mark))
+    end
 end
 
 
-function construct_yaml_int(constructor::Constructor, node::Node)
-    value = string(construct_scalar(constructor, node))
+construct_yaml_bool(constructor::Constructor, node::Node) =
+    construct_parsed_scalar(value -> bool_values[lowercase(value)], constructor, node)
+
+
+construct_yaml_int(constructor::Constructor, node::Node) =
+    construct_parsed_scalar(parse_yaml_int, constructor, node)
+
+function parse_yaml_int(value::AbstractString)
     value = lowercase(replace(value, "_" => ""))
 
     if in(':', value)
@@ -294,8 +314,10 @@ function parse_int(value::AbstractString, base::Int)
 end
 
 
-function construct_yaml_float(constructor::Constructor, node::Node)
-    value = string(construct_scalar(constructor, node))
+construct_yaml_float(constructor::Constructor, node::Node) =
+    construct_parsed_scalar(parse_yaml_float, constructor, node)
+
+function parse_yaml_float(value::AbstractString)
     value = lowercase(replace(value, "_" => ""))
 
     if in(':', value)
@@ -460,10 +482,8 @@ function construct_undefined(constructor::Constructor, node::Node)
 end
 
 
-function construct_yaml_binary(constructor::Constructor, node::Node)
-    value = replace(string(construct_scalar(constructor, node)), "\n" => "")
-    base64decode(value)
-end
+construct_yaml_binary(constructor::Constructor, node::Node) =
+    construct_parsed_scalar(value -> base64decode(replace(value, "\n" => "")), constructor, node)
 
 const default_yaml_constructors = Dict{Union{String, Nothing}, Function}(
         "tag:yaml.org,2002:null"      => construct_yaml_null,

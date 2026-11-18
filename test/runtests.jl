@@ -495,9 +495,18 @@ end
 @testset "explicit float tags reject non-decimal text" begin
     # only a decimal that rounds to zero or infinity takes the arbitrary-precision path
     for input in ("!!float 0b101", "!!float 0b1e400", "!!float 1@5", "!!float 1@400", "!!float 0x1p2000")
-        @test_throws ArgumentError YAML.load(input)
+        @test_throws YAML.ConstructorError YAML.load(input)
     end
     @test YAML.load("!!float 1e400") == Inf
+end
+
+@testset "values that do not fit their explicit tag" begin
+    bad = String([0xd8]) # not valid UTF-8
+    for input in ("!!map x", "!!map [1]", "a: !!map b", "!!bool y", "!!bool " * bad, "!!int abc",
+                  "!!int " * bad, "!!float abc", "!!float 1" * bad, "!!binary 0")
+        @test_throws YAML.ConstructorError YAML.load(input)
+    end
+    @test_throws YAML.ConstructorError YAML.load("!!map x"; dicttype = Dict{String,Any})
 end
 
 # issue 114 - gracefully handle extra commas in flow collections
@@ -869,8 +878,8 @@ end
             @test YAML.load_file(path) === expected
         end
     end
-    @test_throws ArgumentError YAML.load("!!int 0b102")
-    @test_throws ArgumentError YAML.load("!!int 0b")
+    @test_throws YAML.ConstructorError YAML.load("!!int 0b102")
+    @test_throws YAML.ConstructorError YAML.load("!!int 0b")
     @test YAML.load("0b102") == "0b102"
     @test YAML.load("0b") == "0b"
     @test YAML.load("0b" * bitstring(typemax(Int))) === typemax(Int)
@@ -894,7 +903,7 @@ end
         @test YAML.load(YAML.yaml(Dict("k" => x))) == Dict("k" => x)
     end
     @test YAML.load("!!int 09" * "0"^25) == 9 * big(10)^25
-    @test_throws ArgumentError YAML.load("!!int 1 2")
+    @test_throws YAML.ConstructorError YAML.load("!!int 1 2")
 end
 
 @testset "octal integer construction" begin
