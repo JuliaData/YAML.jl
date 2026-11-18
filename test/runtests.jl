@@ -673,6 +673,14 @@ end
     end
 end
 
+@testset "multiline strings with leading spaces" begin
+    for text in ("  indented\nnext", " \nafter\nblank", "\n  indented\nnext\n", "  kept\nline\n\n", " \"quoted\"")
+        @test YAML.load(YAML.yaml(text)) == text
+        @test YAML.load(YAML.yaml(Dict("k" => text))) == Dict("k" => text)
+        @test YAML.load(YAML.yaml([Dict("k" => [text])])) == [Dict("k" => [text])]
+    end
+end
+
 @testset "binary integer construction" begin
     for (input, expected) in (("0b0", 0), ("0b1", 1), ("0b1010", 10),
                               ("0b10_01", 9), ("+0b10_01", 9), ("-0b10_01", -9)),
