@@ -615,6 +615,13 @@ end
     @test e.problem_mark.line == 3
 end
 
+@testset "issue #135" begin
+    @test YAML.load(YAML.yaml(Dict("m" => [1 2; 3 4]))) == Dict("m" => [[1, 3], [2, 4]])
+    @test YAML.load(YAML.yaml([[1 2; 3 4]])) == [[[1, 3], [2, 4]]]
+    @test YAML.load(YAML.yaml(reshape(1:8, 2, 2, 2))) == [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
+    @test YAML.load(YAML.yaml(Dict("m" => zeros(0, 3)))) == Dict("m" => [])
+end
+
 # int resolver: a leading-zero scalar that isn't valid octal must stay a string,
 # not fall into construct_yaml_int's base-8 parse and throw
 @testset "int resolver leading zero" begin
