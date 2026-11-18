@@ -935,4 +935,16 @@ end
     @test YAML.load("_1000") == "_1000"
 end
 
+# The resolver tries its patterns only on text that starts with one of the listed characters,
+# so no pattern may match text that starts with an ASCII character outside the list.
+@testset "implicit resolver first characters" begin
+    rests = ["", "0", "1", "00", "_0", ".5", "e5", "x1f", "b1", "o7", "inf", "nan", "rue", "RUE", "alse",
+             "ull", "ULL", "es", "o", "n", "ff", "<", "=", "!", "\n", "-01-01", "001-01-01 00:00:00"]
+    missed = [string(c, rest) for c in Char(0):Char(127), rest in rests
+              if !(c in YAML.IMPLICIT_FIRST_CHARS) &&
+                 any(r -> occursin(r[2], string(c, rest)), YAML.default_implicit_resolvers)]
+    @test isempty(missed)
+    @test YAML.load("- \"\"\n-\n- ~\n- trUE\n- True\n- 0x1f\n- é") == ["", nothing, nothing, "trUE", true, 31, "é"]
+end
+
 end  # module
