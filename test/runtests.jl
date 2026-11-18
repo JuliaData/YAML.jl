@@ -708,6 +708,11 @@ end
     end
 end
 
+@testset "Pair keys and values are written as one-entry mappings" begin
+    @test YAML.load(YAML.yaml(Dict((1 => 2) => 3))) == Dict(Dict(1 => 2) => 3)
+    @test YAML.load(YAML.yaml(Dict("a" => (1 => 2)))) == Dict("a" => Dict(1 => 2))
+end
+
 @testset "flow scalar line folding" begin
     for linebreak in ("\n", "\r\n", "\r", "\u0085"), delimiter in ("'", "\"", "")
         for (count, expected) in ((1, "first second"), (2, "first\nsecond"), (3, "first\n\nsecond"))

@@ -58,9 +58,9 @@ const Sequence = Union{AbstractVector,Tuple,AbstractSet}
 _print(io::IO, x::Union{Tuple,AbstractSet}, level::Int=0, ignore_level::Bool=false) =
     _print(io, collect(x), level, ignore_level)
 
-# Julia values written as YAML mappings. YAML has no complex type, so a complex number is
-# written as its parts, as JSON.jl does.
-const Mapping = Union{AbstractDict,NamedTuple,Complex}
+# Julia values written as YAML mappings. A `Pair` is a one-entry mapping. YAML has no complex
+# type, so a complex number is written as its parts, as JSON.jl does.
+const Mapping = Union{AbstractDict,NamedTuple,Complex,Pair}
 
 _print(io::IO, x::NamedTuple, level::Int=0, ignore_level::Bool=false) =
     _print(io, pairs(x), level, ignore_level)
