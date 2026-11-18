@@ -109,7 +109,7 @@ end
 # '!handle!suffix'
 struct TagToken <: Token
     span::Span
-    value
+    value::Tuple{Union{String, Nothing}, String}
 end
 
 # A scalar.
