@@ -71,12 +71,13 @@ end
 
 # print a single key-value pair
 function _print(io::IO, pair::Pair, level::Int=0, ignore_level::Bool=false)
-    key = if pair[1] === nothing
+    k = pair[1] isa Union{Symbol,AbstractChar} ? string(pair[1]) : pair[1] # text keys are strings
+    key = if k === nothing
         "null" # this is what the YAML parser interprets as 'nothing'
-    elseif pair[1] isa AbstractString && string_key_needs_quoting(pair[1])
-        string("\"", escape_yaml_string(pair[1]), "\"") # special keys that require quoting
+    elseif k isa AbstractString && string_key_needs_quoting(k)
+        string("\"", escape_yaml_string(k), "\"") # special keys that require quoting
     else
-        string(pair[1]) # any "normal" case
+        string(k) # any "normal" case
     end
 
     print(io, _indent(key * ":", level, ignore_level)) # print the key
@@ -164,6 +165,10 @@ end
 
 _print(io::IO, val::Nothing, level::Int=0, ignore_level::Bool=false) =
     println(io, "~") # this is what the YAML parser interprets as nothing
+
+# Symbols and Chars hold text, so they are written as strings
+_print(io::IO, val::Union{Symbol,AbstractChar}, level::Int=0, ignore_level::Bool=false) =
+    _print(io, string(val), level, ignore_level)
 
 # _print any other single value
 _print(io::IO, val::Any, level::Int=0, ignore_level::Bool=false) =
