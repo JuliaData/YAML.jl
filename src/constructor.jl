@@ -265,18 +265,32 @@ function construct_yaml_int(constructor::Constructor, node::Node)
     end
 
     if startswith(value, "0b") || startswith(value, "+0b") || startswith(value, "-0b")
-        return parse(Int, value)
+        return parse_int(replace(value, "0b" => "", count = 1), 2)
     elseif length(value) > 2 && value[1] == '0' && (value[2] == 'x' || value[2] == 'X')
-        return parse(Int, value[3:end], base = 16)
+        return parse_int(value[3:end], 16)
     elseif startswith(value, "0o")
-        return parse(Int, value[3:end], base = 8)
+        return parse_int(value[3:end], 8)
     elseif length(value) > 1 && value[1] == '0'
         # A leading zero marks a YAML 1.1 octal integer. With an 8 or 9 it is
         # decimal, as YAML 1.2 reads every leading-zero integer.
-        return something(tryparse(Int, value, base = 8), parse(Int, value, base = 10))
+        return parse_int(value, all(c -> '0' <= c <= '7', value) ? 8 : 10)
     else
-        return parse(Int, value, base = 10)
+        return parse_int(value, 10)
     end
+end
+
+# Parse an integer as an Int, or as the first of Int64, Int128, and BigInt that holds it, as
+# Julia reads integer literals. GMP skips whitespace, so only digit text reaches BigInt.
+function parse_int(value::AbstractString, base::Int)
+    for T in (Int, Int64, Int128)
+        x = tryparse(T, value, base = base)
+        x === nothing || return x
+    end
+    if occursin(r"^[-+]?[0-9a-f]+$", value)
+        x = tryparse(BigInt, value, base = base)
+        x === nothing || return x
+    end
+    return parse(Int, value, base = base)
 end
 
 
