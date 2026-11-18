@@ -131,13 +131,16 @@ end
 
 # _print a single string
 function _print(io::IO, str::AbstractString, level::Int=0, ignore_level::Bool=false)
+    # A reader takes a literal block's indentation from its first line with text. When that line
+    # starts with a space, or with a tab (libyaml rejects one there), the header states the
+    # indentation instead. Readers disagree on what a top-level header counts from, so a top-level
+    # string that needs one is quoted.
+    needs_indicator = startswith(lstrip(str, '\n'), (' ', '\t'))
     # Use literal blocks only when non-printable characters are LF or TAB.
     if (occursin('\n', strip(str)) || occursin('"', str)) &&
-       all(c -> isprint(c) || c == '\n' || c == '\t', str)
-        # A reader takes the indentation from the first line with text. When that line starts with
-        # a space, or with a tab (libyaml rejects one there), the header states the indentation
-        # instead. It is 2 because the content sits two spaces deeper than its parent.
-        header = startswith(lstrip(str, '\n'), (' ', '\t')) ? "|2" : "|"
+       all(c -> isprint(c) || c == '\n' || c == '\t', str) && !(level == 0 && needs_indicator)
+        # The indicator is 2 because the content sits two spaces deeper than its parent.
+        header = needs_indicator ? "|2" : "|"
         if endswith(str, "\n\n")   # multiple trailing newlines: keep
             println(io, header, "+")
             str = str[1:end-1]     # otherwise, we have one too many

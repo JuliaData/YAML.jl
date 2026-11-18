@@ -753,6 +753,8 @@ end
 
 @testset "multiline strings with leading spaces" begin
     for text in ("  indented\nnext", " \nafter\nblank", "\n  indented\nnext\n", "  kept\nline\n\n", " \"quoted\"")
+        # readers disagree on what a top-level indentation indicator counts from, so these are quoted
+        @test startswith(YAML.yaml(text), '"')
         @test YAML.load(YAML.yaml(text)) == text
         @test YAML.load(YAML.yaml(Dict("k" => text))) == Dict("k" => text)
         @test YAML.load(YAML.yaml([Dict("k" => [text])])) == [Dict("k" => [text])]
@@ -762,7 +764,7 @@ end
 @testset "multiline strings with leading tabs" begin
     # libyaml and go-yaml reject a tab where they detect a block's indentation, so the header states it
     for text in ("\tx\ny", "\n\tx\ny\n", "\t\"quoted\"", "\tkept\nline\n\n")
-        @test startswith(YAML.yaml(text), "|2")
+        @test startswith(YAML.yaml(text), '"')
         @test startswith(YAML.yaml(Dict("k" => text)), "k: |2")
         @test YAML.load(YAML.yaml(text)) == text
         @test YAML.load(YAML.yaml([Dict("k" => [text])])) == [Dict("k" => [text])]
