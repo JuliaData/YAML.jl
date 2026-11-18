@@ -390,6 +390,13 @@ end
     @test collect(YAML.load_all("!tagged x", constructors)) == ["tagged x"]
 end
 
+@testset "percent-encoded UTF-8 in tags" begin
+    constructors = Dict("tag:example.com,2000:app/é日本" => (c, n) -> "tagged " * YAML.construct_scalar(c, n))
+    @test YAML.load("!<tag:example.com,2000:app/%C3%A9%E6%97%A5%E6%9C%AC> x", constructors) == "tagged x"
+    @test YAML.load("%TAG !e! tag:example.com,2000:app/%C3%A9\n--- !e!%E6%97%A5%E6%9C%AC x", constructors) == "tagged x"
+    @test_throws YAML.ScannerError YAML.load("!<tag:example.com,2000:app/%FF> x", constructors)
+end
+
 
 # also check that things break correctly
 @test_throws YAML.ConstructorError YAML.load_file(
