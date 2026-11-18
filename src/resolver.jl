@@ -16,15 +16,22 @@ const default_implicit_resolvers =
           r"^(?:true|True|TRUE|false|False|FALSE)$"x),
 
          # In decimal integers and floats, underscores may separate digits after the
-         # first, as in YAML 1.1.
+         # first, as in YAML 1.1. As in YAML 1.1, an unsigned leading-zero scalar is an int
+         # only when all its digits are octal; others, such as zero-padded IDs that PyYAML
+         # writes unquoted, stay strings (#41, #252). Signed scalars are read as decimal.
          ("tag:yaml.org,2002:int",
           r"^(?:[-+]?0b[0-1_]+
-            |[-+]? [0-9][0-9_]*
+            |[-+] [0-9][0-9_]*
             |0o [0-7]+
+            |0 [0-7_]*
+            |[1-9] [0-9_]*
             |0x [0-9a-fA-F]+)$"x),
 
+         # a float needs a dot or exponent, so bare digit runs rejected by the int regex
+         # (e.g. "089") stay strings instead of becoming floats
          ("tag:yaml.org,2002:float",
-          r"^(?:[-+]? ( \. [0-9][0-9_]* | [0-9][0-9_]* ( \. [0-9_]* )? ) ( [eE] [-+]? [0-9]+ )?
+          r"^(?:[-+]? (?: \. [0-9][0-9_]* | [0-9][0-9_]* \. [0-9_]* ) (?: [eE] [-+]? [0-9]+ )?
+            |[-+]? [0-9][0-9_]* [eE] [-+]? [0-9]+
             |[-+]? (?: \.inf | \.Inf | \.INF )
             |\.nan | \.NaN | \.NAN)$"x),
 

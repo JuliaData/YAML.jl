@@ -538,6 +538,36 @@ end
     @test e.problem_mark.line == 3
 end
 
+# int resolver: a leading-zero scalar that isn't valid octal must stay a string,
+# not fall into construct_yaml_int's base-8 parse and throw
+@testset "int resolver leading zero" begin
+    @test YAML.load("00969011030760010060001") == "00969011030760010060001"
+    @test YAML.load("0096901103076001006") == "0096901103076001006"
+    @test YAML.load("014") == 12          # bare-leading-zero octal still parses
+    @test YAML.load("0") == 0
+    @test YAML.load("10") == 10
+    @test YAML.load("089") == "089"       # leading zero, non-octal digit
+    # signed scalars are parsed as base 10, so leading zeros are fine there
+    @test YAML.load("-014") === -14
+    @test YAML.load("+014") === 14
+    @test YAML.load("-089") === -89
+    # a dot or exponent marks a float even with leading zeros
+    @test YAML.load("01.5") === 1.5
+    @test YAML.load("001.5") === 1.5
+    @test YAML.load("+01.5") === 1.5
+    @test YAML.load("-01.5") === -1.5
+    @test YAML.load("00.5") === 0.5
+    @test YAML.load("01e2") === 100.0
+    @test YAML.load("-01e2") === -100.0
+    @test YAML.load("1e5") === 100000.0
+    # 0o scalars must still resolve as int so custom int constructors receive them
+    ints = Dict{String,Function}("tag:yaml.org,2002:int" => (c, n) -> parse(BigInt, YAML.construct_scalar(c, n)))
+    @test YAML.load("0o14", ints) == 12
+    @test YAML.load("0o777777777777777777777777", ints) == parse(BigInt, "0o777777777777777777777777")
+    # Roman ASDF ID that PyYAML writes unquoted; it threw OverflowError when read as decimal (#252)
+    @test YAML.load("observation_id: 0105403008001001001031010001") == Dict("observation_id" => "0105403008001001001031010001")
+end
+
 @testset "empty input and null documents" begin
     @test YAML.missing_to_nothing(YAML.MissingDocument()) === nothing
     @test YAML.missing_to_nothing("present") === "present"
@@ -676,6 +706,8 @@ end
 @testset "leading-zero integer construction" begin
     for (input, expected) in (("012", 10), ("07", 7), ("08", 8), ("019", 19), ("-08", -8)),
             tag in ("", "!!int ")
+        # untagged, a non-octal leading-zero scalar stays a string, as in YAML 1.1 (#252)
+        expected = tag == "" && input in ("08", "019") ? input : expected
         @test YAML.load(tag * input) === expected
         @test YAML.load("value: " * tag * input) == Dict("value" => expected)
     end
@@ -683,7 +715,7 @@ end
 end
 
 @testset "underscore digit separators" begin
-    for (input, expected) in (("1_000", 1000), ("-1_000", -1000), ("+1_000", 1000), ("0_8", 8),
+    for (input, expected) in (("1_000", 1000), ("-1_000", -1000), ("+1_000", 1000), ("0_8", "0_8"),
                               ("1_000.5", 1000.5), ("-1_000.25", -1000.25), ("1_000e2", 100000.0),
                               (".5_0", 0.5))
         @test YAML.load(input) === expected
