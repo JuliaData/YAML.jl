@@ -1626,7 +1626,8 @@ end
 
 
 function scan_uri_escapes(stream::TokenStream, name::String, start_mark::Mark)::String
-    bytes = Char[]
+    mark = get_mark(stream)
+    bytes = UInt8[]
     while peek(stream.input) == '%'
         forward!(stream.input)
         # check ns-hex-digit
@@ -1637,8 +1638,12 @@ function scan_uri_escapes(stream::TokenStream, name::String, start_mark::Mark)::
                 "expected URI escape sequence of 2 hexadecimal digits, but found '$c'", get_mark(stream),
             ))
         end
-        push!(bytes, Char(parse(Int, prefix(stream.input, 2), base=16)))
+        push!(bytes, parse(UInt8, prefix(stream.input, 2), base=16))
         forwardchars!(stream, 2)
     end
-    String(bytes)
+    # the escapes encode UTF-8 bytes, so a multi-byte character spans several of them
+    str = String(bytes)
+    isvalid(str) || throw(ScannerError("while scanning a $name", start_mark,
+                                       "expected URI escapes that encode UTF-8", mark))
+    str
 end
