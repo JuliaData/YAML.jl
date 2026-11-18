@@ -58,6 +58,19 @@ const Sequence = Union{AbstractVector,Tuple,AbstractSet}
 _print(io::IO, x::Union{Tuple,AbstractSet}, level::Int=0, ignore_level::Bool=false) =
     _print(io, collect(x), level, ignore_level)
 
+# Julia values written as YAML mappings. YAML has no complex type, so a complex number is
+# written as its parts, as JSON.jl does.
+const Mapping = Union{AbstractDict,NamedTuple,Complex}
+
+_print(io::IO, x::NamedTuple, level::Int=0, ignore_level::Bool=false) =
+    _print(io, pairs(x), level, ignore_level)
+
+_print(io::IO, z::Complex, level::Int=0, ignore_level::Bool=false) =
+    _print(io, (re = real(z), im = imag(z)), level, ignore_level)
+
+# a nonempty collection key or value starts on the line after its '?' or key
+starts_block(x) = x isa Union{Mapping,Sequence} && !isempty(x)
+
 # recursively print an array
 function _print(io::IO, arr::AbstractVector, level::Int=0, ignore_level::Bool=false)
     if isempty(arr)
@@ -78,16 +91,22 @@ end
 # print a single key-value pair
 function _print(io::IO, pair::Pair, level::Int=0, ignore_level::Bool=false)
     k = pair[1] isa Union{Symbol,AbstractChar} ? string(pair[1]) : pair[1] # text keys are strings
-    key = if k === nothing || k === missing
-        "null" # this is what the YAML parser interprets as 'nothing'
-    elseif k isa AbstractString && string_key_needs_quoting(k)
-        string("\"", escape_yaml_string(k), "\"") # special keys that require quoting
+    if starts_block(k)
+        # a collection key is written as an explicit key: '?', the key's lines, then ':'
+        println(io, _indent("?", level, ignore_level))
+        _print(io, k, level + 1)
+        print(io, _indent(":", level))
     else
-        string(k) # any "normal" case
+        key = if k === nothing || k === missing
+            "null" # this is what the YAML parser interprets as 'nothing'
+        elseif k isa AbstractString
+            string_key_needs_quoting(k) ? string("\"", escape_yaml_string(k), "\"") : k
+        else
+            chomp(sprint(_print, k)) # other keys are written as values are, such as .inf or []
+        end
+        print(io, _indent(key * ":", level, ignore_level)) # print the key
     end
-
-    print(io, _indent(key * ":", level, ignore_level)) # print the key
-    if (pair[2] isa AbstractDict || pair[2] isa Sequence) && !isempty(pair[2])
+    if starts_block(pair[2])
         print(io, "\n") # a line break is needed before a recursive structure
     else
         print(io, " ") # a whitespace character is needed before a single value
@@ -176,9 +195,9 @@ end
 _print(io::IO, val::Union{Nothing,Missing}, level::Int=0, ignore_level::Bool=false) =
     println(io, "~") # this is what the YAML parser interprets as nothing
 
-# YAML has no rational type, so a rational is written as the nearest float, which every reader
-# loads as a number
-_print(io::IO, val::Rational, level::Int=0, ignore_level::Bool=false) =
+# YAML has no rational or irrational type, so these are written as the nearest float, which
+# every reader loads as a number
+_print(io::IO, val::Union{Rational,AbstractIrrational}, level::Int=0, ignore_level::Bool=false) =
     _print(io, float(val), level, ignore_level)
 
 # Symbols and Chars hold text, so they are written as strings

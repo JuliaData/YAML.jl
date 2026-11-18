@@ -113,8 +113,12 @@ YAML.load("speed: !unit/kmh 80", nothing, units) # Dict("speed" => ("kmh", "80")
 
 Similar to reading files, you can emit Julia objects to YAML files by calling
 `write_file`, or to a string object by calling `write`. Tuples and sets are
-written as sequences, `missing` as null like `nothing`, and a rational as the
-nearest float, because YAML has no rational type.
+written as sequences, named tuples as mappings, `missing` as null like
+`nothing`, and rationals and irrationals such as `π` as the nearest float,
+because YAML has no type for them. A complex number is written as a mapping
+with keys `re` and `im`. Dictionary keys that are not text are written as their
+values would be, and a nonempty collection key as an explicit `?` key, so a
+`Dict((1, 2) => 3)` loads back as `Dict([1, 2] => 3)`.
 
 For example, you can reproduce the above file from the variable `data`
 
