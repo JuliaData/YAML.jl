@@ -697,6 +697,30 @@ end
     @test YAML.load(YAML.yaml(Dict(missing => 1))) == Dict(nothing => 1)
 end
 
+@testset "named tuples, irrationals, complex numbers, and non-string keys load back" begin
+    for (x, expected) in (((a = 1, b = "x: y"), Dict("a" => 1, "b" => "x: y")), (NamedTuple(), Dict()),
+                          ((a = (b = [1, 2],),), Dict("a" => Dict("b" => [1, 2]))), (pi, Float64(pi)),
+                          (1 + 2im, Dict("re" => 1, "im" => 2)), (1.5 - Inf*im, Dict("re" => 1.5, "im" => -Inf)))
+        @test isequal(YAML.load(YAML.yaml(x)), expected)
+        @test isequal(YAML.load(YAML.yaml(Dict("k" => x))), Dict("k" => expected))
+        @test isequal(YAML.load(YAML.yaml([x])), [expected])
+    end
+    # keys are written as values are; a nonempty collection key is written as an explicit '?' key
+    for (k, expected) in ((1.5, 1.5), (Inf, Inf), (NaN, NaN), (1e300, 1e300), (1//2, 0.5), (pi, Float64(pi)),
+                          ((1, 2), [1, 2]), ((1, "a: b"), [1, "a: b"]), ([1, 2], [1, 2]), ((), []),
+                          (Dict("a" => 1), Dict("a" => 1)), ((a = 1,), Dict("a" => 1)), (1 + 2im, Dict("re" => 1, "im" => 2)))
+        @test isequal(YAML.load(YAML.yaml(Dict(k => 1))), Dict(expected => 1))
+        @test isequal(YAML.load(YAML.yaml(Dict(k => [Dict("v" => 1)]))), Dict(expected => [Dict("v" => 1)]))
+        @test isequal(YAML.load(YAML.yaml(Dict("k" => Dict(k => 1)))), Dict("k" => Dict(expected => 1)))
+        @test isequal(YAML.load(YAML.yaml([Dict(k => 1, "z" => 2)])), [Dict(expected => 1, "z" => 2)])
+    end
+end
+
+@testset "Pair keys and values are written as one-entry mappings" begin
+    @test YAML.load(YAML.yaml(Dict((1 => 2) => 3))) == Dict(Dict(1 => 2) => 3)
+    @test YAML.load(YAML.yaml(Dict("a" => (1 => 2)))) == Dict("a" => Dict(1 => 2))
+end
+
 @testset "flow scalar line folding" begin
     for linebreak in ("\n", "\r\n", "\r", "\u0085"), delimiter in ("'", "\"", "")
         for (count, expected) in ((1, "first second"), (2, "first\nsecond"), (3, "first\n\nsecond"))
