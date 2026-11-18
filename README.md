@@ -112,7 +112,9 @@ YAML.load("speed: !unit/kmh 80", nothing, units) # Dict("speed" => ("kmh", "80")
 ## Writing to YAML
 
 Similar to reading files, you can emit Julia objects to YAML files by calling
-`write_file`, or to a string object by calling `write`.
+`write_file`, or to a string object by calling `write`. Tuples and sets are
+written as sequences, `missing` as null like `nothing`, and a rational as the
+nearest float, because YAML has no rational type.
 
 For example, you can reproduce the above file from the variable `data`
 
