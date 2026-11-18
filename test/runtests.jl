@@ -445,6 +445,18 @@ order_two = OrderedDict(dict_content[[2,1]]...) # reverse order
 @test YAML.load(YAML.yaml(Dict("a" => Dict()))) == Dict("a" => Dict())
 @test YAML.load(YAML.yaml(Dict("a" => []))) == Dict("a" => [])
 
+@testset "floats of every type load back as floats" begin
+    for x in (NaN32, Inf32, -Inf32, Float16(NaN), Float16(Inf), -Float16(Inf), big(NaN), big(Inf), -big(Inf),
+              1.5f0, 1f20, Float16(1e-5), 1e300, -1e300, 1e16, 1e-5, 5e-324, floatmax(Float64))
+        y = YAML.load(YAML.yaml(Dict("k" => x)))["k"]
+        @test y isa Float64 && isequal(oftype(x, y), x)
+    end
+    # YAML 1.1 readers such as PyYAML and Ruby's Psych read an unsigned exponent as a string
+    @test YAML.yaml(1e300) == "1.0e+300\n"
+    @test YAML.yaml(1f20) == "1.0e+20\n"
+    @test YAML.yaml(1e-5) == "1.0e-5\n"
+end
+
 # issue 114 - gracefully handle extra commas in flow collections
 @testset "issue114" begin
     @test YAML.load("[3,4,]") == [3,4]
