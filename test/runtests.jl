@@ -464,6 +464,16 @@ order_two = OrderedDict(dict_content[[2,1]]...) # reverse order
     @test YAML.yaml(1e-5) == "1.0e-5\n"
 end
 
+@testset "floats beyond the Float64 range" begin
+    # YAML readers round a float that is too large or too small for Float64 to infinity or zero
+    for (input, expected) in (("1e400", Inf), ("-1e400", -Inf), ("1e-400", 0.0), ("-1e-400", -0.0),
+                              ("1.8e308", Inf), ("2e-324", 0.0), ("1_0.e400", Inf), ("!!float 1e999", Inf))
+        @test isequal(YAML.load(input), expected)
+        @test isequal(YAML.load("k: [$input]"), Dict("k" => [expected]))
+    end
+    @test YAML.load(YAML.yaml(big"1e400")) == Inf
+end
+
 # issue 114 - gracefully handle extra commas in flow collections
 @testset "issue114" begin
     @test YAML.load("[3,4,]") == [3,4]
