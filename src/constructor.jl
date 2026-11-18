@@ -306,9 +306,14 @@ function construct_yaml_float(constructor::Constructor, node::Node)
     end
 
     x = tryparse(Float64, value)
-    # Julia rejects a value that rounds to zero or infinity, where YAML readers return
-    # 0.0 or Inf, so round it through BigFloat instead
-    return x === nothing ? Float64(parse(BigFloat, value)) : x
+    x === nothing || return x
+    # Julia rejects a decimal that rounds to zero or infinity, where YAML readers return
+    # 0.0 or Inf, so round it through BigFloat. Other text, such as MPFR's 0b and @ forms,
+    # fails with Float64's parse error.
+    if occursin(r"^[-+]?(?:[0-9]+\.?[0-9]*|\.[0-9]+)(?:e[-+]?[0-9]+)?$", value)
+        return Float64(parse(BigFloat, value))
+    end
+    return parse(Float64, value)
 end
 
 
