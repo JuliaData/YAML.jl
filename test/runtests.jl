@@ -397,6 +397,14 @@ end
     @test_throws YAML.ScannerError YAML.load("!<tag:example.com,2000:app/%FF> x", constructors)
 end
 
+@testset "non-specific tag" begin
+    # a lone "!" tag leaves the type to the resolver, as in PyYAML and Psych
+    @test YAML.load("x: !") == Dict("x" => nothing)
+    @test YAML.load("- !\n- ! a\n- ! 12") == [nothing, "a", 12]
+    @test YAML.load("! [1, 2]") == [1, 2]
+    @test YAML.load("! {a: 1}") == Dict("a" => 1)
+end
+
 
 # also check that things break correctly
 @test_throws YAML.ConstructorError YAML.load_file(
