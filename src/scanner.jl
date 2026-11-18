@@ -162,7 +162,8 @@ function forwardchars!(stream::TokenStream, k::Integer=1)
         forward!(stream.input)
         stream.index += 1
         # A CR followed by an LF is one line break, counted at the LF.
-        if in(c, "\n\u0085\u2028\u2029") || (c == '\r' && peek(stream.input) != '\n')
+        if c == '\n' || c == '\u0085' || c == '\u2028' || c == '\u2029' ||
+           (c == '\r' && peek(stream.input) != '\n')
             stream.line += 1
             stream.column = 0
         else
