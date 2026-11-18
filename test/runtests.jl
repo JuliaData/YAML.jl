@@ -242,6 +242,15 @@ const encodings = [
     @test YAML.load(IOBuffer(data)) == "test"
 end
 
+@testset "bytes that are not valid in the detected encoding" begin
+    # an unpaired UTF-16 surrogate, a UTF-32 code point beyond U+10FFFF, and a UTF-16 high
+    # surrogate followed by a character instead of a low surrogate
+    for bytes in (UInt8[0x2d, 0x00, 0x00, 0xdf, 0x00], UInt8[0x00, 0x00, 0x00, 0x78, 0x00, 0x11, 0x00, 0x00],
+                  UInt8[0xff, 0xfe, 0x78, 0x00, 0x00, 0xd8, 0x79, 0x00])
+        @test_throws YAML.ScannerError YAML.load(IOBuffer(bytes))
+    end
+end
+
 const multidoc_contents = """
 \ufeff---\r
 test: 1
