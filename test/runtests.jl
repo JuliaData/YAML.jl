@@ -718,6 +718,14 @@ end
     @test YAML.load("k: |\r  x\r  y\r") == Dict("k" => "x\ny\n")
 end
 
+@testset "text after a multi-line quoted scalar" begin
+    # a quoted scalar can end at the indentation column, where a key would be required
+    for input in ("a:\n  b: \"x\ny\"c", "a:\n  b: 'x\ny'c", "a:\n  b: \"x\ny\"[c]")
+        e = try YAML.load(input) catch e; e end
+        @test e isa YAML.ParserError && e.problem_mark.line == 3
+    end
+end
+
 @testset "escapes and quotes count toward key length and marks" begin
     # each character of an escape counts toward the 1024-character implicit key limit
     @test YAML.load("\"$("\\t"^511)\": 1\n") == Dict("\t"^511 => 1)
