@@ -20,6 +20,9 @@ end
 
 Write a YAML representation of some data (e.g. a dictionary or an array) to an IO stream,
 if provided, or return a string of that representation.
+
+A multidimensional array is written as nested sequences along its last dimension, so a
+matrix becomes a sequence of its columns.
 """
 function write(io::IO, data::Any, prefix::AbstractString="")
     print(io, prefix) # print the prefix, e.g. a comment at the beginning of the file
@@ -53,7 +56,7 @@ function _print(io::IO, dict::AbstractDict, level::Int=0, ignore_level::Bool=fal
 end
 
 # Julia collections written as YAML sequences
-const Sequence = Union{AbstractVector,Tuple,AbstractSet}
+const Sequence = Union{AbstractArray,Tuple,AbstractSet}
 
 _print(io::IO, x::Union{Tuple,AbstractSet}, level::Int=0, ignore_level::Bool=false) =
     _print(io, collect(x), level, ignore_level)
@@ -86,6 +89,15 @@ function _print(io::IO, arr::AbstractVector, level::Int=0, ignore_level::Bool=fa
             end
         end
     end
+end
+
+# YAML has no multidimensional sequences. Write an array as a sequence of its slices along the
+# last dimension, so a matrix becomes a sequence of its columns and `reduce(hcat, ...)` on the
+# loaded value rebuilds it.
+function _print(io::IO, arr::AbstractArray, level::Int=0, ignore_level::Bool=false)
+    n = ndims(arr)
+    slices = isempty(arr) ? [] : [selectdim(arr, n, i) for i in axes(arr, n)]
+    _print(io, slices, level, ignore_level)
 end
 
 # print a single key-value pair
