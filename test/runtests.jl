@@ -659,6 +659,16 @@ end
     @test YAML.load("value: \" first  \"\n") == Dict("value" => " first  ")
 end
 
+@testset "long implicit keys and lone CR line breaks" begin
+    # YAML allows implicit keys of up to 1024 characters
+    for n in (513, 1024)
+        @test YAML.load("$("k"^n): 1\n") == Dict("k"^n => 1)
+    end
+    @test YAML.load("a: 1\rb:\r  c: 2\r") == Dict("a" => 1, "b" => Dict("c" => 2))
+    @test YAML.load("- a\r- b\r") == ["a", "b"]
+    @test YAML.load("k: |\r  x\r  y\r") == Dict("k" => "x\ny\n")
+end
+
 @testset "control characters in quoted and multiline strings" begin
     controls = ('\0', '\x01', '\a', '\b', '\v', '\f', '\r', '\e', '\x7f', '\u0080', '\u0085', '\u009f', '\u2028', '\u2029')
     for control in controls, text in ("quote \" " * control * " after", "first\nsecond " * control * " after")
