@@ -305,7 +305,10 @@ function construct_yaml_float(constructor::Constructor, node::Node)
         end
     end
 
-    return parse(Float64, value)
+    x = tryparse(Float64, value)
+    # Julia rejects a value that rounds to zero or infinity, where YAML readers return
+    # 0.0 or Inf, so round it through BigFloat instead
+    return x === nothing ? Float64(parse(BigFloat, value)) : x
 end
 
 
