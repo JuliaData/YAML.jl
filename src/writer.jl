@@ -127,13 +127,17 @@ function _print(io::IO, str::AbstractString, level::Int=0, ignore_level::Bool=fa
     # Use literal blocks only when non-printable characters are LF or TAB.
     if (occursin('\n', strip(str)) || occursin('"', str)) &&
        all(c -> isprint(c) || c == '\n' || c == '\t', str)
+        # A reader takes the indentation from the first line with text. When that line starts with
+        # a space, the header states the indentation instead. It is 2 because the content sits two
+        # spaces deeper than its parent.
+        header = startswith(lstrip(str, '\n'), ' ') ? "|2" : "|"
         if endswith(str, "\n\n")   # multiple trailing newlines: keep
-            println(io, "|+")
+            println(io, header, "+")
             str = str[1:end-1]     # otherwise, we have one too many
         elseif endswith(str, "\n") # one trailing newline: clip
-            println(io, "|")
+            println(io, header)
         else                       # no trailing newlines: strip
-            println(io, "|-")
+            println(io, header, "-")
         end
         indent = repeat("  ", max(level, 1))
         for line in split(str, "\n")
