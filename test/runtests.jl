@@ -790,7 +790,26 @@ end
     @test YAML.load("0b") == "0b"
     @test YAML.load("0b" * bitstring(typemax(Int))) === typemax(Int)
     @test YAML.load("-0b1" * repeat("0", 8 * sizeof(Int) - 1)) === typemin(Int)
-    @test_throws OverflowError YAML.load("0b1" * repeat("0", 8 * sizeof(Int) - 1))
+    @test YAML.load("0b1" * repeat("0", 8 * sizeof(Int) - 1)) === Int128(typemax(Int)) + 1
+end
+
+@testset "integers beyond Int64" begin
+    # as with Julia integer literals, an integer that doesn't fit an Int loads as an Int128,
+    # and one that doesn't fit an Int128 loads as a BigInt
+    for (input, expected) in (("9223372036854775807", typemax(Int64)), ("9223372036854775808", Int128(2)^63),
+                              ("-9223372036854775809", -Int128(2)^63 - 1), ("170141183460469231731687303715884105727", typemax(Int128)),
+                              ("170141183460469231731687303715884105728", big(2)^127), ("1_000_000_000_000_000_000_000", Int128(10)^21),
+                              ("0x10000000000000000", Int128(2)^64), ("0o1" * "0"^21, Int128(2)^63),
+                              ("01" * "0"^21, Int128(2)^63), ("-0b1" * "0"^64, -Int128(2)^64),
+                              ("0x1" * "0"^32, big(2)^128))
+        @test YAML.load(input) == expected && typeof(YAML.load(input)) == typeof(expected)
+        @test YAML.load("!!int " * input) == expected
+    end
+    for x in (Int128(2)^100, -big(10)^50)
+        @test YAML.load(YAML.yaml(Dict("k" => x))) == Dict("k" => x)
+    end
+    @test YAML.load("!!int 09" * "0"^25) == 9 * big(10)^25
+    @test_throws ArgumentError YAML.load("!!int 1 2")
 end
 
 @testset "octal integer construction" begin
