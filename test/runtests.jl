@@ -640,6 +640,16 @@ end
     end
 end
 
+@testset "Symbol and Char values load back as strings" begin
+    for x in (Symbol("true"), :null, Symbol("1"), Symbol("a: b"), Symbol("#x"), Symbol("- a"),
+              Symbol(""), Symbol("two\nlines"), '-', '#', ':', '"', '\'', '1', ' ', '\t', '\n')
+        s = string(x)
+        @test YAML.load(YAML.yaml(Dict("k" => x))) == Dict("k" => s)
+        @test YAML.load(YAML.yaml([x])) == [s]
+        @test YAML.load(YAML.yaml(Dict(x => 1))) == Dict(s => 1)
+    end
+end
+
 @testset "flow scalar line folding" begin
     for linebreak in ("\n", "\r\n", "\r", "\u0085"), delimiter in ("'", "\"", "")
         for (count, expected) in ((1, "first second"), (2, "first\nsecond"), (3, "first\n\nsecond"))
