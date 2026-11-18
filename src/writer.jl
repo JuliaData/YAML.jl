@@ -20,6 +20,9 @@ end
 
 Write a YAML representation of some data (e.g. a dictionary or an array) to an IO stream,
 if provided, or return a string of that representation.
+
+A multidimensional array is written as nested sequences along its last dimension, so a
+matrix becomes a sequence of its columns.
 """
 function write(io::IO, data::Any, prefix::AbstractString="")
     print(io, prefix) # print the prefix, e.g. a comment at the beginning of the file
@@ -58,7 +61,7 @@ function _print(io::IO, arr::AbstractVector, level::Int=0, ignore_level::Bool=fa
         println(io, "[]")
     else
         for elem in arr
-            if elem isa AbstractVector && !isempty(elem) # nonempty vectors of vectors must be handled differently
+            if elem isa AbstractArray && !isempty(elem) # nonempty nested arrays must be handled differently
                 print(io, _indent("-\n", level))
                 _print(io, elem, level + 1)
             else
@@ -67,6 +70,15 @@ function _print(io::IO, arr::AbstractVector, level::Int=0, ignore_level::Bool=fa
             end
         end
     end
+end
+
+# YAML has no multidimensional sequences. Write an array as a sequence of its slices along the
+# last dimension, so a matrix becomes a sequence of its columns and `reduce(hcat, ...)` on the
+# loaded value rebuilds it.
+function _print(io::IO, arr::AbstractArray, level::Int=0, ignore_level::Bool=false)
+    n = ndims(arr)
+    slices = isempty(arr) ? [] : [selectdim(arr, n, i) for i in axes(arr, n)]
+    _print(io, slices, level, ignore_level)
 end
 
 # print a single key-value pair
@@ -80,7 +92,7 @@ function _print(io::IO, pair::Pair, level::Int=0, ignore_level::Bool=false)
     end
 
     print(io, _indent(key * ":", level, ignore_level)) # print the key
-    if (pair[2] isa AbstractDict || pair[2] isa AbstractVector) && !isempty(pair[2])
+    if (pair[2] isa AbstractDict || pair[2] isa AbstractArray) && !isempty(pair[2])
         print(io, "\n") # a line break is needed before a recursive structure
     else
         print(io, " ") # a whitespace character is needed before a single value
