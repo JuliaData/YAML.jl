@@ -790,12 +790,12 @@ end
     @test YAML.load("0b") == "0b"
     @test YAML.load("0b" * bitstring(typemax(Int))) === typemax(Int)
     @test YAML.load("-0b1" * repeat("0", 8 * sizeof(Int) - 1)) === typemin(Int)
-    @test YAML.load("0b1" * repeat("0", 8 * sizeof(Int) - 1)) === Int128(typemax(Int)) + 1
+    @test YAML.load("0b1" * repeat("0", 8 * sizeof(Int) - 1)) == Int128(typemax(Int)) + 1
 end
 
 @testset "integers beyond Int64" begin
-    # as with Julia integer literals, an integer that doesn't fit an Int loads as an Int128,
-    # and one that doesn't fit an Int128 loads as a BigInt
+    # as with Julia integer literals, an integer that doesn't fit an Int loads as the first of
+    # Int64, Int128, and BigInt that holds it
     for (input, expected) in (("9223372036854775807", typemax(Int64)), ("9223372036854775808", Int128(2)^63),
                               ("-9223372036854775809", -Int128(2)^63 - 1), ("170141183460469231731687303715884105727", typemax(Int128)),
                               ("170141183460469231731687303715884105728", big(2)^127), ("1_000_000_000_000_000_000_000", Int128(10)^21),

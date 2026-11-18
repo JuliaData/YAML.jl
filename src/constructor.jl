@@ -279,13 +279,13 @@ function construct_yaml_int(constructor::Constructor, node::Node)
     end
 end
 
-# Parse an integer as an Int, or as an Int128 or BigInt when it doesn't fit, as Julia reads
-# integer literals. GMP skips whitespace, so only digit text reaches BigInt.
+# Parse an integer as an Int, or as the first of Int64, Int128, and BigInt that holds it, as
+# Julia reads integer literals. GMP skips whitespace, so only digit text reaches BigInt.
 function parse_int(value::AbstractString, base::Int)
-    x = tryparse(Int, value, base = base)
-    x === nothing || return x
-    x = tryparse(Int128, value, base = base)
-    x === nothing || return x
+    for T in (Int, Int64, Int128)
+        x = tryparse(T, value, base = base)
+        x === nothing || return x
+    end
     if occursin(r"^[-+]?[0-9a-f]+$", value)
         x = tryparse(BigInt, value, base = base)
         x === nothing || return x
