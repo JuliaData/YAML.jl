@@ -87,6 +87,27 @@ using DataStructures
 data = YAML.load_file("test.yml"; dicttype=()->DefaultDict{String,Any}(Missing))
 ```
 
+To read application-specific tags, pass a `Dict` that maps each tag to a function.
+The function receives the constructor and the node, and returns the Julia value.
+`YAML.construct_scalar`, `YAML.construct_sequence`, and `YAML.construct_mapping`
+read the contents of a node.
+
+```julia
+@enum AgeGroup child adult senior
+constructors = Dict("!agegroup" => (constructor, node) ->
+    AgeGroup(parse(Int, YAML.construct_scalar(constructor, node))))
+YAML.load("- !agegroup 1\n- !agegroup 2", constructors) # [adult, senior]
+```
+
+To read every tag that starts with a prefix, pass a second `Dict`. Its functions
+also receive the rest of the tag.
+
+```julia
+units = Dict("!unit/" => (constructor, suffix, node) ->
+    (suffix, YAML.construct_scalar(constructor, node)))
+YAML.load("speed: !unit/kmh 80", nothing, units) # Dict("speed" => ("kmh", "80"))
+```
+
 
 ## Writing to YAML
 
@@ -143,4 +164,3 @@ date: 2012-08-06
   * Parsing sexigesimal numbers.
   * Fractions of seconds in timestamps.
   * Specific time-zone offsets in timestamps.
-  * Application specific tags.

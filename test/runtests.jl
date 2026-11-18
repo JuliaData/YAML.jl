@@ -384,6 +384,12 @@ end
     )
 end
 
+@testset "constructor Dict with one function type" begin
+    constructors = Dict("!tagged" => (c, n) -> "tagged " * YAML.construct_scalar(c, n))
+    @test YAML.load("!tagged x", constructors) == "tagged x"
+    @test collect(YAML.load_all("!tagged x", constructors)) == ["tagged x"]
+end
+
 
 # also check that things break correctly
 @test_throws YAML.ConstructorError YAML.load_file(
