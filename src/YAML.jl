@@ -52,11 +52,10 @@ const _dicttype = Union{Type,Function}
 
 # add a dicttype-aware version of construct_mapping to the constructors
 function _patch_constructors(more_constructors::_constructor, dicttype::_dicttype)
-    if more_constructors === nothing
-        more_constructors = Dict{String,Function}()
-    else
-        more_constructors = copy(more_constructors) # do not change the outside world
-    end
+    # Copy into a Dict that can hold any function, so the caller's Dict stays unchanged and the
+    # mapping constructor fits even when the caller's Dict holds a single function type.
+    more_constructors = more_constructors === nothing ? Dict{Union{String,Nothing},Function}() :
+        Dict{Union{String,Nothing},Function}(more_constructors)
     if !haskey(more_constructors, "tag:yaml.org,2002:map")
         more_constructors["tag:yaml.org,2002:map"] = custom_mapping(dicttype) # map to the custom type
     elseif dicttype != Dict{Any,Any} # only warn if another type has explicitly been set
