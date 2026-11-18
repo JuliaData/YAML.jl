@@ -661,6 +661,14 @@ end
     end
 end
 
+@testset "escapes beyond the Unicode range" begin
+    # as in libyaml, an escape must name a code point no greater than U+10FFFF
+    for code in ("00110000", "0b0001F6", "ffffffff")
+        @test_throws YAML.ScannerError YAML.load("x: \"\\U$code\"")
+    end
+    @test YAML.load("\"\\U0010ffff\"") == "\U10ffff"
+end
+
 @testset "string keys retain their meaning" begin
     for key in ("null", "Null", "NULL", "~", "key\npart", "key\rpart", "key\tpart",
                 "key\0part", "key\u0085part", "key\u2028part", "key\u00adO",
