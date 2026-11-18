@@ -970,6 +970,11 @@ function scan_yaml_directive_number(stream::TokenStream, start_mark::Mark)::Int
         c = peek(stream.input, pos)
         isdigit(c) || break
     end
+    # as in libyaml, a version number has at most 9 digits, so it fits an `Int` on every platform
+    pos > 9 && throw(ScannerError(
+        "while scanning a directive", start_mark,
+        "found extremely long version number", get_mark(stream),
+    ))
     # ------------------------------
     # get the decimal digit as `Int`
     # ------------------------------
