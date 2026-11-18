@@ -151,9 +151,10 @@ function _print(io::IO, str::AbstractString, level::Int=0, ignore_level::Bool=fa
 end
 
 # handle NaNs and Infs
-function _print(io::IO, val::Float64, level::Int=0, ignore_level::Bool=false)
+function _print(io::IO, val::AbstractFloat, level::Int=0, ignore_level::Bool=false)
     if isfinite(val)
-        println(io, string(val)) # the usual case
+        # YAML 1.1 readers such as PyYAML and Ruby's Psych read an unsigned exponent as a string
+        println(io, replace(string(val), r"e(?=\d)" => "e+"))
     elseif isnan(val)
         println(io, ".NaN") # this is what the YAML parser interprets as NaN
     elseif val == Inf
