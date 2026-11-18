@@ -258,7 +258,8 @@ function construct_parsed_scalar(parse_text::Function, constructor::Constructor,
     value = construct_scalar(constructor, node)
     try
         return parse_text(value)
-    catch
+    catch e
+        e isa InterruptException && rethrow()
         throw(ConstructorError(nothing, nothing,
             "could not convert $(repr(value)) to $(node.tag)", node.start_mark))
     end
