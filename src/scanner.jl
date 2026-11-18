@@ -1366,7 +1366,13 @@ function scan_flow_scalar_non_spaces(stream::TokenStream, double::Bool,
                                            get_mark(stream)))
                     end
                 end
-                push!(chunks, Char(parse(Int, prefix(stream.input, length), base = 16)))
+                code = parse(UInt32, prefix(stream.input, length), base = 16)
+                if code > 0x10ffff
+                    throw(ScannerError("while scanning a double-quoted scalar", start_mark,
+                                       "found invalid Unicode character escape code",
+                                       get_mark(stream)))
+                end
+                push!(chunks, Char(code))
                 forwardchars!(stream, length)
             elseif is_b_char(YAMLV1_1(), c)
                 scan_line_break(YAMLV1_1(), stream)
