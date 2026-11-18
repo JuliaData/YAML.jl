@@ -80,6 +80,9 @@ function resolve(resolver::Resolver, ::Type{ScalarNode}, value, implicit)
     if implicit[1]
         for (tag, pat) in resolver.implicit_resolvers
             if occursin(pat, value)
+                # timestamp-shaped text that is not a real date or time, such as 2001-13-01,
+                # stays a string, as in Psych and go-yaml
+                tag == "tag:yaml.org,2002:timestamp" && parse_timestamp(value) === nothing && continue
                 return tag
             end
         end

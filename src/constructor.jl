@@ -332,19 +332,19 @@ end
 
 
 const timestamp_pat =
-    r"^(\d{4})-    (?# year)
-       (\d\d?)-    (?# month)
-       (\d\d?)     (?# day)
+    r"^([0-9]{4})-        (?# year)
+       ([0-9][0-9]?)-     (?# month)
+       ([0-9][0-9]?)      (?# day)
       (?:
         (?:[Tt]|[ \t]+)
-        (\d\d?):      (?# hour)
-        (\d\d):       (?# minute)
-        (\d\d)        (?# second)
-        (?:\.(\d*))?  (?# fraction)
+        ([0-9][0-9]?):    (?# hour)
+        ([0-9][0-9]):     (?# minute)
+        ([0-9][0-9])      (?# second)
+        (?:\.([0-9]*))?   (?# fraction)
         (?:
-          [ \t]*(Z|(?:[+\-])(\d\d?)
+          [ \t]*(Z|(?:[+\-])([0-9][0-9]?)
             (?:
-                :(\d\d)
+                :([0-9][0-9])
             )?)
         )?
       )?$"x
@@ -352,52 +352,65 @@ const timestamp_pat =
 
 function construct_yaml_timestamp(constructor::Constructor, node::Node)
     value = construct_scalar(constructor, node)
-    mat = match(timestamp_pat, value)
-    if mat === nothing
+    t = parse_timestamp(value)
+    if t === nothing
         throw(ConstructorError(nothing, nothing,
             "could not make sense of timestamp format", node.start_mark))
     end
+    return t
+end
 
-    yr = parse(Int, mat.captures[1])
-    mn = parse(Int, mat.captures[2])
-    dy = parse(Int, mat.captures[3])
+# Parse timestamp text as a Date or DateTime. Return nothing when the text is not a timestamp or
+# names an impossible date or time, such as 2001-13-01.
+function parse_timestamp(value::AbstractString)
+    mat = match(timestamp_pat, value)
+    mat === nothing && return nothing
 
-    if mat.captures[4] === nothing
-        return Date(yr, mn, dy)
-    end
+    try
+        yr = parse(Int, mat.captures[1])
+        mn = parse(Int, mat.captures[2])
+        dy = parse(Int, mat.captures[3])
 
-    h = parse(Int, mat.captures[4])
-    m = parse(Int, mat.captures[5])
-    s = parse(Int, mat.captures[6])
-
-    if mat.captures[7] === nothing
-        return DateTime(yr, mn, dy, h, m, s)
-    end
-
-    ms = 0
-    if mat.captures[7] !== nothing
-        ms = mat.captures[7]
-        if length(ms) > 3
-            ms = ms[1:3]
+        if mat.captures[4] === nothing
+            return Date(yr, mn, dy)
         end
-        ms = parse(Int, string(ms, repeat("0", 3 - length(ms))))
+
+        h = parse(Int, mat.captures[4])
+        m = parse(Int, mat.captures[5])
+        s = parse(Int, mat.captures[6])
+
+        if mat.captures[7] === nothing
+            return DateTime(yr, mn, dy, h, m, s)
+        end
+
+        ms = 0
+        if mat.captures[7] !== nothing
+            ms = mat.captures[7]
+            if length(ms) > 3
+                ms = ms[1:3]
+            end
+            ms = parse(Int, string(ms, repeat("0", 3 - length(ms))))
+        end
+
+        delta_hr = 0
+        delta_mn = 0
+
+        if mat.captures[9] !== nothing
+            delta_hr = parse(Int, mat.captures[9])
+        end
+
+        if mat.captures[10] !== nothing
+            delta_mn = parse(Int, mat.captures[10])
+        end
+
+        # TODO: Also, I'm not sure if there is a way to numerically set the timezone
+        # in Calendar.
+
+        return DateTime(yr, mn, dy, h, m, s, ms)
+    catch e
+        e isa ArgumentError || rethrow()
+        return nothing
     end
-
-    delta_hr = 0
-    delta_mn = 0
-
-    if mat.captures[9] !== nothing
-        delta_hr = parse(Int, mat.captures[9])
-    end
-
-    if mat.captures[10] !== nothing
-        delta_mn = parse(Int, mat.captures[10])
-    end
-
-    # TODO: Also, I'm not sure if there is a way to numerically set the timezone
-    # in Calendar.
-
-    return DateTime(yr, mn, dy, h, m, s, ms)
 end
 
 

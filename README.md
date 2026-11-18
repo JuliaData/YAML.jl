@@ -68,8 +68,9 @@ Which will show you something like this.
 ```
 
 Note that ints and floats are recognized, as well as timestamps which are parsed
-into CalendarTime objects. Also, anchors and references work as expected,
-without making a copy.
+into `Date` or `DateTime` values. Text shaped like a timestamp that names an
+impossible date or time, such as `2001-13-01`, loads as a string. Also, anchors
+and references work as expected, without making a copy.
 
 Dictionaries are parsed into instances of `Dict{Any,Any}` by default.
 You can, however, specify a custom type in which to parse all dictionaries.

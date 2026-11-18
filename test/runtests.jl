@@ -5,6 +5,7 @@ module YAMLTests
 import YAML
 import Base.Filesystem
 using StringEncodings: encode, decode, @enc_str
+using Dates: Date, DateTime
 using Test
 
 const tests = [
@@ -625,6 +626,18 @@ end
     @test YAML.load("") === nothing
     @test isempty(collect(YAML.load_all("")))
     @test isequal(collect(YAML.load_all("null\n---\nnull\n")), [nothing, nothing])
+end
+
+@testset "timestamps that are not real dates" begin
+    # timestamp-shaped text that is not a real date or time loads as a string, as in Psych and
+    # go-yaml, and an explicit timestamp tag on it is an error
+    for text in ("2001-13-01", "2024-02-30", "2001-01-01 25:00:00", "2001-01-01t10:61:00Z",
+                 "\u0662\u0660\u0660\u0661-\u0660\u0661-\u0660\u0661")
+        @test YAML.load("d: " * text) == Dict("d" => text)
+        @test_throws YAML.ConstructorError YAML.load("d: !!timestamp " * text)
+    end
+    @test YAML.load("d: 2024-02-29") == Dict("d" => Date(2024, 2, 29))
+    @test YAML.load("d: !!timestamp 2001-01-01 23:59:59") == Dict("d" => DateTime(2001, 1, 1, 23, 59, 59))
 end
 
 @testset "quoted scalar termination" begin
