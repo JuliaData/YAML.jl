@@ -52,13 +52,19 @@ function _print(io::IO, dict::AbstractDict, level::Int=0, ignore_level::Bool=fal
     end
 end
 
+# Julia collections written as YAML sequences
+const Sequence = Union{AbstractVector,Tuple,AbstractSet}
+
+_print(io::IO, x::Union{Tuple,AbstractSet}, level::Int=0, ignore_level::Bool=false) =
+    _print(io, collect(x), level, ignore_level)
+
 # recursively print an array
 function _print(io::IO, arr::AbstractVector, level::Int=0, ignore_level::Bool=false)
     if isempty(arr)
         println(io, "[]")
     else
         for elem in arr
-            if elem isa AbstractVector && !isempty(elem) # nonempty vectors of vectors must be handled differently
+            if elem isa Sequence && !isempty(elem) # nonempty sequences of sequences must be handled differently
                 print(io, _indent("-\n", level))
                 _print(io, elem, level + 1)
             else
@@ -72,7 +78,7 @@ end
 # print a single key-value pair
 function _print(io::IO, pair::Pair, level::Int=0, ignore_level::Bool=false)
     k = pair[1] isa Union{Symbol,AbstractChar} ? string(pair[1]) : pair[1] # text keys are strings
-    key = if k === nothing
+    key = if k === nothing || k === missing
         "null" # this is what the YAML parser interprets as 'nothing'
     elseif k isa AbstractString && string_key_needs_quoting(k)
         string("\"", escape_yaml_string(k), "\"") # special keys that require quoting
@@ -81,7 +87,7 @@ function _print(io::IO, pair::Pair, level::Int=0, ignore_level::Bool=false)
     end
 
     print(io, _indent(key * ":", level, ignore_level)) # print the key
-    if (pair[2] isa AbstractDict || pair[2] isa AbstractVector) && !isempty(pair[2])
+    if (pair[2] isa AbstractDict || pair[2] isa Sequence) && !isempty(pair[2])
         print(io, "\n") # a line break is needed before a recursive structure
     else
         print(io, " ") # a whitespace character is needed before a single value
@@ -164,8 +170,13 @@ function _print(io::IO, val::AbstractFloat, level::Int=0, ignore_level::Bool=fal
     end
 end
 
-_print(io::IO, val::Nothing, level::Int=0, ignore_level::Bool=false) =
+_print(io::IO, val::Union{Nothing,Missing}, level::Int=0, ignore_level::Bool=false) =
     println(io, "~") # this is what the YAML parser interprets as nothing
+
+# YAML has no rational type, so a rational is written as the nearest float, which every reader
+# loads as a number
+_print(io::IO, val::Rational, level::Int=0, ignore_level::Bool=false) =
+    _print(io, float(val), level, ignore_level)
 
 # Symbols and Chars hold text, so they are written as strings
 _print(io::IO, val::Union{Symbol,AbstractChar}, level::Int=0, ignore_level::Bool=false) =
