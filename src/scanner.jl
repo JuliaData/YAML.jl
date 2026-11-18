@@ -1085,7 +1085,7 @@ function scan_tag(stream::TokenStream)
         forwardchars!(stream)
     elseif in(c, "\0 \t\r\n\u0085\u2028\u2029")
         handle = nothing
-        suffix = '!'
+        suffix = "!"
         forwardchars!(stream)
     else
         length = 1
