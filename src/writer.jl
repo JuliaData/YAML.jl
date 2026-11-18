@@ -129,9 +129,9 @@ function _print(io::IO, str::AbstractString, level::Int=0, ignore_level::Bool=fa
     if (occursin('\n', strip(str)) || occursin('"', str)) &&
        all(c -> isprint(c) || c == '\n' || c == '\t', str)
         # A reader takes the indentation from the first line with text. When that line starts with
-        # a space, the header states the indentation instead. It is 2 because the content sits two
-        # spaces deeper than its parent.
-        header = startswith(lstrip(str, '\n'), ' ') ? "|2" : "|"
+        # a space, or with a tab (libyaml rejects one there), the header states the indentation
+        # instead. It is 2 because the content sits two spaces deeper than its parent.
+        header = startswith(lstrip(str, '\n'), (' ', '\t')) ? "|2" : "|"
         if endswith(str, "\n\n")   # multiple trailing newlines: keep
             println(io, header, "+")
             str = str[1:end-1]     # otherwise, we have one too many

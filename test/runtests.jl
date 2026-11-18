@@ -697,6 +697,16 @@ end
     end
 end
 
+@testset "multiline strings with leading tabs" begin
+    # libyaml and go-yaml reject a tab where they detect a block's indentation, so the header states it
+    for text in ("\tx\ny", "\n\tx\ny\n", "\t\"quoted\"", "\tkept\nline\n\n")
+        @test startswith(YAML.yaml(text), "|2")
+        @test startswith(YAML.yaml(Dict("k" => text)), "k: |2")
+        @test YAML.load(YAML.yaml(text)) == text
+        @test YAML.load(YAML.yaml([Dict("k" => [text])])) == [Dict("k" => [text])]
+    end
+end
+
 @testset "binary integer construction" begin
     for (input, expected) in (("0b0", 0), ("0b1", 1), ("0b1010", 10),
                               ("0b10_01", 9), ("+0b10_01", 9), ("-0b10_01", -9)),
