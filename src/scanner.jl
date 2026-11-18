@@ -314,7 +314,6 @@ end
 function save_possible_simple_key(stream::TokenStream)
     # Simple key required at the current position.
     required = stream.flow_level == 0 && stream.indent == stream.column
-    @assert stream.allow_simple_key || !required
 
     if stream.allow_simple_key
         remove_possible_simple_key(stream)
