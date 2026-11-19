@@ -17,16 +17,30 @@ end
 
 # Read and buffer `n` more characters
 function buffer!(bi::BufferedInput, n::Integer)::Nothing
+    # `bi.input` is typed `IO`, so name the common concrete types to read each character
+    # with a static call; other streams pay one dynamic call per `buffer!`.
+    input = bi.input
+    if input isa IOBuffer
+        buffer!(bi, input, n)
+    elseif input isa IOStream
+        buffer!(bi, input, n)
+    else
+        buffer!(bi, input, n)
+    end
+    bi.avail += n
+    nothing
+end
+
+function buffer!(bi::BufferedInput, input::IO, n::Integer)
     for i in (bi.offset + bi.avail) .+ (1:n)
-        c = eof(bi.input) ? '\0' : read(bi.input, Char)
+        c = eof(input) ? '\0' : read(input, Char)
         if i ≤ length(bi.buffer)
             bi.buffer[i] = c
         else
             push!(bi.buffer, c)
         end
     end
-    bi.avail += n
-    nothing
+    return nothing
 end
 
 # Peek the character in the i-th position relative to the current position.
@@ -44,7 +58,7 @@ end
 # of the stream.
 function prefix(bi::BufferedInput, n::Integer=1)::String
     bi.avail < n && buffer!(bi, n - bi.avail)
-    String(bi.buffer[bi.offset .+ (1:n)])
+    String(view(bi.buffer, bi.offset .+ (1:n)))
 end
 
 
