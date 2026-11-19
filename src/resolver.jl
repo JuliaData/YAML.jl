@@ -76,8 +76,14 @@ struct Resolver
 end
 
 
+# Each implicit pattern above matches only empty text, text that starts with one of these
+# characters, or text that starts with a non-ASCII character (`\d` also matches other Unicode
+# digits). "\n" is listed because `$` matches before a final line break. Other text skips the
+# patterns, as in PyYAML, which indexes its resolvers by first character.
+const IMPLICIT_FIRST_CHARS = "\n!&*+-.0123456789<=FNTfnt~"
+
 function resolve(resolver::Resolver, ::Type{ScalarNode}, value, implicit)
-    if implicit[1]
+    if implicit[1] && (isempty(value) || !isascii(first(value)) || first(value) in IMPLICIT_FIRST_CHARS)
         for (tag, pat) in resolver.implicit_resolvers
             if occursin(pat, value)
                 # timestamp-shaped text that is not a real date or time, such as 2001-13-01,
