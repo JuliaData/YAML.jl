@@ -73,6 +73,7 @@ _print(io::IO, z::Complex, level::Int=0, ignore_level::Bool=false) =
 
 # a nonempty collection key or value starts on the line after its '?' or key
 starts_block(x) = x isa Union{Mapping,Sequence} && !isempty(x)
+starts_block(x::AbstractArray{<:Any,0}) = starts_block(x[])
 
 # recursively print an array
 function _print(io::IO, arr::AbstractVector, level::Int=0, ignore_level::Bool=false)
@@ -80,7 +81,7 @@ function _print(io::IO, arr::AbstractVector, level::Int=0, ignore_level::Bool=fa
         println(io, "[]")
     else
         for elem in arr
-            if elem isa Sequence && !isempty(elem) # nonempty sequences of sequences must be handled differently
+            if elem isa Sequence && starts_block(elem) # nonempty sequences of sequences must be handled differently
                 print(io, _indent("-\n", level))
                 _print(io, elem, level + 1)
             else
@@ -99,6 +100,10 @@ function _print(io::IO, arr::AbstractArray, level::Int=0, ignore_level::Bool=fal
     slices = isempty(arr) ? [] : [selectdim(arr, n, i) for i in axes(arr, n)]
     _print(io, slices, level, ignore_level)
 end
+
+# a zero-dimensional array holds one value, so it is written as that value, as JSON.jl does
+_print(io::IO, arr::AbstractArray{<:Any,0}, level::Int=0, ignore_level::Bool=false) =
+    _print(io, arr[], level, ignore_level)
 
 # print a single key-value pair
 function _print(io::IO, pair::Pair, level::Int=0, ignore_level::Bool=false)
