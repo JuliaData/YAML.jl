@@ -20,6 +20,9 @@ end
 
 Write a YAML representation of some data (e.g. a dictionary or an array) to an IO stream,
 if provided, or return a string of that representation.
+
+A multidimensional array is written as nested sequences along its last dimension, so a
+matrix becomes a sequence of its columns.
 """
 function write(io::IO, data::Any, prefix::AbstractString="")
     print(io, prefix) # print the prefix, e.g. a comment at the beginning of the file
@@ -53,7 +56,7 @@ function _print(io::IO, dict::AbstractDict, level::Int=0, ignore_level::Bool=fal
 end
 
 # Julia collections written as YAML sequences
-const Sequence = Union{AbstractVector,Tuple,AbstractSet}
+const Sequence = Union{AbstractArray,Tuple,AbstractSet}
 
 _print(io::IO, x::Union{Tuple,AbstractSet}, level::Int=0, ignore_level::Bool=false) =
     _print(io, collect(x), level, ignore_level)
@@ -70,6 +73,7 @@ _print(io::IO, z::Complex, level::Int=0, ignore_level::Bool=false) =
 
 # a nonempty collection key or value starts on the line after its '?' or key
 starts_block(x) = x isa Union{Mapping,Sequence} && !isempty(x)
+starts_block(x::AbstractArray{<:Any,0}) = starts_block(x[])
 
 # recursively print an array
 function _print(io::IO, arr::AbstractVector, level::Int=0, ignore_level::Bool=false)
@@ -77,7 +81,7 @@ function _print(io::IO, arr::AbstractVector, level::Int=0, ignore_level::Bool=fa
         println(io, "[]")
     else
         for elem in arr
-            if elem isa Sequence && !isempty(elem) # nonempty sequences of sequences must be handled differently
+            if elem isa Sequence && starts_block(elem) # nonempty sequences of sequences must be handled differently
                 print(io, _indent("-\n", level))
                 _print(io, elem, level + 1)
             else
@@ -88,9 +92,26 @@ function _print(io::IO, arr::AbstractVector, level::Int=0, ignore_level::Bool=fa
     end
 end
 
+# YAML has no multidimensional sequences. Write an array as a sequence of its slices along the
+# last dimension, so a matrix becomes a sequence of its columns and `reduce(hcat, ...)` on the
+# loaded value rebuilds it.
+function _print(io::IO, arr::AbstractArray, level::Int=0, ignore_level::Bool=false)
+    n = ndims(arr)
+    slices = isempty(arr) ? [] : [selectdim(arr, n, i) for i in axes(arr, n)]
+    _print(io, slices, level, ignore_level)
+end
+
+# a zero-dimensional array holds one value, so it is written as that value, as JSON.jl does
+_print(io::IO, arr::AbstractArray{<:Any,0}, level::Int=0, ignore_level::Bool=false) =
+    _print(io, arr[], level, ignore_level)
+
 # print a single key-value pair
 function _print(io::IO, pair::Pair, level::Int=0, ignore_level::Bool=false)
-    k = pair[1] isa Union{Symbol,AbstractChar} ? string(pair[1]) : pair[1] # text keys are strings
+    k = pair[1]
+    while k isa AbstractArray{<:Any,0}
+        k = k[]
+    end
+    k = k isa Union{Symbol,AbstractChar} ? string(k) : k # text keys are strings
     if starts_block(k)
         # a collection key is written as an explicit key: '?', the key's lines, then ':'
         println(io, _indent("?", level, ignore_level))

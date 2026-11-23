@@ -615,6 +615,21 @@ end
     @test e.problem_mark.line == 3
 end
 
+@testset "issue #135" begin
+    @test YAML.load(YAML.yaml(Dict("m" => [1 2; 3 4]))) == Dict("m" => [[1, 3], [2, 4]])
+    @test YAML.load(YAML.yaml([[1 2; 3 4]])) == [[[1, 3], [2, 4]]]
+    @test YAML.load(YAML.yaml(reshape(1:8, 2, 2, 2))) == [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
+    @test YAML.load(YAML.yaml(Dict("m" => zeros(0, 3)))) == Dict("m" => [])
+    # a zero-dimensional array is written as the one value it holds
+    @test YAML.load(YAML.yaml(fill(1))) == 1
+    @test YAML.load(YAML.yaml(Dict("z" => fill(2), "v" => fill([1, 2])))) == Dict("z" => 2, "v" => [1, 2])
+    @test YAML.load(YAML.yaml([fill(3), fill(Dict("a" => 4)), fill([5, 6])])) == [3, Dict("a" => 4), [5, 6]]
+    @test YAML.load(YAML.yaml(Dict(fill("a\nb") => 1))) == Dict("a\nb" => 1)
+    @test YAML.load(YAML.yaml(Dict(fill(fill("a\"b")) => 2))) == Dict("a\"b" => 2)
+    @test YAML.load(YAML.yaml(Dict(fill(Symbol("a: b")) => 3))) == Dict("a: b" => 3)
+    @test YAML.load(YAML.yaml(Dict(fill([1 2; 3 4]) => 4))) == Dict([[1, 3], [2, 4]] => 4)
+end
+
 # int resolver: a leading-zero scalar that isn't valid octal must stay a string,
 # not fall into construct_yaml_int's base-8 parse and throw
 @testset "int resolver leading zero" begin
