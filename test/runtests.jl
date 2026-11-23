@@ -624,6 +624,10 @@ end
     @test YAML.load(YAML.yaml(fill(1))) == 1
     @test YAML.load(YAML.yaml(Dict("z" => fill(2), "v" => fill([1, 2])))) == Dict("z" => 2, "v" => [1, 2])
     @test YAML.load(YAML.yaml([fill(3), fill(Dict("a" => 4)), fill([5, 6])])) == [3, Dict("a" => 4), [5, 6]]
+    @test YAML.load(YAML.yaml(Dict(fill("a\nb") => 1))) == Dict("a\nb" => 1)
+    @test YAML.load(YAML.yaml(Dict(fill(fill("a\"b")) => 2))) == Dict("a\"b" => 2)
+    @test YAML.load(YAML.yaml(Dict(fill(Symbol("a: b")) => 3))) == Dict("a: b" => 3)
+    @test YAML.load(YAML.yaml(Dict(fill([1 2; 3 4]) => 4))) == Dict([[1, 3], [2, 4]] => 4)
 end
 
 # int resolver: a leading-zero scalar that isn't valid octal must stay a string,

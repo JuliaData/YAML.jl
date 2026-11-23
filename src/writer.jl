@@ -107,7 +107,11 @@ _print(io::IO, arr::AbstractArray{<:Any,0}, level::Int=0, ignore_level::Bool=fal
 
 # print a single key-value pair
 function _print(io::IO, pair::Pair, level::Int=0, ignore_level::Bool=false)
-    k = pair[1] isa Union{Symbol,AbstractChar} ? string(pair[1]) : pair[1] # text keys are strings
+    k = pair[1]
+    while k isa AbstractArray{<:Any,0}
+        k = k[]
+    end
+    k = k isa Union{Symbol,AbstractChar} ? string(k) : k # text keys are strings
     if starts_block(k)
         # a collection key is written as an explicit key: '?', the key's lines, then ':'
         println(io, _indent("?", level, ignore_level))
